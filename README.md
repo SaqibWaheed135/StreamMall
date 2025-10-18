@@ -1,6 +1,4 @@
-Perfect 🔥 — here’s a **professional, visually structured README.md** for your **StreamMall** repository.
-It’s written in clean Markdown style and suitable for GitHub — with emojis, badges, and sections for quick understanding.
-You can copy-paste this directly into your repo’s `README.md` file.
+
 
 ---
 
@@ -169,7 +167,7 @@ This project is licensed under the **MIT License**.
 React Native & Full Stack Developer
 📍 Rawalpindi, Pakistan
 📧 [xaqibwaheed333@gmail.com](mailto:xaqibwaheed333@gmail.com)
-🌐 [Portfolio Coming Soon](#)
+🌐 [Portfolio](https://saqibwaheedportfolio.netlify.app/)
 
 ---
 
