@@ -75,33 +75,52 @@ export default function Login() {
   };
 
   // Initialize Google Sign-In
-  useEffect(() => {
+    useEffect(() => {
     const initializeGoogleSignIn = async () => {
       if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        console.warn("Missing Google Client ID");
+        console.warn("VITE_GOOGLE_CLIENT_ID not found in environment variables");
         return;
       }
+
       try {
         await loadGoogleScript();
+
         if (window.google && window.google.accounts) {
           window.google.accounts.id.initialize({
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
             callback: handleGoogleResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            use_fedcm_for_prompt: false
           });
+
           const googleButtonDiv = document.getElementById("googleSignInDiv");
           if (googleButtonDiv) {
-            googleButtonDiv.innerHTML = "";
+            googleButtonDiv.innerHTML = '';
+
             window.google.accounts.id.renderButton(googleButtonDiv, {
               theme: "outline",
               size: "large",
               width: "100%",
+              text: "signin_with",
+              shape: "rectangular",
+              logo_alignment: "left"
             });
           }
         }
       } catch (error) {
-        console.error("Google Sign-In Error:", error);
+        console.error("Failed to load Google Sign-In:", error);
+        const googleButtonDiv = document.getElementById("googleSignInDiv");
+        if (googleButtonDiv) {
+          googleButtonDiv.innerHTML = `
+            <div className="flex items-center justify-center w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed">
+              <span className="text-sm">Google Sign-In unavailable</span>
+            </div>
+          `;
+        }
       }
     };
+
     initializeGoogleSignIn();
   }, []);
 
@@ -205,24 +224,19 @@ export default function Login() {
           </div>
 
           {/* Google Sign-In */}
-          <div className="flex flex-col items-center space-y-3">
-            <div id="googleSignInDiv" className="hidden" />
-            <button
-              onClick={() => {
-                const googleDiv = document.getElementById("googleSignInDiv");
-                if (googleDiv) googleDiv.querySelector("div")?.click();
-              }}
-              disabled={googleLoading}
-              className="w-full flex items-center justify-center gap-3 border border-[#2C2C33] bg-[#fff] hover:bg-[#1C1C22] text-black hover:text-white py-3 rounded-lg transition-all shadow-[0_0_15px_rgba(255,255,255,0.05)]"
-            >
-              <img
-                src="https://developers.google.com/identity/images/g-logo.png"
-                alt="Google"
-                className="w-5 h-5"
-              />
-              {googleLoading ? "Signing in with Google..." : "Sign in with Google"}
-            </button>
+           <div className="mb-6">
+            <div
+              id="googleSignInDiv"
+              className={`${googleLoading ? 'opacity-50 pointer-events-none' : ''}`}
+            ></div>
+            {googleLoading && (
+              <div className="flex items-center justify-center mt-3">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-bg-[#FF2B55]"></div>
+                <span className="text-gray-400 text-sm ml-2">Signing in with Google...</span>
+              </div>
+            )}
           </div>
+
 
           {/* Signup Link */}
           <p className="text-gray-400 text-center mt-6">
