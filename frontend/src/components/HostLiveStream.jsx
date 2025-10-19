@@ -1,8 +1,10 @@
+
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Radio, Users, X, Mic, MicOff, Video, VideoOff, MessageCircle, Heart, Coins, TrendingUp, Share2 } from 'lucide-react';
+import { Camera, Radio, Users, X, Mic, MicOff, Video, VideoOff, MessageCircle, Heart } from 'lucide-react';
 import io from 'socket.io-client';
 
-let Room, RoomEvent, Track;
+let Room, RoomEvent, Track, DataPacket_Kind;
 
 const loadLiveKit = async () => {
   try {
@@ -10,15 +12,16 @@ const loadLiveKit = async () => {
     Room = livekit.Room;
     RoomEvent = livekit.RoomEvent;
     Track = livekit.Track;
+    DataPacket_Kind = livekit.DataPacket_Kind;
     return true;
   } catch (err) {
-    console.error('LiveKit not installed');
+    console.error('LiveKit not installed. Run: npm install livekit-client');
     return false;
   }
 };
 
-const API_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
-const SOCKET_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com';
+const API_URL = 'https://theclipstream-backend.onrender.com/api';
+const SOCKET_URL = 'https://theclipstream-backend.onrender.com';
 
 const HostLiveStream = ({ onBack }) => {
   const [isLive, setIsLive] = useState(false);
@@ -45,9 +48,8 @@ const HostLiveStream = ({ onBack }) => {
     link: ''
   });
   const [orders, setOrders] = useState([]);
-  const [coinBalance, setCoinBalance] = useState(0);
+  const [streamEarnings, setStreamEarnings] = useState(0);
   const [socket, setSocket] = useState(null);
-  const [shareLink, setShareLink] = useState('');
   
   const videoRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -91,47 +93,61 @@ const HostLiveStream = ({ onBack }) => {
       
       newSocket.on('connect', () => {
         console.log('Socket connected');
+        
         newSocket.emit('join-stream', { 
           streamId: streamData.streamId, 
           isStreamer: true 
-        });
-        newSocket.emit('subscribe-to-stream-earnings', {
-          streamId: streamData.streamId
         });
       });
 
       newSocket.on('new-order', (data) => {
         console.log('New order received:', data);
-        setOrders(prev => {
-          const orderExists = prev.some(o => 
-            o._id === data.order._id || 
-            (o.productIndex === data.order.productIndex && 
-             o.buyer === data.order.buyer)
-          );
-          return orderExists ? prev : [...prev, {
-            ...data.order,
-            buyerUsername: data.buyerUsername || data.order.buyer?.username
-          }];
-        });
+        if (data.streamId === streamData.streamId) {
+          setOrders(prev => {
+            const orderExists = prev.some(o => 
+              (o.productIndex === data.order.productIndex && 
+               o.buyer === data.order.buyer)
+            );
+            return orderExists ? prev : [...prev, {
+              ...data.order,
+              buyerUsername: data.buyerUsername || data.order.buyer?.username
+            }];
+          });
 
-        if (data.totalEarnings !== undefined) {
-          setCoinBalance(data.totalEarnings);
+          if (data.totalEarnings !== undefined) {
+            setStreamEarnings(data.totalEarnings);
+          }
+
+          setError(`Order received from ${data.buyerUsername}!`);
+          setTimeout(() => setError(''), 3000);
         }
       });
 
       newSocket.on('coins-updated', (data) => {
         console.log('Coins updated:', data);
         if (data.streamId === streamData.streamId) {
-          setCoinBalance(data.coinBalance);
+          setStreamEarnings(data.streamEarnings || data.earnedAmount);
+          
           setError(`Earned ${data.earnedAmount} coins from a purchase!`);
           setTimeout(() => setError(''), 3000);
         }
       });
 
+      newSocket.on('product-added', (data) => {
+        console.log('Product added:', data);
+        if (data.streamId === streamData.streamId) {
+          setProducts(prev => [...prev, { ...data.product, index: data.productIndex }]);
+        }
+      });
+
+      newSocket.on('error', (error) => {
+        console.error('Socket error:', error);
+        setError(error.message || 'Connection error');
+      });
+
       setSocket(newSocket);
-      fetchInitialOrders();
-      setProducts(streamData.stream.products?.map((p, i) => ({ ...p, index: i })) || []);
-      setCoinBalance(streamData.stream.points || 0);
+
+      fetchInitialData();
 
       return () => {
         newSocket.disconnect();
@@ -139,24 +155,29 @@ const HostLiveStream = ({ onBack }) => {
     }
   }, [isLive, streamData?.streamId]);
 
-  const fetchInitialOrders = async () => {
+  const fetchInitialData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/live/${streamData.streamId}/orders`, {
+      
+      const ordersResponse = await fetch(`${API_URL}/live/${streamData.streamId}/orders`, {
         headers: {
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
       });
-      const data = await response.json();
-      if (response.ok) {
-        const ordersWithBuyerInfo = data.orders.map(o => ({
-          ...o,
-          buyerUsername: o.buyer?.username || 'Unknown Buyer'
-        })) || [];
-        setOrders(ordersWithBuyerInfo);
+      const ordersData = await ordersResponse.json();
+      if (ordersResponse.ok) {
+        setOrders(ordersData.orders.map(o => ({ 
+          ...o, 
+          buyerUsername: o.buyer?.username || 'Unknown Buyer' 
+        })) || []);
+      }
+
+      if (streamData?.stream) {
+        setProducts(streamData.stream.products?.map((p, i) => ({ ...p, index: i })) || []);
+        setStreamEarnings(streamData.stream.points || 0);
       }
     } catch (err) {
-      console.error('Failed to fetch initial orders:', err);
+      console.error('Failed to fetch initial data:', err);
     }
   };
 
@@ -227,8 +248,8 @@ const HostLiveStream = ({ onBack }) => {
         throw new Error(data.msg || 'Failed to create stream');
       }
 
+      console.log('Stream created:', data);
       setStreamData(data);
-      setShareLink(`${window.location.origin}/live/${data.streamId}`);
 
       const room = new Room({
         adaptiveStream: true,
@@ -242,11 +263,15 @@ const HostLiveStream = ({ onBack }) => {
         }
       });
 
+      console.log('Connecting to LiveKit room...');
       await room.connect(data.roomUrl, data.publishToken);
+      console.log('✅ Connected to LiveKit room');
 
       room.on(RoomEvent.DataReceived, (payload, participant) => {
         const decoder = new TextDecoder();
         const message = JSON.parse(decoder.decode(payload));
+        
+        console.log('📨 Data received from', participant?.identity, message);
         
         if (message.type === 'comment') {
           setComments(prev => [...prev, {
@@ -270,15 +295,20 @@ const HostLiveStream = ({ onBack }) => {
 
       room.on(RoomEvent.ParticipantConnected, () => {
         setViewerCount(room.remoteParticipants.size);
+        console.log('👤 Viewer joined. Total:', room.remoteParticipants.size);
       });
 
       room.on(RoomEvent.ParticipantDisconnected, () => {
         setViewerCount(room.remoteParticipants.size);
+        console.log('👋 Viewer left. Total:', room.remoteParticipants.size);
       });
 
       await room.localParticipant.enableCameraAndMicrophone();
+      console.log('✅ Camera and microphone enabled');
 
       room.on(RoomEvent.LocalTrackPublished, (publication) => {
+        console.log('Track published:', publication.source);
+        
         if (publication.source === Track.Source.Camera) {
           const localVideoTrack = publication.track;
           if (localVideoTrack && localVideoTrack.mediaStreamTrack) {
@@ -289,6 +319,7 @@ const HostLiveStream = ({ onBack }) => {
               videoRef.current.muted = true;
               videoRef.current.play()
                 .then(() => {
+                  console.log('✅ LiveKit video playing');
                   setTimeout(() => {
                     if (localVideoRef.current) {
                       localVideoRef.current.style.display = 'none';
@@ -308,6 +339,11 @@ const HostLiveStream = ({ onBack }) => {
           videoRef.current.srcObject = mediaStream;
           videoRef.current.muted = true;
           videoRef.current.play()
+            .then(() => {
+              if (localVideoRef.current) {
+                localVideoRef.current.style.display = 'none';
+              }
+            })
             .catch(err => console.error('Manual attach error:', err));
         }
       }, 1000);
@@ -366,7 +402,7 @@ const HostLiveStream = ({ onBack }) => {
       setHearts([]);
       setProducts([]);
       setOrders([]);
-      setCoinBalance(0);
+      setStreamEarnings(0);
       
       onBack();
     } catch (err) {
@@ -402,9 +438,40 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
+  const addProductViaSocket = () => {
+    if (!socket) {
+      setError('Socket not connected');
+      return;
+    }
+
+    if (!newProduct.name.trim()) {
+      setError('Product name is required');
+      return;
+    }
+
+    if (newProduct.price <= 0) {
+      setError('Product price must be greater than 0');
+      return;
+    }
+
+    socket.emit('add-product', {
+      streamId: streamData.streamId,
+      product: newProduct
+    });
+
+    setNewProduct({
+      type: 'product',
+      name: '',
+      description: '',
+      price: 0,
+      imageUrl: '',
+      link: ''
+    });
+  };
+
   if (isLive) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-950 via-gray-900 to-black text-white p-4">
+      <div className="min-h-screen bg-gray-900 text-white p-4">
         <style>{`
           @keyframes float-up {
             0% { transform: translateY(0) scale(1); opacity: 1; }
@@ -412,17 +479,11 @@ const HostLiveStream = ({ onBack }) => {
           }
         `}</style>
 
-        {error && (
-          <div className="fixed top-4 left-4 right-4 bg-red-500/90 text-white px-4 py-3 rounded-lg z-50">
-            {error}
-          </div>
-        )}
-
         <div className="max-w-6xl mx-auto">
-          <div className="bg-black/50 backdrop-blur border border-white/10 rounded-lg p-4 mb-4">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-red-500 px-3 py-1 rounded-full">
+                <div className="flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                   <span className="text-sm font-semibold">LIVE</span>
                 </div>
@@ -430,38 +491,21 @@ const HostLiveStream = ({ onBack }) => {
                   <Users className="w-4 h-4" />
                   <span className="text-sm">{viewerCount} viewers</span>
                 </div>
-                <div className="flex items-center gap-2 text-yellow-400">
-                  <Coins className="w-4 h-4" />
-                  <span className="text-sm font-bold">{coinBalance} coins</span>
-                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(shareLink);
-                    setError('Share link copied!');
-                    setTimeout(() => setError(''), 2000);
-                  }}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 px-3 py-2 rounded-lg flex items-center gap-2 text-sm"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </button>
-                <button
-                  onClick={endStream}
-                  className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 px-4 py-2 rounded-lg flex items-center gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  End
-                </button>
-              </div>
+              <button
+                onClick={endStream}
+                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                End Stream
+              </button>
             </div>
-            <h2 className="text-xl font-bold mt-3 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-cyan-400">{streamData?.stream?.title}</h2>
+            <h2 className="text-xl font-bold mt-3">{streamData?.stream?.title}</h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             <div className="lg:col-span-3">
-              <div className="bg-black rounded-lg aspect-video mb-4 relative overflow-hidden border border-white/10">
+              <div className="bg-black rounded-lg aspect-video mb-4 relative overflow-hidden">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -479,7 +523,7 @@ const HostLiveStream = ({ onBack }) => {
                   style={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
                 />
                 {!isCameraOn && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80" style={{ zIndex: 10 }}>
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900" style={{ zIndex: 10 }}>
                     <VideoOff className="w-16 h-16 text-gray-600" />
                   </div>
                 )}
@@ -500,30 +544,27 @@ const HostLiveStream = ({ onBack }) => {
                 ))}
               </div>
 
-              <div className="bg-black/50 backdrop-blur border border-white/10 rounded-lg p-4 mb-4 flex items-center justify-center gap-4">
+              <div className="bg-gray-800 rounded-lg p-4 mb-4 flex items-center justify-center gap-4">
                 <button
                   onClick={toggleCamera}
-                  className={`p-4 rounded-full transition-all ${isCameraOn ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 hover:from-cyan-500/50 hover:to-blue-500/50' : 'bg-gradient-to-r from-pink-500/30 to-red-500/30 hover:from-pink-500/50 hover:to-red-500/50'}`}
+                  className={`p-4 rounded-full transition-colors ${isCameraOn ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`}
                 >
                   {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
                 </button>
                 <button
                   onClick={toggleMic}
-                  className={`p-4 rounded-full transition-all ${isMicOn ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 hover:from-cyan-500/50 hover:to-blue-500/50' : 'bg-gradient-to-r from-pink-500/30 to-red-500/30 hover:from-pink-500/50 hover:to-red-500/50'}`}
+                  className={`p-4 rounded-full transition-colors ${isMicOn ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`}
                 >
                   {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                 </button>
               </div>
 
-              <div className="bg-black/50 backdrop-blur border border-white/10 rounded-lg p-4 mb-4">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-yellow-400" />
-                  Add Product/Ad
-                </h3>
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <h3 className="font-semibold mb-4">Add Product/Ad</h3>
                 <select 
                   value={newProduct.type}
                   onChange={(e) => setNewProduct({...newProduct, type: e.target.value})}
-                  className="w-full bg-gray-800/50 border border-white/20 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-pink-500 text-white"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 >
                   <option value="product">Product</option>
                   <option value="ad">Ad</option>
@@ -532,87 +573,84 @@ const HostLiveStream = ({ onBack }) => {
                   placeholder="Name"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                  className="w-full bg-gray-800/50 border border-white/20 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-pink-500 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Description"
                   value={newProduct.description}
                   onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                  className="w-full bg-gray-800/50 border border-white/20 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-pink-500 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={newProduct.price}
                   onChange={(e) => setNewProduct({...newProduct, price: parseFloat(e.target.value)})}
-                  className="w-full bg-gray-800/50 border border-white/20 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-pink-500 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Image URL"
                   value={newProduct.imageUrl}
                   onChange={(e) => setNewProduct({...newProduct, imageUrl: e.target.value})}
-                  className="w-full bg-gray-800/50 border border-white/20 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-pink-500 text-white placeholder-gray-400"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
+                />
+                <input
+                  placeholder="Link (for ad or product)"
+                  value={newProduct.link}
+                  onChange={(e) => setNewProduct({...newProduct, link: e.target.value})}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <button
-                  onClick={async () => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      const response = await fetch(`${API_URL}/live/${streamData.streamId}/add-product`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          ...(token && { 'Authorization': `Bearer ${token}` })
-                        },
-                        body: JSON.stringify(newProduct)
-                      });
-                      const data = await response.json();
-                      if (response.ok) {
-                        setProducts([...products, { ...data.product, index: products.length }]);
-                        setNewProduct({type: 'product', name: '', description: '', price: 0, imageUrl: '', link: ''});
-                      } else {
-                        setError(data.msg);
-                      }
-                    } catch (err) {
-                      setError('Failed to add product');
-                    }
-                  }}
-                  className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-600 hover:via-purple-600 hover:to-cyan-600 py-2 rounded-lg font-semibold mt-2 transition-all"
+                  onClick={addProductViaSocket}
+                  className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold mt-2"
                 >
-                  Add Item
+                  Add via Socket
                 </button>
                 
                 <div className="mt-4">
-                  <h4 className="font-semibold mb-2 text-sm">Added Items ({products.length})</h4>
-                  {products.map((p, i) => (
-                    <div key={i} className="bg-white/5 rounded-lg p-2 mb-2 border border-white/10">
-                      <span className="text-sm">{p.name} - ${p.price}</span>
-                    </div>
-                  ))}
+                  <h4 className="font-semibold mb-2">Added Items ({products.length})</h4>
+                  {products.length === 0 ? (
+                    <p className="text-gray-400 text-sm">No products added yet</p>
+                  ) : (
+                    products.map((p, i) => (
+                      <div key={i} className="bg-gray-700 rounded-lg p-2 mb-2">
+                        <span>{p.name} - ${p.price} ({Math.ceil(p.price * 100)} coins)</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
-              <div className="bg-black/50 backdrop-blur border border-white/10 rounded-lg p-4">
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-yellow-400" />
-                  Orders ({orders.length})
-                </h3>
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="font-semibold mb-2">Orders ({orders.length})</h3>
                 {orders.length === 0 ? (
                   <p className="text-gray-400">No orders yet</p>
                 ) : (
                   orders.map((o, i) => (
-                    <div key={i} className="bg-white/5 rounded-lg p-2 mb-2 border border-white/10 text-sm">
+                    <div key={i} className="bg-gray-700 rounded-lg p-2 mb-2">
                       <span>{products[o.productIndex]?.name} - Qty: {o.quantity} by {o.buyerUsername}</span>
                     </div>
                   ))
                 )}
               </div>
+
+              <div className="bg-gray-800 rounded-lg p-4 mt-4">
+                <h3 className="font-semibold mb-2">Stream Details</h3>
+                <div className="space-y-2 text-sm">
+                  <p className="text-gray-400">Stream ID: <span className="text-white font-mono text-xs">{streamData?.streamId}</span></p>
+                  <p className="text-gray-400">Status: <span className="text-green-400">● Live</span></p>
+                  <p className="text-gray-400">Room: <span className="text-white">Connected</span></p>
+                  <p className="text-gray-400">Active Viewers: <span className="text-white">{viewerCount}</span></p>
+                  <p className="text-gray-400">Stream Earnings: <span className="text-yellow-400">{streamEarnings} coins</span></p>
+                </div>
+              </div>
             </div>
 
             <div className="lg:col-span-1">
-              <div className="bg-black/50 backdrop-blur border border-white/10 rounded-lg h-[600px] flex flex-col">
-                <div className="p-4 border-b border-white/10">
+              <div className="bg-gray-800 rounded-lg h-[600px] flex flex-col">
+                <div className="p-4 border-b border-gray-700">
                   <h3 className="font-semibold flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-cyan-400" />
+                    <MessageCircle className="w-5 h-5" />
                     Live Chat
                   </h3>
                 </div>
@@ -620,7 +658,7 @@ const HostLiveStream = ({ onBack }) => {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {comments.map((c) => (
                     <div key={c.id} className="text-sm">
-                      <span className="font-semibold text-cyan-400">@{c.username}: </span>
+                      <span className="font-semibold text-blue-400">@{c.username}: </span>
                       <span className="text-gray-300">{c.text}</span>
                     </div>
                   ))}
@@ -633,10 +671,10 @@ const HostLiveStream = ({ onBack }) => {
                   <div ref={commentsEndRef} />
                 </div>
 
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-gray-700">
                   <div className="flex items-center gap-2 text-gray-400 text-xs">
                     <Heart className="w-4 h-4 text-pink-500" />
-                    <span>Viewers sending hearts & comments</span>
+                    <span>Viewers can send hearts and comments</span>
                   </div>
                 </div>
               </div>
@@ -648,35 +686,34 @@ const HostLiveStream = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-gray-900 to-black text-white p-4">
+    <div className="min-h-screen bg-gray-900 text-white p-4">
       <button
         onClick={onBack}
-        className="mb-4 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg border border-white/20 transition-all"
+        className="mb-4 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg"
       >
-        ← Back
+        ← Back to Streams
       </button>
 
       <div className="max-w-md mx-auto mt-10">
-        <div className="bg-black/50 backdrop-blur border border-white/20 rounded-2xl p-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 bg-gradient-to-r from-pink-400 to-cyan-400 bg-clip-text text-transparent">
-            <Radio className="w-8 h-8 text-pink-500" />
-            Go Live
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Radio className="w-6 h-6 text-red-500" />
+            Start Live Stream
           </h1>
-          <p className="text-gray-400 mb-6">Start streaming and earn coins</p>
 
           {error && (
-            <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded-lg mb-4 text-sm">
+            <div className="bg-red-500/20 border border-red-500 text-red-500 p-3 rounded mb-4 text-sm">
               {error}
             </div>
           )}
 
           {!liveKitReady && (
-            <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-3 rounded-lg mb-4 text-sm">
-              Installing LiveKit...
+            <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-500 p-3 rounded mb-4 text-sm">
+              ⚠️ LiveKit not loaded. Run: <code className="bg-black/30 px-1 rounded">npm install livekit-client</code>
             </div>
           )}
 
-          <div className="relative bg-black rounded-xl aspect-video mb-6 overflow-hidden border border-white/20">
+          <div className="relative bg-black rounded-lg aspect-video mb-6 overflow-hidden">
             <video
               ref={localVideoRef}
               autoPlay
@@ -687,19 +724,19 @@ const HostLiveStream = ({ onBack }) => {
             <div className="absolute top-4 right-4 flex space-x-2">
               <button
                 onClick={toggleCamera}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-all ${isCameraOn ? 'bg-gradient-to-r from-cyan-500/50 to-blue-500/50' : 'bg-gradient-to-r from-pink-500/50 to-red-500/50'}`}
+                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isCameraOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'}`}
               >
                 {isCameraOn ? <Camera className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <button
                 onClick={toggleMic}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-all ${isMicOn ? 'bg-gradient-to-r from-cyan-500/50 to-blue-500/50' : 'bg-gradient-to-r from-pink-500/50 to-red-500/50'}`}
+                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isMicOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'}`}
               >
                 {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
             </div>
             {!localStream && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                 <div className="text-center">
                   <Camera className="w-12 h-12 mx-auto mb-3 text-gray-600" />
                   <p className="text-gray-400 text-sm">Requesting camera access...</p>
@@ -716,7 +753,7 @@ const HostLiveStream = ({ onBack }) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="What's your stream about?"
-                className="w-full bg-gray-800/50 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent text-white placeholder-gray-400"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
                 maxLength={100}
               />
               <p className="text-gray-400 text-xs mt-1">{title.length}/100</p>
@@ -728,7 +765,7 @@ const HostLiveStream = ({ onBack }) => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add more details..."
-                className="w-full bg-gray-800/50 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent text-white placeholder-gray-400 resize-none"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 resize-none"
                 rows={3}
                 maxLength={500}
               />
@@ -737,7 +774,7 @@ const HostLiveStream = ({ onBack }) => {
             <button
               onClick={startStream}
               disabled={loading || !liveKitReady}
-              className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-600 hover:via-purple-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed py-3 rounded-lg font-bold transition-all transform hover:shadow-lg hover:shadow-pink-500/50"
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-3 rounded-lg font-semibold transition-colors"
             >
               {loading ? 'Starting...' : '🔴 Go LIVE'}
             </button>
@@ -749,4 +786,3 @@ const HostLiveStream = ({ onBack }) => {
 };
 
 export default HostLiveStream;
-
