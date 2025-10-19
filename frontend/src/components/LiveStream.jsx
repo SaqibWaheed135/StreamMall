@@ -20,7 +20,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
     try {
       const response = await fetch(`${API_URL}/live`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.msg || 'Failed to fetch streams');
       }
@@ -37,12 +37,12 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
 
   const filteredStreams = streams.filter(stream => {
     const matchesSearch = stream.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         stream.streamer?.username.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      stream.streamer?.username.toLowerCase().includes(searchQuery.toLowerCase());
+
     if (filter === 'all') return matchesSearch;
     if (filter === 'popular') return matchesSearch && stream.viewers?.length > 10;
     if (filter === 'new') return matchesSearch;
-    
+
     return matchesSearch;
   });
 
@@ -50,7 +50,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
     const diff = Date.now() - new Date(startedAt).getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) return `${hours}h ${minutes % 60}m`;
     return `${minutes}m`;
   };
@@ -96,9 +96,9 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
               </p>
             </div>
             <button
-              onClick={() => (window.location.href = '/host-live-stream')}
+              onClick={onStartStream}
               className="w-full sm:w-auto bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] hover:opacity-90 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all transform hover:scale-105"
-              
+
             >
               <Radio className="w-4 h-4 sm:w-5 sm:h-5" />
               Go Live
@@ -123,11 +123,10 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                 <button
                   key={filterOption}
                   onClick={() => setFilter(filterOption)}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
-                    filter === filterOption
+                  className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${filter === filterOption
                       ? 'bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] text-white'
                       : 'bg-[#16161A] text-gray-300 hover:bg-[#2C2C33] border border-[#2C2C33]'
-                  }`}
+                    }`}
                 >
                   {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
                 </button>
@@ -154,7 +153,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
               {searchQuery ? 'No streams match your search' : 'Be the first to go live!'}
             </p>
             <button
-              onClick={() => (window.location.href = '/host-live-stream')}
+              onClick={onStartStream}
               className="bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] hover:opacity-90 px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105"
             >
               Start Streaming
@@ -179,7 +178,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                       <p className="text-gray-500 text-xs sm:text-sm">Live Stream</p>
                     </div>
                   </div>
-                  
+
                   {/* Live Badge */}
                   <div className="absolute top-3 left-3 flex items-center gap-2 bg-[#FF2B55] px-2 sm:px-3 py-1 rounded-full z-10">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
