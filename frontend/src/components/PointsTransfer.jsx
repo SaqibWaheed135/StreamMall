@@ -75,7 +75,7 @@ const PointsTransfer = () => {
   // Fetch current balance
   const fetchBalance = async () => {
     try {
-      const data = await makeAPICall('/points/balance');
+      const data = await API_BASE_URL('/points/balance');
       setCurrentBalance(data.balance || 0);
     } catch (err) {
       console.error('Failed to fetch balance:', err);
