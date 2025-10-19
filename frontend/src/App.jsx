@@ -48,9 +48,6 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
     { id: "live", icon: CircleDot, label: "LIVE", path: "/live-streams" },
     { id: "search", icon: Search, label: "Discover", path: "/search" },
     { id: "messages", icon: MessageSquare, label: "Messages", path: "/messaging" },
-
-
-
     { id: "profile", icon: User, label: "Profile", path: "/profile" },
   ];
 
@@ -74,18 +71,21 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
                   <Icon className="w-5 h-5 text-white" />
                 </div>
               ) : (
-                <Icon
-                  className={`w-6 h-6 mb-1 transition-all ${isActive
-                    ? item.id === "live"
-                      ? "text-[#FF2B55] scale-110"
-                      : "text-white"
-                    : "text-gray-400 hover:text-[#7B2FF7]"
+                <div
+                  className={`mb-1 flex flex-col items-center transition-all ${isActive ? "text-transparent bg-clip-text bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7]" : "text-gray-400 hover:text-[#7B2FF7]"
                     }`}
-                />
+                >
+                  <Icon
+                    className={`w-6 h-6 ${isActive
+                      ? "text-transparent bg-clip-text bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] scale-110"
+                      : ""
+                      }`}
+                  />
+                </div>
               )}
               <span
                 className={`text-xs transition-all ${isActive && !isUpload
-                  ? "text-[#FF2B55] font-medium"
+                  ? "text-transparent bg-clip-text bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] font-medium"
                   : "text-gray-400"
                   }`}
               >
@@ -98,6 +98,8 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
     </div>
   );
 };
+
+
 
 // --------------------
 // Token Check
