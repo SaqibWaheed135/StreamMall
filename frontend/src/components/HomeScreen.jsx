@@ -74,15 +74,22 @@ export default function StreamMallHome() {
     }
   };
 
-  const fetchLiveRooms = async () => {
+ const fetchLiveRooms = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/live`, {
-        headers: getAuthHeaders(),
-      });
+      const response = await fetch(`${API_URL}/live`);
       const data = await response.json();
-      setLiveRooms(data.streams || []);
-    } catch (error) {
-      console.error("Error fetching live rooms:", error);
+
+      if (!response.ok) {
+        throw new Error(data.msg || 'Failed to fetch streams');
+      }
+
+      setStreams(data);
+      setError('');
+    } catch (err) {
+      console.error('Fetch streams error:', err);
+      setError('Could not load live streams');
+    } finally {
+      setLoading(false);
     }
   };
 
