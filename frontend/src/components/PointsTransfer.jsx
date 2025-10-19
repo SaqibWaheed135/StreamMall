@@ -274,6 +274,7 @@ const PointsTransfer = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-6xl mx-auto">
+
         <h1 className="text-3xl font-bold mb-8 text-center">Transfer Points</h1>
 
         {/* Balance and Stats Cards */}
@@ -403,7 +404,7 @@ const PointsTransfer = () => {
               <button
                 onClick={handleTransfer}
                 disabled={loading || currentBalance <= 0}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                 className="bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] hover:opacity-90 px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105"
               >
                 {loading ? (
                   <>

@@ -192,8 +192,9 @@ export default function StreamMallHome() {
           <img
             src={Logo}
             alt="StreamMall Logo"
-            className="w-28 rounded-xl drop-shadow-[0_0_30px_rgba(255,43,85,0.4)]"
+            className="w-20 sm:w-28 rounded-xl drop-shadow-[0_0_30px_rgba(255,43,85,0.4)]"
           />
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-[#FF2B55]/40">
               <Coins className="w-5 h-5 text-[#FF2B55]" />
