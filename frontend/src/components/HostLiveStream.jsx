@@ -20,8 +20,8 @@ const loadLiveKit = async () => {
   }
 };
 
-const API_URL = 'https://theclipstream-backend.onrender.com/api';
-const SOCKET_URL = 'https://theclipstream-backend.onrender.com';
+const API_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
+const SOCKET_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com';
 
 const HostLiveStream = ({ onBack }) => {
   const [isLive, setIsLive] = useState(false);
