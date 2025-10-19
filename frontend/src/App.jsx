@@ -31,6 +31,8 @@ import FollowRequestsScreen from "./components/FollowRequestScreen.jsx";
 import PointsWithdrawalScreen from "./components/PointsWithdrawalScreen.jsx";
 import HostLiveStream from "./components/HostLiveStream.jsx";
 import ViewerLiveStream from "./components/ViewerLiveStream.jsx";
+import LiveStreamsListing from './components/LiveStream.jsx';
+
 
 // ✅ Load Poppins font dynamically
 const poppinsLink = document.createElement("link");
@@ -76,8 +78,8 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
               ) : (
                 <Icon
                   className={`w-6 h-6 mb-1 transition-all ${isActive
-                      ? "text-[#FF2B55] scale-110"
-                      : "text-gray-400 hover:text-[#7B2FF7]"
+                    ? "text-[#FF2B55] scale-110"
+                    : "text-gray-400 hover:text-[#7B2FF7]"
                     }`}
                 />
 
@@ -222,7 +224,15 @@ const App = () => {
           <Route path="/messages/:conversationId" element={<ProtectedRoute><MessagingScreen /></ProtectedRoute>} />
           <Route path="/live-browse" element={<ProtectedRoute><LiveBrowse /></ProtectedRoute>} />
           <Route path="/live/:streamId" element={<LiveViewer />} />
-          <Route path="/live-streams" element={<ProtectedRoute><LiveScreen /></ProtectedRoute>} />
+          {/* Updated Live Stream Routes */}
+          <Route path="/live-streams" element={
+            <ProtectedRoute>
+              <LiveStreamsListing
+                onStartStream={() => navigate('/host-live-stream')}
+                onJoinStream={(streamId) => navigate(`/viewer-live-stream/${streamId}`)}
+              />
+            </ProtectedRoute>
+          } />
           <Route path="/host-live-stream" element={<ProtectedRoute><HostLiveStream /></ProtectedRoute>} />
           <Route path="/viewer-live-stream/:streamId" element={<ProtectedRoute><ViewerLiveStreamWrapper /></ProtectedRoute>} />
         </Routes>
