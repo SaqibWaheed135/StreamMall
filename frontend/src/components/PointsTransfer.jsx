@@ -33,7 +33,7 @@ const PointsTransfer = () => {
 
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  const API_BASE_URL = 'https://theclipstream-backend.onrender.com/api';
+  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   // API call helper function
   const makeAPICall = async (url, options = {}) => {

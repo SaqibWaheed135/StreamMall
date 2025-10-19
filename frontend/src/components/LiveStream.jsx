@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Radio, Users, Eye, Clock, Search, Filter, X, Play } from 'lucide-react';
 
-const API_URL = 'https://theclipstream-backend.onrender.com/api';
+const API_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
 const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
   const [streams, setStreams] = useState([]);

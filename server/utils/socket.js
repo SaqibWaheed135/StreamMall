@@ -11,9 +11,9 @@ let io;
 // Placeholder function for generating stream details
 const generateStreamDetails = (streamId, userId) => {
   return {
-    rtmpUrl: `rtmp://theclipstream-backend.onrender.com/live`,
+    rtmpUrl: `rtmp://streammall-backend-73a4b072d5eb.herokuapp.com/live`,
     streamKey: `${streamId}-${userId}`,
-    playbackUrl: `https://theclipstream-backend.onrender.com/live/${streamId}-${userId}.m3u8`
+    playbackUrl: `https://streammall-backend-73a4b072d5eb.herokuapp.com/live/${streamId}-${userId}.m3u8`
   };
 };
 

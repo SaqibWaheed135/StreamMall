@@ -9,7 +9,7 @@ const AddFriendsScreen = ({ onBack }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userFollowStatus, setUserFollowStatus] = useState({});
 
-  const API_BASE_URL = 'https://theclipstream-backend.onrender.com/api';
+  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {

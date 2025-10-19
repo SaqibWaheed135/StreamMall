@@ -40,7 +40,7 @@ export default function Login() {
     setError("");
     try {
       const res = await axios.post(
-        "https://theclipstream-backend.onrender.com/api/auth/login",
+        "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/login",
         { email, password }
       );
       localStorage.setItem("token", res.data.token);
@@ -60,7 +60,7 @@ export default function Login() {
     try {
       const idToken = response.credential;
       const res = await axios.post(
-        "https://theclipstream-backend.onrender.com/api/auth/google",
+        "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/google",
         { idToken }
       );
       localStorage.setItem("token", res.data.token);

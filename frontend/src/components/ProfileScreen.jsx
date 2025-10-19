@@ -23,7 +23,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
   const [followRequests, setFollowRequests] = useState([]);
   const [showFollowRequests, setShowFollowRequests] = useState(false);
 
-  const API_BASE_URL = 'https://theclipstream-backend.onrender.com/api';
+  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");

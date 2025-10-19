@@ -123,7 +123,7 @@ const LiveBrowse = () => {
     const fetchLiveStreams = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://theclipstream-backend.onrender.com/api/live', {
+        const response = await fetch('https://streammall-backend-73a4b072d5eb.herokuapp.com/api/live', {
           credentials: 'include'
         });
 

@@ -17,8 +17,8 @@ const loadLiveKit = async () => {
   }
 };
 
-const API_URL = 'https://theclipstream-backend.onrender.com/api';
-const SOCKET_URL = 'https://theclipstream-backend.onrender.com';
+const API_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
+const SOCKET_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com';
 
 const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }) => {
   const [purchaseLoading, setPurchaseLoading] = useState(false);

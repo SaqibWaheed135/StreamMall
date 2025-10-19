@@ -462,7 +462,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
   const mediaRecorderRef = useRef(null);
   const recordingIntervalRef = useRef(null);
 
-  const API_BASE_URL = 'https://theclipstream-backend.onrender.com/api';
+  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   const API_CONFIG = useMemo(() => ({
     baseUrl: API_BASE_URL,
@@ -494,7 +494,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    socketRef.current = io('https://theclipstream-backend.onrender.com', {
+    socketRef.current = io('https://streammall-backend-73a4b072d5eb.herokuapp.com', {
       withCredentials: true,
       auth: { token }
     });

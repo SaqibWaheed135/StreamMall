@@ -33,7 +33,7 @@ const LiveViewer = () => {
         setIsLoading(true);
 
         const response = await fetch(
-          `https://theclipstream-backend.onrender.com/api/live/${streamId}`,
+          `https://streammall-backend-73a4b072d5eb.herokuapp.com/api/live/${streamId}`,
           { credentials: 'include' }
         );
 
@@ -44,7 +44,7 @@ const LiveViewer = () => {
         setStream(streamData);
 
         const token = localStorage.getItem('token');
-        socketRef.current = io('https://theclipstream-backend.onrender.com', {
+        socketRef.current = io('https://streammall-backend-73a4b072d5eb.herokuapp.com', {
           withCredentials: true,
           auth: token ? { token } : {},
         });
@@ -117,7 +117,7 @@ const LiveViewer = () => {
   const fetchViewerToken = async () => {
     try {
       const response = await fetch(
-        `https://theclipstream-backend.onrender.com/api/live/${streamId}/token`,
+        `https://streammall-backend-73a4b072d5eb.herokuapp.com/api/live/${streamId}/token`,
         { credentials: 'include' }
       );
       if (response.ok) {

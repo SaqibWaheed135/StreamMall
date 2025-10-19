@@ -61,7 +61,7 @@ export default function Signup() {
       const referralCode = sessionStorage.getItem("referralCode");
 
       const res = await axios.post(
-        "https://theclipstream-backend.onrender.com/api/auth/signup",
+        "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/signup",
         { username, email, password, referralCode }
       );
 
@@ -83,7 +83,7 @@ export default function Signup() {
     try {
       const idToken = response.credential;
       const res = await axios.post(
-        "https://theclipstream-backend.onrender.com/api/auth/google",
+        "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/google",
         { idToken }
       );
       localStorage.setItem("token", res.data.token);
