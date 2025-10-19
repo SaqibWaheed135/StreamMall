@@ -130,7 +130,14 @@ const ProtectedRoute = ({ children }) => {
 // --------------------
 const ViewerLiveStreamWrapper = ({ onBack }) => {
   const { streamId } = useParams();
-  return <ViewerLiveStream streamId={streamId} onBack={onBack} />;
+  const navigate = useNavigate();
+  
+  const handleBack = () => {
+    // Navigate back to live streams listing
+    navigate('/live-streams');
+  };
+
+  return <ViewerLiveStream streamId={streamId} onBack={handleBack} />;
 };
 
 // --------------------
