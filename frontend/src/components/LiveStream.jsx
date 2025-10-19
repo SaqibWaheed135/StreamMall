@@ -96,8 +96,9 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
               </p>
             </div>
             <button
-              onClick={onStartStream}
+              onClick={() => (window.location.href = '/host-live-stream')}
               className="w-full sm:w-auto bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] hover:opacity-90 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all transform hover:scale-105"
+              
             >
               <Radio className="w-4 h-4 sm:w-5 sm:h-5" />
               Go Live
@@ -153,7 +154,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
               {searchQuery ? 'No streams match your search' : 'Be the first to go live!'}
             </p>
             <button
-              onClick={onStartStream}
+              onClick={() => (window.location.href = '/host-live-stream')}
               className="bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] hover:opacity-90 px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105"
             >
               Start Streaming
