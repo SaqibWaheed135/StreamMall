@@ -50,14 +50,14 @@ const HostLiveStream = ({ onBack }) => {
   const [orders, setOrders] = useState([]);
   const [streamEarnings, setStreamEarnings] = useState(0);
   const [socket, setSocket] = useState(null);
-  
+
   const videoRef = useRef(null);
   const localVideoRef = useRef(null);
   const commentsEndRef = useRef(null);
 
   useEffect(() => {
     loadLiveKit().then(setLiveKitReady);
-    
+
     return () => {
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
@@ -90,13 +90,13 @@ const HostLiveStream = ({ onBack }) => {
           token: localStorage.getItem('token')
         }
       });
-      
+
       newSocket.on('connect', () => {
         console.log('Socket connected');
-        
-        newSocket.emit('join-stream', { 
-          streamId: streamData.streamId, 
-          isStreamer: true 
+
+        newSocket.emit('join-stream', {
+          streamId: streamData.streamId,
+          isStreamer: true
         });
       });
 
@@ -104,9 +104,9 @@ const HostLiveStream = ({ onBack }) => {
         console.log('New order received:', data);
         if (data.streamId === streamData.streamId) {
           setOrders(prev => {
-            const orderExists = prev.some(o => 
-              (o.productIndex === data.order.productIndex && 
-               o.buyer === data.order.buyer)
+            const orderExists = prev.some(o =>
+            (o.productIndex === data.order.productIndex &&
+              o.buyer === data.order.buyer)
             );
             return orderExists ? prev : [...prev, {
               ...data.order,
@@ -127,7 +127,7 @@ const HostLiveStream = ({ onBack }) => {
         console.log('Coins updated:', data);
         if (data.streamId === streamData.streamId) {
           setStreamEarnings(data.streamEarnings || data.earnedAmount);
-          
+
           setError(`Earned ${data.earnedAmount} coins from a purchase!`);
           setTimeout(() => setError(''), 3000);
         }
@@ -158,7 +158,7 @@ const HostLiveStream = ({ onBack }) => {
   const fetchInitialData = async () => {
     try {
       const token = localStorage.getItem('token');
-      
+
       const ordersResponse = await fetch(`${API_URL}/live/${streamData.streamId}/orders`, {
         headers: {
           ...(token && { 'Authorization': `Bearer ${token}` })
@@ -166,9 +166,9 @@ const HostLiveStream = ({ onBack }) => {
       });
       const ordersData = await ordersResponse.json();
       if (ordersResponse.ok) {
-        setOrders(ordersData.orders.map(o => ({ 
-          ...o, 
-          buyerUsername: o.buyer?.username || 'Unknown Buyer' 
+        setOrders(ordersData.orders.map(o => ({
+          ...o,
+          buyerUsername: o.buyer?.username || 'Unknown Buyer'
         })) || []);
       }
 
@@ -243,7 +243,7 @@ const HostLiveStream = ({ onBack }) => {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.msg || 'Failed to create stream');
       }
@@ -270,9 +270,9 @@ const HostLiveStream = ({ onBack }) => {
       room.on(RoomEvent.DataReceived, (payload, participant) => {
         const decoder = new TextDecoder();
         const message = JSON.parse(decoder.decode(payload));
-        
+
         console.log('📨 Data received from', participant?.identity, message);
-        
+
         if (message.type === 'comment') {
           setComments(prev => [...prev, {
             id: Date.now() + Math.random(),
@@ -282,10 +282,10 @@ const HostLiveStream = ({ onBack }) => {
           }]);
         } else if (message.type === 'heart') {
           const heartId = Date.now() + Math.random();
-          setHearts(prev => [...prev, { 
-            id: heartId, 
+          setHearts(prev => [...prev, {
+            id: heartId,
             x: Math.random() * 80 + 10,
-            from: participant?.identity 
+            from: participant?.identity
           }]);
           setTimeout(() => {
             setHearts(prev => prev.filter(h => h.id !== heartId));
@@ -308,12 +308,12 @@ const HostLiveStream = ({ onBack }) => {
 
       room.on(RoomEvent.LocalTrackPublished, (publication) => {
         console.log('Track published:', publication.source);
-        
+
         if (publication.source === Track.Source.Camera) {
           const localVideoTrack = publication.track;
           if (localVideoTrack && localVideoTrack.mediaStreamTrack) {
             const mediaStream = new MediaStream([localVideoTrack.mediaStreamTrack]);
-            
+
             if (videoRef.current) {
               videoRef.current.srcObject = mediaStream;
               videoRef.current.muted = true;
@@ -351,7 +351,7 @@ const HostLiveStream = ({ onBack }) => {
       setLiveKitRoom(room);
       setViewerCount(room.remoteParticipants.size);
       setIsLive(true);
-      
+
     } catch (err) {
       console.error('Error starting stream:', err);
       setError(err.message);
@@ -403,7 +403,7 @@ const HostLiveStream = ({ onBack }) => {
       setProducts([]);
       setOrders([]);
       setStreamEarnings(0);
-      
+
       onBack();
     } catch (err) {
       console.error('Error ending stream:', err);
@@ -561,9 +561,9 @@ const HostLiveStream = ({ onBack }) => {
 
               <div className="bg-gray-800 rounded-lg p-4 mb-4">
                 <h3 className="font-semibold mb-4">Add Product/Ad</h3>
-                <select 
+                <select
                   value={newProduct.type}
-                  onChange={(e) => setNewProduct({...newProduct, type: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 >
                   <option value="product">Product</option>
@@ -572,32 +572,32 @@ const HostLiveStream = ({ onBack }) => {
                 <input
                   placeholder="Name"
                   value={newProduct.name}
-                  onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Description"
                   value={newProduct.description}
-                  onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={newProduct.price}
-                  onChange={(e) => setNewProduct({...newProduct, price: parseFloat(e.target.value)})}
+                  onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Image URL"
                   value={newProduct.imageUrl}
-                  onChange={(e) => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Link (for ad or product)"
                   value={newProduct.link}
-                  onChange={(e) => setNewProduct({...newProduct, link: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <button
@@ -606,7 +606,7 @@ const HostLiveStream = ({ onBack }) => {
                 >
                   Add via Socket
                 </button>
-                
+
                 <div className="mt-4">
                   <h4 className="font-semibold mb-2">Added Items ({products.length})</h4>
                   {products.length === 0 ? (
@@ -688,7 +688,7 @@ const HostLiveStream = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <button
-        onClick={window.location.href('/live-streams')}
+        onClick={() => (window.location.href = '/live-streams')}
         className="mb-4 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg"
       >
         ← Back
