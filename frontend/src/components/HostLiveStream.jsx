@@ -688,10 +688,10 @@ const HostLiveStream = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <button
-        onClick={onBack}
+        onClick={window.location.href('/live-streams')}
         className="mb-4 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg"
       >
-        ← Back to Streams
+        ← Back
       </button>
 
       <div className="max-w-md mx-auto mt-10">
