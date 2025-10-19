@@ -127,7 +127,8 @@ export default function StreamMallHome() {
     window.location.href = "/login";
   };
 
- const LiveRoomCard = ({ room }) => {
+const LiveRoomCard = ({ room }) => {
+  const navigate = useNavigate();
   const streamer = room.streamer || {};
   const streamerAvatar = streamer.avatar || '';
   const streamerUsername = streamer.username || 'Unknown Host';
@@ -135,6 +136,10 @@ export default function StreamMallHome() {
   const description = room.description || '';
   const currentViewers = room.currentViewers || room.viewers?.length || 0;
   const products = room.products || [];
+
+  const handleJoinLive = () => {
+    navigate(`/viewer-live-stream/${room._id}`);
+  };
 
   return (
     <div className="group cursor-pointer relative">
@@ -227,7 +232,9 @@ export default function StreamMallHome() {
           )}
           
           {/* Join Button */}
-          <button className="w-full bg-gradient-to-r from-[#FF2B55] via-[#7B2FF7] to-[#00CFFF] hover:from-[#FF2B55]/80 hover:via-[#7B2FF7]/80 hover:to-[#00CFFF]/80 text-white font-bold py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(255,43,85,0.4)]">
+          <button 
+            onClick={handleJoinLive}
+            className="w-full bg-gradient-to-r from-[#FF2B55] via-[#7B2FF7] to-[#00CFFF] hover:from-[#FF2B55]/80 hover:via-[#7B2FF7]/80 hover:to-[#00CFFF]/80 text-white font-bold py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(255,43,85,0.4)]">
             Join Live
           </button>
         </div>
