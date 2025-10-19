@@ -7,7 +7,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { Home, Search, User, CircleDot, Bell,MessageSquare } from "lucide-react";
+import { Home, Search, User, CircleDot, Bell, MessageSquare } from "lucide-react";
 import axios from "axios";
 
 import logo from "./assets/logo.png";
@@ -76,12 +76,11 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
               ) : (
                 <Icon
                   className={`w-6 h-6 mb-1 transition-all ${isActive
-                    ? item.id === "live"
                       ? "text-[#FF2B55] scale-110"
-                      : "text-white"
-                    : "text-gray-400 hover:text-[#7B2FF7]"
+                      : "text-gray-400 hover:text-[#7B2FF7]"
                     }`}
                 />
+
               )}
               <span
                 className={`text-xs transition-all ${isActive && !isUpload
