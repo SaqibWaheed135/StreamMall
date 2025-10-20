@@ -1756,7 +1756,6 @@
 
 // export default HostLiveStream;
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Radio, Users, X, Mic, MicOff, Video, VideoOff, MessageCircle, Heart, ChevronDown } from 'lucide-react';
 import io from 'socket.io-client';
@@ -1775,6 +1774,41 @@ const loadLiveKit = async () => {
     console.error('LiveKit not installed. Run: npm install livekit-client');
     return false;
   }
+};
+
+// **MOBILE DETECTION HELPER**
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         window.innerWidth <= 768;
+};
+
+// **MOBILE-OPTIMIZED CAMERA CONSTRAINTS**
+const getCameraConstraints = () => {
+  const mobile = isMobile();
+  
+  return {
+    video: {
+      // Mobile-specific settings
+      ...(mobile && {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        aspectRatio: { ideal: 16/9 },
+        facingMode: 'user',
+      }),
+      // Desktop/Laptop settings
+      ...(!mobile && {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'user',
+        frameRate: { ideal: 30 }
+      }),
+    },
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    }
+  };
 };
 
 const API_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
@@ -1884,7 +1918,7 @@ const HostLiveStream = ({ onBack }) => {
   const localVideoRef = useRef(null);
   const commentsEndRef = useRef(null);
 
-  // New: Persist stream state in localStorage
+  // Persist stream state in localStorage
   const saveStreamState = () => {
     if (isLive && streamData) {
       localStorage.setItem('liveStreamState', JSON.stringify({
@@ -1904,12 +1938,10 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  // New: Clear stream state from localStorage
   const clearStreamState = () => {
     localStorage.removeItem('liveStreamState');
   };
 
-  // New: Restore stream state on mount
   const restoreStreamState = () => {
     const savedState = localStorage.getItem('liveStreamState');
     if (savedState) {
@@ -1931,7 +1963,20 @@ const HostLiveStream = ({ onBack }) => {
     return false;
   };
 
-  // New: Handle beforeunload event
+  // **NEW: Add viewport meta tag for mobile**
+  useEffect(() => {
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      document.head.appendChild(meta);
+    }
+  }, []);
+
+  // Handle beforeunload event
   useEffect(() => {
     const handleBeforeUnload = (event) => {
       if (isLive) {
@@ -1948,7 +1993,6 @@ const HostLiveStream = ({ onBack }) => {
   useEffect(() => {
     loadLiveKit().then(setLiveKitReady);
 
-    // New: Restore stream state and reconnect if necessary
     const isRestoring = restoreStreamState();
     if (isRestoring && liveKitReady) {
       reconnectToStream();
@@ -1984,29 +2028,45 @@ const HostLiveStream = ({ onBack }) => {
     }
   }, [comments]);
 
-  // New: Reconnect to the existing stream
+  // **UPDATED: Mobile-optimized camera preview**
+  const startCameraPreview = async () => {
+    try {
+      const constraints = getCameraConstraints();
+      console.log('📱 Using constraints:', constraints);
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setLocalStream(stream);
+      
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+        localVideoRef.current.muted = true;
+        localVideoRef.current.style.objectFit = 'cover';
+        localVideoRef.current.style.objectPosition = 'center';
+        await localVideoRef.current.play();
+        
+        if (isMobile()) {
+          localVideoRef.current.style.width = '100%';
+          localVideoRef.current.style.height = '100%';
+        }
+      }
+    } catch (err) {
+      console.error('Camera preview error:', err);
+      setError('Could not access camera/microphone. Please grant permissions.');
+    }
+  };
+
   const reconnectToStream = async () => {
     if (!streamData?.streamId || !liveKitReady) return;
 
     setLoading(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user',
-          frameRate: { ideal: 30 }
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
+      const constraints = getCameraConstraints();
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setLocalStream(stream);
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
         localVideoRef.current.muted = true;
+        localVideoRef.current.style.objectFit = 'cover';
         await localVideoRef.current.play();
       }
 
@@ -2014,7 +2074,12 @@ const HostLiveStream = ({ onBack }) => {
         adaptiveStream: true,
         dynacast: true,
         videoCaptureDefaults: {
-          resolution: { width: 1280, height: 720, frameRate: 30 }
+          ...(isMobile() && {
+            resolution: { width: 640, height: 480 }
+          }),
+          ...(!isMobile() && {
+            resolution: { width: 1280, height: 720, frameRate: 30 }
+          })
         },
         audioCaptureDefaults: {
           echoCancellation: true,
@@ -2022,7 +2087,6 @@ const HostLiveStream = ({ onBack }) => {
         }
       });
 
-      // Reconnect to LiveKit room
       await room.connect(streamData.roomUrl, streamData.publishToken);
       console.log('✅ Reconnected to LiveKit room');
 
@@ -2051,18 +2115,15 @@ const HostLiveStream = ({ onBack }) => {
 
       room.on(RoomEvent.ParticipantConnected, () => {
         setViewerCount(room.remoteParticipants.size);
-        console.log('👤 Viewer joined. Total:', room.remoteParticipants.size);
       });
 
       room.on(RoomEvent.ParticipantDisconnected, () => {
         setViewerCount(room.remoteParticipants.size);
-        console.log('👋 Viewer left. Total:', room.remoteParticipants.size);
       });
 
       await room.localParticipant.enableCameraAndMicrophone();
       setLiveKitRoom(room);
 
-      // Reconnect to socket
       const newSocket = io(SOCKET_URL, {
         auth: {
           token: localStorage.getItem('token')
@@ -2243,34 +2304,7 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  const startCameraPreview = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user',
-          frameRate: { ideal: 30 }
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-
-      setLocalStream(stream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-        localVideoRef.current.muted = true;
-        await localVideoRef.current.play();
-      }
-    } catch (err) {
-      console.error('Camera preview error:', err);
-      setError('Could not access camera/microphone. Please grant permissions.');
-    }
-  };
-
+  // **UPDATED: Mobile-optimized stream start**
   const startStream = async () => {
     if (!title.trim()) {
       setError('Please enter a title');
@@ -2315,7 +2349,12 @@ const HostLiveStream = ({ onBack }) => {
         adaptiveStream: true,
         dynacast: true,
         videoCaptureDefaults: {
-          resolution: { width: 1280, height: 720, frameRate: 30 }
+          ...(isMobile() && {
+            resolution: { width: 640, height: 480 }
+          }),
+          ...(!isMobile() && {
+            resolution: { width: 1280, height: 720, frameRate: 30 }
+          })
         },
         audioCaptureDefaults: {
           echoCancellation: true,
@@ -2351,12 +2390,10 @@ const HostLiveStream = ({ onBack }) => {
 
       room.on(RoomEvent.ParticipantConnected, () => {
         setViewerCount(room.remoteParticipants.size);
-        console.log('👤 Viewer joined. Total:', room.remoteParticipants.size);
       });
 
       room.on(RoomEvent.ParticipantDisconnected, () => {
         setViewerCount(room.remoteParticipants.size);
-        console.log('👋 Viewer left. Total:', room.remoteParticipants.size);
       });
 
       await room.localParticipant.enableCameraAndMicrophone();
@@ -2370,6 +2407,8 @@ const HostLiveStream = ({ onBack }) => {
             if (videoRef.current) {
               videoRef.current.srcObject = mediaStream;
               videoRef.current.muted = true;
+              videoRef.current.style.objectFit = 'cover';
+              videoRef.current.style.objectPosition = 'center';
               videoRef.current.play()
                 .then(() => {
                   console.log('✅ LiveKit video playing');
@@ -2391,6 +2430,8 @@ const HostLiveStream = ({ onBack }) => {
           const mediaStream = new MediaStream([camPublication.track.mediaStreamTrack]);
           videoRef.current.srcObject = mediaStream;
           videoRef.current.muted = true;
+          videoRef.current.style.objectFit = 'cover';
+          videoRef.current.style.objectPosition = 'center';
           videoRef.current.play()
             .then(() => {
               if (localVideoRef.current) {
@@ -2446,7 +2487,6 @@ const HostLiveStream = ({ onBack }) => {
         socket.disconnect();
       }
 
-      // New: Clear saved stream state
       clearStreamState();
 
       setIsLive(false);
@@ -2492,6 +2532,7 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
+  // **LIVE STREAM UI (with mobile fixes)**
   if (isLive) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -2528,22 +2569,39 @@ const HostLiveStream = ({ onBack }) => {
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3">
-              <div className="bg-black rounded-lg aspect-video mb-4 relative overflow-hidden">
+              {/* **UPDATED: Mobile-optimized video container** */}
+              <div 
+                className="bg-black rounded-lg mb-4 relative overflow-hidden"
+                style={{ 
+                  aspectRatio: '16/9',
+                  width: '100%'
+                }}
+              >
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover"
-                  style={{ position: 'absolute', top: 0, left: 0, zIndex: 2 }}
+                  className="w-full h-full"
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    width: '100%',
+                    height: '100%'
+                  }}
                 />
                 <video
                   ref={localVideoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover"
-                  style={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
+                  className="w-full h-full"
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    width: '100%',
+                    height: '100%'
+                  }}
                 />
                 {!isCameraOn && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-900" style={{ zIndex: 10 }}>
@@ -2746,6 +2804,7 @@ const HostLiveStream = ({ onBack }) => {
     );
   }
 
+  // **PREVIEW UI (with mobile fixes)**
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <button
@@ -2774,30 +2833,57 @@ const HostLiveStream = ({ onBack }) => {
             </div>
           )}
 
-          <div className="relative bg-black rounded-lg aspect-video mb-6 overflow-hidden">
+          {/* **UPDATED: Mobile-optimized video container** */}
+          <div 
+            className="relative bg-black rounded-lg mb-6 overflow-hidden"
+            style={{ 
+              aspectRatio: '16/9',
+              width: '100%',
+              maxWidth: '100vw'
+            }}
+          >
             <video
               ref={localVideoRef}
               autoPlay
               muted
               playsInline
-              className="w-full h-full object-cover"
+              className="w-full h-full"
+              style={{
+                objectFit: 'cover',
+                objectPosition: 'center',
+                width: '100%',
+                height: '100%'
+              }}
             />
-            <div className="absolute top-4 right-4 flex space-x-2">
+            
+            {/* **NEW: Mobile orientation hint** */}
+            {isMobile() && (
+              <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs z-10">
+                📱 Rotate to landscape for best view
+              </div>
+            )}
+            
+            <div className="absolute top-4 right-4 flex space-x-2 z-10">
               <button
                 onClick={toggleCamera}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isCameraOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'}`}
+                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${
+                  isCameraOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
+                }`}
               >
                 {isCameraOn ? <Camera className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <button
                 onClick={toggleMic}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isMicOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'}`}
+                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${
+                  isMicOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
+                }`}
               >
                 {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
             </div>
+            
             {!localStream && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-5">
                 <div className="text-center">
                   <Camera className="w-12 h-12 mx-auto mb-3 text-gray-600" />
                   <p className="text-gray-400 text-sm">Requesting camera access...</p>
