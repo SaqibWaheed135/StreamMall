@@ -1757,7 +1757,7 @@
 // export default HostLiveStream;
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Radio, Users, X, Mic, MicOff, Video, VideoOff, MessageCircle, Heart, ChevronDown } from 'lucide-react';
+import { Camera, Radio, Users, X, Mic, MicOff, Video, VideoOff, MessageCircle, Heart, ChevronDown, Share2 } from 'lucide-react';
 import io from 'socket.io-client';
 
 let Room, RoomEvent, Track, DataPacket_Kind;
@@ -1961,6 +1961,34 @@ const HostLiveStream = ({ onBack }) => {
       return true;
     }
     return false;
+  };
+
+  // **NEW: Handle share functionality**
+  const handleShare = async () => {
+    if (!streamData?.streamId) {
+      setError('No stream active to share');
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/live/${streamData.streamId}`;
+    const shareData = {
+      title: streamData.stream?.title || 'Live Stream',
+      text: streamData.stream?.description || 'Join my live stream!',
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share && isMobile()) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setError('Stream link copied to clipboard!');
+        setTimeout(() => setError(''), 3000);
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+      setError('Failed to share stream link');
+    }
   };
 
   // **NEW: Add viewport meta tag for mobile**
@@ -2532,7 +2560,7 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  // **LIVE STREAM UI (with mobile fixes)**
+  // **LIVE STREAM UI (with mobile fixes and share button)**
   if (isLive) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -2556,20 +2584,28 @@ const HostLiveStream = ({ onBack }) => {
                   <span className="text-sm">{viewerCount} viewers</span>
                 </div>
               </div>
-              <button
-                onClick={endStream}
-                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <X className="w-4 h-4" />
-                End Stream
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleShare}
+                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+                <button
+                  onClick={endStream}
+                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  End Stream
+                </button>
+              </div>
             </div>
             <h2 className="text-xl font-bold mt-3">{streamData?.stream?.title}</h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3">
-              {/* **UPDATED: Mobile-optimized video container** */}
               <div 
                 className="bg-black rounded-lg mb-4 relative overflow-hidden"
                 style={{ 
@@ -2833,7 +2869,6 @@ const HostLiveStream = ({ onBack }) => {
             </div>
           )}
 
-          {/* **UPDATED: Mobile-optimized video container** */}
           <div 
             className="relative bg-black rounded-lg mb-6 overflow-hidden"
             style={{ 
@@ -2856,7 +2891,6 @@ const HostLiveStream = ({ onBack }) => {
               }}
             />
             
-            {/* **NEW: Mobile orientation hint** */}
             {isMobile() && (
               <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs z-10">
                 📱 Rotate to landscape for best view
