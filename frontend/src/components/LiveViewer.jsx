@@ -387,7 +387,7 @@
 
 //         if (track.kind === Track.Kind.Audio) {
 //   console.log('🎵 Audio track received from', participant.identity);
-  
+
 //   // Remove any existing audio element for this participant
 //   const existingAudio = document.querySelector(
 //     `audio[data-participant="${participant.identity}"]`
@@ -407,7 +407,7 @@
 //   console.log('Attaching audio track to new audio element');
 //   track.attach(audioEl);
 //   document.body.appendChild(audioEl);
-  
+
 //   console.log('Audio element created:', {
 //     muted: audioEl.muted,
 //     volume: audioEl.volume,
@@ -427,7 +427,7 @@
 //     .catch((err) => {
 //       console.error('❌ Audio autoplay failed:', err.name, err.message);
 //       alert('Click anywhere on the screen to enable audio!');
-      
+
 //       const playOnClick = () => {
 //         console.log('User clicked, attempting audio play...');
 //         audioEl.play()
@@ -438,7 +438,7 @@
 //           })
 //           .catch((e) => console.error('Audio play failed after click:', e));
 //       };
-      
+
 //       document.addEventListener('click', playOnClick, { once: true });
 //       document.addEventListener('touchstart', playOnClick, { once: true });
 //     });
@@ -675,9 +675,8 @@
 // };
 
 // export default LiveViewer;
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Users, Send, ArrowLeft, Camera } from 'lucide-react';
+import { Heart, MessageCircle, Users, Send, ShoppingBag, ExternalLink, AlertCircle } from 'lucide-react';
 import io from 'socket.io-client';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Room, RoomEvent, Track } from 'livekit-client';
@@ -694,16 +693,17 @@ const LiveViewer = () => {
   const [hearts, setHearts] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
-  const [hasRequestedCohost, setHasRequestedCohost] = useState(false);
   const [liveKitRoom, setLiveKitRoom] = useState(null);
   const [products, setProducts] = useState([]);
+  const [showProducts, setShowProducts] = useState(false);
 
   const socketRef = useRef(null);
   const videoRefs = useRef({});
   const commentsEndRef = useRef(null);
 
-  const LIVEKIT_URL =
-    process.env.REACT_APP_LIVEKIT_URL || 'wss://theclipstream-q0jt88zr.livekit.cloud';
+  const API_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
+  const SOCKET_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com';
+  const LIVEKIT_URL = process.env.REACT_APP_LIVEKIT_URL || 'wss://theclipstream-q0jt88zr.livekit.cloud';
 
   // Initialize socket and join stream
   useEffect(() => {
@@ -711,20 +711,19 @@ const LiveViewer = () => {
       try {
         setIsLoading(true);
 
-        const response = await fetch(
-          `https://streammall-backend-73a4b072d5eb.herokuapp.com/api/live/${streamId}`,
-          { credentials: 'include' }
-        );
+        const response = await fetch(`${API_URL}/live/${streamId}`, {
+          credentials: 'include'
+        });
 
         if (!response.ok) throw new Error('Stream not found');
 
         const streamData = await response.json();
         console.log('Fetched stream data:', streamData);
         setStream(streamData);
-        setProducts(streamData.products || []); // ✅ Set initial products
+        setProducts(streamData.products || []);
 
         const token = localStorage.getItem('token');
-        socketRef.current = io('https://streammall-backend-73a4b072d5eb.herokuapp.com', {
+        socketRef.current = io(SOCKET_URL, {
           withCredentials: true,
           auth: token ? { token } : {},
         });
@@ -743,7 +742,7 @@ const LiveViewer = () => {
           console.log('Joined stream data:', data);
           setViewers(data.viewerCount);
           setStream(data.stream);
-          setProducts(data.stream?.products || []); // ✅ Set initial products
+          setProducts(data.stream?.products || []);
           setIsLoading(false);
 
           const viewerToken = streamData.viewerToken || data.stream?.viewerToken;
@@ -758,20 +757,44 @@ const LiveViewer = () => {
 
         socketRef.current.on('viewer-joined', (data) => setViewers(data.viewerCount));
         socketRef.current.on('viewer-left', (data) => setViewers(data.viewerCount));
-        socketRef.current.on('new-comment', (comment) =>
-          setComments((prev) => [...prev, comment])
-        );
+        
+        socketRef.current.on('new-comment', (comment) => {
+          setComments((prev) => [...prev, comment]);
+        });
+        
         socketRef.current.on('heart-sent', () => addHeart());
 
-        // ✅ REAL-TIME PRODUCT UPDATES
+        // Real-time product updates
         socketRef.current.on('product-added', (data) => {
           console.log('New product added:', data);
           setProducts(prev => [...prev, { ...data.product, index: data.productIndex }]);
+          setError('New product available! 🛍️');
+          setTimeout(() => setError(null), 3000);
         });
 
-        socketRef.current.on('stream-ended', () => {
-          setError('This live stream has ended');
-          setTimeout(() => navigate('/'), 3000);
+        // Stream ended event
+        socketRef.current.on('stream-ended', (data) => {
+          console.log('Stream ended:', data);
+          
+          // Update stream status
+          setStream(prev => ({
+            ...prev,
+            status: 'ended',
+            duration: data.duration,
+            totalViews: data.stream?.totalViews || prev?.totalViews,
+            heartsReceived: data.stream?.heartsReceived || prev?.heartsReceived,
+            formattedDuration: data.stream?.formattedDuration || prev?.formattedDuration,
+            endedAt: data.stream?.endedAt || new Date()
+          }));
+          
+          // Disconnect from LiveKit
+          if (liveKitRoom) {
+            liveKitRoom.disconnect();
+            setLiveKitRoom(null);
+          }
+          
+          // Clean up audio elements
+          document.querySelectorAll('audio[data-participant]').forEach(el => el.remove());
         });
 
         if (streamData.viewerToken) {
@@ -796,17 +819,15 @@ const LiveViewer = () => {
       if (liveKitRoom) {
         liveKitRoom.disconnect();
       }
-      // Clean up audio elements
       document.querySelectorAll('audio[data-participant]').forEach(el => el.remove());
     };
   }, [streamId, navigate]);
 
   const fetchViewerToken = async () => {
     try {
-      const response = await fetch(
-        `https://streammall-backend-73a4b072d5eb.herokuapp.com/api/live/${streamId}/token`,
-        { credentials: 'include' }
-      );
+      const response = await fetch(`${API_URL}/live/${streamId}/token`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched viewer token:', data);
@@ -825,24 +846,14 @@ const LiveViewer = () => {
         return;
       }
 
-      console.log('Connecting to LiveKit as viewer:', {
-        roomUrl,
-        tokenLength: viewerToken.length,
-      });
+      console.log('Connecting to LiveKit as viewer');
 
       const room = new Room();
       await room.connect(roomUrl, viewerToken);
       setLiveKitRoom(room);
 
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-        console.log(
-          'Subscribed to track from:',
-          participant.identity,
-          'Kind:',
-          track.kind,
-          'Track enabled:',
-          track.mediaStreamTrack?.enabled
-        );
+        console.log('Subscribed to track from:', participant.identity, 'Kind:', track.kind);
 
         if (track.kind === Track.Kind.Video) {
           let videoEl = videoRefs.current[participant.identity];
@@ -865,10 +876,7 @@ const LiveViewer = () => {
             track.attach(videoEl);
             videoEl.muted = true;
             videoEl.volume = 0;
-            videoEl.play().catch((err) => {
-              console.warn('Video autoplay failed:', err);
-              videoEl.play().catch(console.error);
-            });
+            videoEl.play().catch(console.error);
           }
         }
 
@@ -879,7 +887,6 @@ const LiveViewer = () => {
             `audio[data-participant="${participant.identity}"]`
           );
           if (existingAudio) {
-            console.log('Removing existing audio element');
             existingAudio.remove();
           }
 
@@ -890,41 +897,22 @@ const LiveViewer = () => {
           audioEl.volume = 1.0;
           audioEl.dataset.participant = participant.identity;
 
-          console.log('Attaching audio track to new audio element');
           track.attach(audioEl);
           document.body.appendChild(audioEl);
-          
-          console.log('Audio element created:', {
-            muted: audioEl.muted,
-            volume: audioEl.volume,
-            autoplay: audioEl.autoplay,
-            srcObject: audioEl.srcObject
-          });
 
           audioEl.play()
-            .then(() => {
-              console.log('✅ Audio track PLAYING for', participant.identity);
-              console.log('Audio element state:', {
-                paused: audioEl.paused,
-                muted: audioEl.muted,
-                volume: audioEl.volume
-              });
-            })
+            .then(() => console.log('✅ Audio playing for', participant.identity))
             .catch((err) => {
-              console.error('❌ Audio autoplay failed:', err.name, err.message);
-              alert('Click anywhere on the screen to enable audio!');
-              
+              console.error('❌ Audio autoplay failed:', err);
               const playOnClick = () => {
-                console.log('User clicked, attempting audio play...');
                 audioEl.play()
                   .then(() => {
                     console.log('✅ Audio started after user interaction');
                     document.removeEventListener('click', playOnClick);
                     document.removeEventListener('touchstart', playOnClick);
                   })
-                  .catch((e) => console.error('Audio play failed after click:', e));
+                  .catch(console.error);
               };
-              
               document.addEventListener('click', playOnClick, { once: true });
               document.addEventListener('touchstart', playOnClick, { once: true });
             });
@@ -932,8 +920,6 @@ const LiveViewer = () => {
       });
 
       room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
-        console.log('Unsubscribed from track:', participant.identity);
-
         if (track.kind === Track.Kind.Video) {
           track.detach();
           const videoEl = videoRefs.current[participant.identity];
@@ -952,11 +938,6 @@ const LiveViewer = () => {
         }
       });
 
-      room.on(RoomEvent.ParticipantConnected, (participant) => {
-        console.log('New participant joined:', participant.identity);
-        subscribeToNewTracks();
-      });
-
       room.on(RoomEvent.ParticipantDisconnected, (participant) => {
         console.log('Participant left:', participant.identity);
         const videoEl = videoRefs.current[participant.identity];
@@ -971,24 +952,6 @@ const LiveViewer = () => {
         );
         audioEls.forEach((el) => el.remove());
       });
-
-      const subscribeToNewTracks = () => {
-        room.remoteParticipants.forEach((participant) => {
-          participant.trackPublications.forEach((pub) => {
-            if (pub.isSubscribed && pub.track?.kind === Track.Kind.Video) {
-              const track = pub.track;
-              const videoEl = videoRefs.current[participant.identity];
-              if (videoEl && !videoEl.srcObject) {
-                track.attach(videoEl);
-                videoEl.muted = true;
-                videoEl.play().catch(console.error);
-              }
-            }
-          });
-        });
-      };
-
-      subscribeToNewTracks();
 
       console.log('LiveKit room connected as viewer');
     } catch (error) {
@@ -1019,19 +982,124 @@ const LiveViewer = () => {
     }
   };
 
+  const handleProductClick = (product, index) => {
+    if (product.type === 'ad' && product.link) {
+      window.open(product.link, '_blank', 'noopener,noreferrer');
+    } else if (product.type === 'product') {
+      // Navigate to purchase page or emit order event
+      if (socketRef.current) {
+        socketRef.current.emit('place-order', {
+          streamId,
+          productIndex: index,
+          quantity: 1
+        });
+        setError('Order placed! Check your orders.');
+        setTimeout(() => setError(null), 3000);
+      }
+    }
+  };
+
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center text-white">
-        <p>Connecting to live stream...</p>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg">Connecting to live stream...</p>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  // Error state (no stream found)
+  if (error && !stream) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white">
-        <p>{error}</p>
-        <button onClick={() => navigate('/')}>Go Back</button>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-4">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-20 h-20 mx-auto mb-4 text-red-500" />
+          <h2 className="text-2xl font-bold mb-2">Unable to Connect</h2>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Go Back Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Stream ended state
+  if (stream?.status === 'ended') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col items-center justify-center text-white p-4">
+        <div className="text-center max-w-md">
+          <div className="text-7xl mb-6 animate-pulse">🎬</div>
+          <h1 className="text-3xl font-bold mb-3">Stream Has Ended</h1>
+          <h2 className="text-xl text-gray-300 mb-2">{stream.title}</h2>
+          <p className="text-gray-500 text-sm mb-8">
+            Thank you for watching! The host has ended this live stream.
+          </p>
+          
+          {/* Stream Statistics */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 mb-8 border border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-300">Stream Summary</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 flex items-center gap-2">
+                  <span>⏱️</span>
+                  Duration:
+                </span>
+                <span className="font-semibold text-white">
+                  {stream.formattedDuration || 'N/A'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Total Views:
+                </span>
+                <span className="font-semibold text-white">
+                  {stream.totalViews || 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-red-400" />
+                  Hearts:
+                </span>
+                <span className="font-semibold text-red-400">
+                  {stream.heartsReceived || 0}
+                </span>
+              </div>
+              {stream.endedAt && (
+                <div className="flex items-center justify-between text-sm pt-3 border-t border-gray-700">
+                  <span className="text-gray-500">Ended at:</span>
+                  <span className="text-gray-400">
+                    {new Date(stream.endedAt).toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-3">
+            <button 
+              onClick={() => navigate('/')}
+              className="w-full bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg"
+            >
+              Browse Live Streams
+            </button>
+            <button 
+              onClick={() => navigate(-1)}
+              className="w-full bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1041,170 +1109,199 @@ const LiveViewer = () => {
     : [];
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {error && (
-        <div className="absolute top-4 left-4 bg-red-500/80 px-4 py-2 rounded text-white text-sm z-50">
+    <div className="min-h-screen bg-black text-white relative">
+      {/* Error/Success Toast */}
+      {error && stream?.status !== 'ended' && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500/90 backdrop-blur-sm px-6 py-3 rounded-lg text-white text-sm z-50 shadow-xl animate-fade-in">
           {error}
         </div>
       )}
       
       {/* Video Section */}
-      <div
-        className={`relative aspect-[9/16] bg-gray-900 grid ${participants.length > 1 ? 'grid-cols-2' : 'grid-cols-1'
-          }`}
-      >
-        {participants.length === 0 ? (
-          <div className="flex items-center justify-center">
-            <p>Waiting for host...</p>
-          </div>
-        ) : (
-          participants.map((p) => {
-            const camPub = p.getTrackPublication(Track.Source.Camera);
-            const micPub = p.getTrackPublication(Track.Source.Microphone);
+      <div className="relative aspect-[9/16] max-h-screen bg-gray-900">
+        <div className={`h-full grid ${participants.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {participants.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-400">Waiting for host to start...</p>
+            </div>
+          ) : (
+            participants.map((p) => {
+              const camPub = p.getTrackPublication(Track.Source.Camera);
+              const micPub = p.getTrackPublication(Track.Source.Microphone);
+              const hasCamera = camPub?.isSubscribed && camPub?.track;
+              const hasMic = micPub?.isSubscribed && micPub?.track;
 
-            const hasCamera = camPub?.isSubscribed && camPub?.track;
-            const hasMic = micPub?.isSubscribed && micPub?.track;
-
-            return (
-              <div key={p.identity} className="relative bg-gray-800" data-participant-video>
-                <video
-                  autoPlay
-                  playsInline
-                  muted={false}
-                  controls={false}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  ref={(el) => {
-                    if (el) {
-                      videoRefs.current[p.identity] = el;
-                      el.muted = false;
-                      el.volume = 1.0;
-                      if (hasCamera) {
-                        camPub.track.attach(el);
-                        el.play().catch((err) => {
-                          console.warn('Video play failed:', err);
-                          el.muted = true;
-                          el.play().then(() => {
-                            setTimeout(() => { el.muted = false; }, 100);
-                          }).catch(console.error);
-                        });
+              return (
+                <div key={p.identity} className="relative bg-gray-800 h-full" data-participant-video>
+                  <video
+                    autoPlay
+                    playsInline
+                    muted={false}
+                    controls={false}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    ref={(el) => {
+                      if (el) {
+                        videoRefs.current[p.identity] = el;
+                        el.muted = false;
+                        el.volume = 1.0;
+                        if (hasCamera) {
+                          camPub.track.attach(el);
+                          el.play().catch(console.error);
+                        }
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
 
-                <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-sm flex items-center gap-2">
-                  <span>@{p.identity}</span>
-                  {hasMic && <span className="text-green-400">🎤</span>}
-                </div>
-
-                {!hasCamera && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-gray-400">
-                    <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center text-2xl font-bold">
-                      {p.identity[0]?.toUpperCase()}
-                    </div>
-                    <p className="mt-2 text-sm">@{p.identity}</p>
-                    {hasMic ? (
-                      <p className="text-xs italic">🎤 Audio only</p>
-                    ) : (
-                      <p className="text-xs italic">No video yet…</p>
-                    )}
+                  <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm flex items-center gap-2">
+                    <span className="font-medium">@{p.identity}</span>
+                    {hasMic && <span className="text-green-400">🎤</span>}
                   </div>
-                )}
-              </div>
-            );
-          })
-        )}
+
+                  {!hasCamera && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 text-gray-400">
+                      <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center text-3xl font-bold mb-3">
+                        {p.identity[0]?.toUpperCase()}
+                      </div>
+                      <p className="text-base font-medium">@{p.identity}</p>
+                      {hasMic ? (
+                        <p className="text-sm italic mt-1 flex items-center gap-1">
+                          <span className="text-green-400">🎤</span> Audio only
+                        </p>
+                      ) : (
+                        <p className="text-sm italic mt-1">Camera off</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
 
         {/* Hearts Animation */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {hearts.map((heart) => (
             <div
               key={heart.id}
-              className="absolute bottom-32"
+              className="absolute bottom-24"
               style={{
                 left: `${heart.x}%`,
                 animation: 'heartFloat 3s ease-out forwards',
               }}
             >
-              <Heart className="w-8 h-8 text-red-500 fill-red-500" />
+              <Heart className="w-10 h-10 text-red-500 fill-red-500 drop-shadow-lg" />
             </div>
           ))}
         </div>
 
         {/* Stream Info Overlay */}
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 to-transparent p-4">
-          <div className="flex items-center justify-between">
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 via-black/50 to-transparent p-4 pb-20">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full">
+              <div className="flex items-center gap-2 bg-red-600 px-3 py-1.5 rounded-full shadow-lg">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                <span className="text-sm font-semibold">LIVE</span>
+                <span className="text-sm font-bold">LIVE</span>
               </div>
-              <div className="flex items-center gap-2 text-white">
+              <div className="flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
                 <Users className="w-4 h-4" />
-                <span className="text-sm">{viewers} viewers</span>
+                <span className="text-sm font-semibold">{viewers}</span>
               </div>
             </div>
           </div>
-          <h2 className="text-lg font-bold mt-2">{stream?.title}</h2>
+          <h2 className="text-lg font-bold drop-shadow-lg">{stream?.title}</h2>
+          {stream?.streamer && (
+            <p className="text-sm text-gray-300 mt-1">by @{stream.streamer.username}</p>
+          )}
         </div>
 
-        {/* Heart Button */}
-        <button
-          onClick={sendHeart}
-          className="absolute bottom-32 right-4 bg-red-500/80 hover:bg-red-600 p-4 rounded-full"
-        >
-          <Heart className="w-6 h-6 text-white fill-white" />
-        </button>
+        {/* Action Buttons */}
+        <div className="absolute bottom-24 right-4 flex flex-col gap-3">
+          <button
+            onClick={sendHeart}
+            className="bg-red-500/90 hover:bg-red-600 backdrop-blur-sm p-4 rounded-full shadow-lg transition-all hover:scale-110"
+          >
+            <Heart className="w-6 h-6 text-white fill-white" />
+          </button>
+          
+          {products.length > 0 && (
+            <button
+              onClick={() => setShowProducts(!showProducts)}
+              className="bg-blue-500/90 hover:bg-blue-600 backdrop-blur-sm p-4 rounded-full shadow-lg transition-all hover:scale-110 relative"
+            >
+              <ShoppingBag className="w-6 h-6 text-white" />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                {products.length}
+              </span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Products Section */}
-      {products && products.length > 0 && (
-        <div className="bg-gray-900 border-t border-gray-800 p-4">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            🛍️ Available Products
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-            {products.map((product, index) => (
-              <div key={index} className="bg-gray-800 rounded-lg p-3">
-                {product.imageUrl && (
-                  <img 
-                    src={product.imageUrl} 
-                    alt={product.name}
-                    className="w-full h-32 object-cover rounded mb-2"
-                  />
-                )}
-                <h4 className="font-semibold text-sm">{product.name}</h4>
-                <p className="text-xs text-gray-400 mt-1">{product.description}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-yellow-400 font-bold">${product.price}</span>
-                  {product.type === 'product' ? (
-                    <button
-                      onClick={() => {
-                        if (socketRef.current) {
-                          socketRef.current.emit('place-order', {
-                            streamId,
-                            productIndex: index,
-                            quantity: 1
-                          });
-                        }
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs"
-                    >
-                      Buy Now
-                    </button>
-                  ) : (
-                    <a
-                      href={product.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs"
-                    >
-                      View Ad
-                    </a>
-                  )}
+      {/* Products Drawer */}
+      {showProducts && products.length > 0 && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 flex items-end" onClick={() => setShowProducts(false)}>
+          <div 
+            className="bg-gray-900 w-full max-h-[70vh] rounded-t-3xl overflow-hidden animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" />
+                Available Products
+              </h3>
+              <button 
+                onClick={() => setShowProducts(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(70vh-80px)]">
+              {products.map((product, index) => (
+                <div 
+                  key={index} 
+                  className="bg-gray-800 rounded-xl p-4 hover:bg-gray-750 transition-colors cursor-pointer"
+                  onClick={() => handleProductClick(product, index)}
+                >
+                  <div className="flex gap-3">
+                    {product.imageUrl && (
+                      <img 
+                        src={product.imageUrl} 
+                        alt={product.name}
+                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-semibold text-base truncate">{product.name}</h4>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          product.type === 'product' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
+                        }`}>
+                          {product.type === 'product' ? '🛍️ Product' : '📢 Ad'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-1 line-clamp-2">{product.description}</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-xl font-bold text-yellow-400">${product.price}</span>
+                        {product.type === 'product' ? (
+                          <button className="bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1">
+                            <ShoppingBag className="w-4 h-4" />
+                            Buy Now
+                          </button>
+                        ) : (
+                          <button className="bg-purple-600 hover:bg-purple-700 px-4 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1">
+                            <ExternalLink className="w-4 h-4" />
+                            View
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1212,22 +1309,36 @@ const LiveViewer = () => {
       {/* Comments Section */}
       <div className="bg-gray-900 border-t border-gray-800">
         <div className="h-64 overflow-y-auto p-4 space-y-3">
-          {comments.map((c, i) => (
-            <div key={i} className="text-sm">
-              <strong>{c.username || 'User'}:</strong> {c.text}
+          {comments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <MessageCircle className="w-12 h-12 mb-2 opacity-50" />
+              <p className="text-sm">No comments yet. Be the first!</p>
             </div>
-          ))}
+          ) : (
+            comments.map((c, i) => (
+              <div key={i} className="text-sm bg-gray-800/50 rounded-lg p-2">
+                <strong className="text-blue-400">@{c.username || 'Viewer'}</strong>
+                <span className="text-gray-300 ml-2">{c.text}</span>
+              </div>
+            ))
+          )}
           <div ref={commentsEndRef} />
         </div>
-        <form onSubmit={sendComment} className="p-4 flex gap-2">
+        
+        <form onSubmit={sendComment} className="p-4 flex gap-2 border-t border-gray-800">
           <input
-            className="flex-1 p-2 rounded bg-gray-800 text-white"
+            className="flex-1 p-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Say something..."
+            maxLength={200}
           />
-          <button type="submit" className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded">
-            <Send className="w-4 h-4" />
+          <button 
+            type="submit" 
+            disabled={!newComment.trim()}
+            className="px-5 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg transition-colors"
+          >
+            <Send className="w-5 h-5" />
           </button>
         </form>
       </div>
@@ -1235,8 +1346,33 @@ const LiveViewer = () => {
       <style>{`
         @keyframes heartFloat {
           0% { transform: translateY(0) scale(1); opacity: 1; }
-          50% { transform: translateY(-100px) scale(1.2); opacity: 0.8; }
-          100% { transform: translateY(-200px) scale(0.8); opacity: 0; }
+          50% { transform: translateY(-120px) scale(1.3); opacity: 0.8; }
+          100% { transform: translateY(-240px) scale(0.8); opacity: 0; }
+        }
+        
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        @keyframes slide-up {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </div>
@@ -1244,4 +1380,3 @@ const LiveViewer = () => {
 };
 
 export default LiveViewer;
-
