@@ -696,6 +696,7 @@ const LiveViewer = () => {
   const [error, setError] = useState(null);
   const [hasRequestedCohost, setHasRequestedCohost] = useState(false);
   const [liveKitRoom, setLiveKitRoom] = useState(null);
+  const [products, setProducts] = useState([]);
 
   const socketRef = useRef(null);
   const videoRefs = useRef({});
@@ -720,6 +721,7 @@ const LiveViewer = () => {
         const streamData = await response.json();
         console.log('Fetched stream data:', streamData);
         setStream(streamData);
+        setProducts(streamData.products || []); // ✅ Set initial products
 
         const token = localStorage.getItem('token');
         socketRef.current = io('https://streammall-backend-73a4b072d5eb.herokuapp.com', {
@@ -741,6 +743,7 @@ const LiveViewer = () => {
           console.log('Joined stream data:', data);
           setViewers(data.viewerCount);
           setStream(data.stream);
+          setProducts(data.stream?.products || []); // ✅ Set initial products
           setIsLoading(false);
 
           const viewerToken = streamData.viewerToken || data.stream?.viewerToken;
@@ -760,29 +763,14 @@ const LiveViewer = () => {
         );
         socketRef.current.on('heart-sent', () => addHeart());
 
-        // New listener for product added
-        socketRef.current.on('product-added', (product) => {
-          setStream((prev) => ({
-            ...prev,
-            products: [...(prev?.products || []), { ...product, index: prev?.products?.length || 0 }]
-          }));
+        // ✅ REAL-TIME PRODUCT UPDATES
+        socketRef.current.on('product-added', (data) => {
+          console.log('New product added:', data);
+          setProducts(prev => [...prev, { ...data.product, index: data.productIndex }]);
         });
 
         socketRef.current.on('stream-ended', () => {
           setError('This live stream has ended');
-          if (liveKitRoom) {
-            liveKitRoom.disconnect();
-          }
-          Object.values(videoRefs.current).forEach((video) => {
-            if (video) {
-              video.pause();
-              video.srcObject = null;
-            }
-          });
-          document.querySelectorAll('audio[data-participant]').forEach((el) => {
-            el.pause();
-            el.remove();
-          });
           setTimeout(() => navigate('/'), 3000);
         });
 
@@ -875,7 +863,7 @@ const LiveViewer = () => {
 
           if (videoEl) {
             track.attach(videoEl);
-            videoEl.muted = true; // Video elements should not handle audio
+            videoEl.muted = true;
             videoEl.volume = 0;
             videoEl.play().catch((err) => {
               console.warn('Video autoplay failed:', err);
@@ -887,7 +875,6 @@ const LiveViewer = () => {
         if (track.kind === Track.Kind.Audio) {
           console.log('🎵 Audio track received from', participant.identity);
           
-          // Remove any existing audio element for this participant
           const existingAudio = document.querySelector(
             `audio[data-participant="${participant.identity}"]`
           );
@@ -993,7 +980,7 @@ const LiveViewer = () => {
               const videoEl = videoRefs.current[participant.identity];
               if (videoEl && !videoEl.srcObject) {
                 track.attach(videoEl);
-                videoEl.muted = true; // Ensure video element is muted
+                videoEl.muted = true;
                 videoEl.play().catch(console.error);
               }
             }
@@ -1025,28 +1012,10 @@ const LiveViewer = () => {
     setNewComment('');
   };
 
-  const handleBuy = async (productIndex) => {
-    try {
-      const response = await fetch(
-        `https://streammall-backend-73a4b072d5eb.herokuapp.com/api/live/${streamId}/buy`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productIndex, quantity: 1 }),
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.msg || 'Purchase failed');
-      }
-
-      setError('Purchase successful!');
-      setTimeout(() => setError(null), 3000);
-    } catch (err) {
-      setError(err.message);
-      setTimeout(() => setError(null), 5000);
+  const sendHeart = () => {
+    if (socketRef.current && isConnected) {
+      socketRef.current.emit('send-heart', { streamId });
+      addHeart();
     }
   };
 
@@ -1074,10 +1043,12 @@ const LiveViewer = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       {error && (
-        <div className="absolute top-4 left-4 bg-red-500/80 px-4 py-2 rounded text-white text-sm">
+        <div className="absolute top-4 left-4 bg-red-500/80 px-4 py-2 rounded text-white text-sm z-50">
           {error}
         </div>
       )}
+      
+      {/* Video Section */}
       <div
         className={`relative aspect-[9/16] bg-gray-900 grid ${participants.length > 1 ? 'grid-cols-2' : 'grid-cols-1'
           }`}
@@ -1143,52 +1114,102 @@ const LiveViewer = () => {
             );
           })
         )}
-      </div>
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {error && (
-          <div className="absolute top-4 left-4 bg-red-500/80 px-4 py-2 rounded text-white text-sm">
-            {error}
+        {/* Hearts Animation */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {hearts.map((heart) => (
+            <div
+              key={heart.id}
+              className="absolute bottom-32"
+              style={{
+                left: `${heart.x}%`,
+                animation: 'heartFloat 3s ease-out forwards',
+              }}
+            >
+              <Heart className="w-8 h-8 text-red-500 fill-red-500" />
+            </div>
+          ))}
+        </div>
+
+        {/* Stream Info Overlay */}
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 to-transparent p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                <span className="text-sm font-semibold">LIVE</span>
+              </div>
+              <div className="flex items-center gap-2 text-white">
+                <Users className="w-4 h-4" />
+                <span className="text-sm">{viewers} viewers</span>
+              </div>
+            </div>
           </div>
-        )}
-        {hearts.map((heart) => (
-          <div
-            key={heart.id}
-            className="absolute bottom-32"
-            style={{
-              left: `${heart.x}%`,
-              animation: 'heartFloat 3s ease-out forwards',
-            }}
-          >
-            <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-          </div>
-        ))}
+          <h2 className="text-lg font-bold mt-2">{stream?.title}</h2>
+        </div>
+
+        {/* Heart Button */}
+        <button
+          onClick={sendHeart}
+          className="absolute bottom-32 right-4 bg-red-500/80 hover:bg-red-600 p-4 rounded-full"
+        >
+          <Heart className="w-6 h-6 text-white fill-white" />
+        </button>
       </div>
 
       {/* Products Section */}
-      <div className="p-4 overflow-x-auto">
-        <h3 className="text-lg font-bold mb-2 text-white">Products</h3>
-        <div className="flex gap-4">
-          {stream?.products?.map((p, index) => (
-            <div key={index} className="min-w-[200px] bg-gray-800 p-4 rounded flex-shrink-0">
-              {p.imageUrl && <img src={p.imageUrl} alt={p.name} className="w-full h-32 object-cover mb-2 rounded" />}
-              <h4 className="font-bold text-sm text-white">{p.name}</h4>
-              <p className="text-xs text-gray-300">{p.description.slice(0, 50)}...</p>
-              <p className="font-bold text-yellow-400">${p.price}</p>
-              <button
-                onClick={() => handleBuy(index)}
-                className="bg-blue-500 text-white px-2 py-1 rounded mt-2 text-sm w-full"
-              >
-                Buy
-              </button>
-            </div>
-          ))}
-          {(!stream?.products || stream.products.length === 0) && (
-            <p className="text-gray-400">No products added yet.</p>
-          )}
+      {products && products.length > 0 && (
+        <div className="bg-gray-900 border-t border-gray-800 p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            🛍️ Available Products
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+            {products.map((product, index) => (
+              <div key={index} className="bg-gray-800 rounded-lg p-3">
+                {product.imageUrl && (
+                  <img 
+                    src={product.imageUrl} 
+                    alt={product.name}
+                    className="w-full h-32 object-cover rounded mb-2"
+                  />
+                )}
+                <h4 className="font-semibold text-sm">{product.name}</h4>
+                <p className="text-xs text-gray-400 mt-1">{product.description}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-yellow-400 font-bold">${product.price}</span>
+                  {product.type === 'product' ? (
+                    <button
+                      onClick={() => {
+                        if (socketRef.current) {
+                          socketRef.current.emit('place-order', {
+                            streamId,
+                            productIndex: index,
+                            quantity: 1
+                          });
+                        }
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs"
+                    >
+                      Buy Now
+                    </button>
+                  ) : (
+                    <a
+                      href={product.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs"
+                    >
+                      View Ad
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
+      {/* Comments Section */}
       <div className="bg-gray-900 border-t border-gray-800">
         <div className="h-64 overflow-y-auto p-4 space-y-3">
           {comments.map((c, i) => (
@@ -1198,14 +1219,14 @@ const LiveViewer = () => {
           ))}
           <div ref={commentsEndRef} />
         </div>
-        <form onSubmit={sendComment} className="p-4 flex">
+        <form onSubmit={sendComment} className="p-4 flex gap-2">
           <input
-            className="flex-1 p-2 rounded bg-gray-800"
+            className="flex-1 p-2 rounded bg-gray-800 text-white"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Say something..."
           />
-          <button type="submit" className="ml-2 px-4 py-2 bg-red-500 rounded">
+          <button type="submit" className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded">
             <Send className="w-4 h-4" />
           </button>
         </form>
@@ -1223,3 +1244,4 @@ const LiveViewer = () => {
 };
 
 export default LiveViewer;
+
