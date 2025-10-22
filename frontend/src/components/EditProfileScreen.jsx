@@ -278,7 +278,7 @@ const EditProfileScreen = ({ onBack }) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-[#FF2B55] text-white rounded-lg hover:bg-[#FF2B55] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -522,7 +522,7 @@ const EditProfileScreen = ({ onBack }) => {
                 onChange={handleInputChange}
                 className="sr-only peer"
               />
-              <div className="relative w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+              <div className="relative w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF2B55]"></div>
             </label>
           </div>
         </div>
@@ -547,7 +547,7 @@ const EditProfileScreen = ({ onBack }) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full flex items-center justify-center space-x-2 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full flex items-center justify-center space-x-2 py-3 bg-[#FF2B55] text-white rounded-lg hover:bg-[#FF2B55] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {saving ? (
               <>

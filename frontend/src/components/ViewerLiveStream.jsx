@@ -1913,7 +1913,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                 <button
                   onClick={sendHeart}
                   disabled={!socketConnected}
-                  className="w-full bg-pink-600 hover:bg-pink-700 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#FF2B55] hover:bg-[#FF2B55] py-2 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Heart className="w-4 h-4" />
                   <span className="text-sm font-semibold">Send Heart</span>

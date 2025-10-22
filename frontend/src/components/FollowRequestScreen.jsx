@@ -251,7 +251,7 @@ const FollowRequestsScreen = ({ onBack }) => {
                 <button
                   onClick={() => acceptRequest(request._id)}
                   disabled={processingRequest === request._id || processingRequest === 'all'}
-                  className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
+                  className="bg-[#FF2B55] hover:bg-[#FF2B55] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
                 >
                   <UserCheck className="w-4 h-4" />
                   <span>Accept</span>
@@ -338,7 +338,7 @@ const FollowRequestsScreen = ({ onBack }) => {
                 <button
                   onClick={acceptAllRequests}
                   disabled={processingRequest === 'all'}
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+                  className="w-full bg-[#FF2B55] hover:bg-[#FF2B55] text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
                   <UserCheck className="w-5 h-5" />
                   <span>

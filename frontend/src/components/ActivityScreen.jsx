@@ -220,14 +220,14 @@ const ActivityScreen = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 rounded-full font-bold whitespace-nowrap flex items-center space-x-2 transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'bg-pink-500 text-white'
+                    ? 'bg-[#FF2B55] text-white'
                     : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
                 }`}
               >
                 <span>{tab.label}</span>
                 {tab.count > 0 && (
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    activeTab === tab.id ? 'bg-pink-600' : 'bg-gray-700'
+                    activeTab === tab.id ? 'bg-[#FF2B55]' : 'bg-gray-700'
                   }`}>
                     {tab.count}
                   </span>
@@ -253,7 +253,7 @@ const ActivityScreen = () => {
                 key={activity.id}
                 onClick={() => !activity.isRead && markAsRead(activity.id)}
                 className={`p-4 hover:bg-gray-900/50 transition-colors cursor-pointer ${
-                  !activity.isRead ? 'bg-pink-500/5 border-l-4 border-pink-500' : ''
+                  !activity.isRead ? 'bg-[#FF2B55] border-l-4 border-pink-500' : ''
                 }`}
               >
                 <div className="flex items-start space-x-3">
@@ -329,7 +329,7 @@ const ActivityScreen = () => {
                     {/* Action Buttons */}
                     <div className="flex items-center space-x-4 mt-3">
                       {activity.type === 'follow' && (
-                        <button className="bg-pink-500 text-white px-4 py-1.5 rounded-full text-sm font-bold hover:bg-pink-600 transition-colors">
+                        <button className="bg-[#FF2B55] text-white px-4 py-1.5 rounded-full text-sm font-bold hover:bg-[#FF2B55] transition-colors">
                           Follow Back
                         </button>
                       )}

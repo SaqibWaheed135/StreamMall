@@ -259,7 +259,7 @@ const AddFriendsScreen = ({ onBack }) => {
     if (status.isFollowing) {
       return "bg-gray-800 text-white border border-gray-600 hover:bg-gray-700";
     }
-    return "bg-pink-600 text-white hover:bg-pink-700";
+    return "bg-[#FF2B55] text-white hover:bg-[#FF2B55]";
   };
 
   // Format numbers

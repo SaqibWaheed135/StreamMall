@@ -1279,7 +1279,7 @@ const PointsRechargeScreen = ({ onBack }) => {
           <button
             onClick={() => setActiveTab('recharge')}
             className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'recharge'
-                ? 'bg-pink-600 text-white'
+                ? 'bg-[#FF2B55] text-white'
                 : 'text-gray-400 hover:text-white'
               }`}
           >
@@ -1289,7 +1289,7 @@ const PointsRechargeScreen = ({ onBack }) => {
           <button
             onClick={() => setActiveTab('history')}
             className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'history'
-                ? 'bg-pink-600 text-white'
+                ? 'bg-[#FF2B55] text-white'
                 : 'text-gray-400 hover:text-white'
               }`}
           >
@@ -1311,7 +1311,7 @@ const PointsRechargeScreen = ({ onBack }) => {
                       setCustomAmount('');
                     }}
                     className={`relative p-4 rounded-xl border-2 transition-all ${selectedAmount === option.amount
-                        ? 'border-pink-500 bg-pink-600/20'
+                        ? 'bg-[#FF2B55] bg-red-600/20'
                         : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                       }`}
                   >
@@ -1383,7 +1383,7 @@ const PointsRechargeScreen = ({ onBack }) => {
                       key={method.id}
                       onClick={() => setSelectedPaymentMethod(method.id)}
                       className={`w-full p-4 rounded-lg border-2 transition-all ${selectedPaymentMethod === method.id
-                          ? 'border-pink-500 bg-pink-600/20'
+                          ? 'border-red-500 bg-red-600/20'
                           : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                         }`}
                     >

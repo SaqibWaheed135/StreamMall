@@ -209,7 +209,7 @@ const NotificationsScreen = ({ onBack }) => {
                           <button
                             onClick={() => acceptRequest(request._id)}
                             disabled={processingRequest === request._id}
-                            className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
+                            className="bg-[#FF2B55] hover:bg-[#FF2B55] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
                           >
                             <UserCheck className="w-4 h-4" />
                             <span>Accept</span>
