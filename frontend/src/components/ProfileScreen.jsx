@@ -535,7 +535,7 @@
 //           0% { background-position: -200% 0; }
 //           100% { background-position: 200% 0; }
 //         }
-        
+
 //         .animate-shimmer {
 //           animation: shimmer 2s infinite linear;
 //         }
@@ -964,51 +964,33 @@ const ProfileScreen = ({ userId: propUserId }) => {
     }
   };
 
-  const fetchMyStreams = async () => {
+
+
+  const fetchHostOrders = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/live/my`, {
+      const response = await fetch(`${API_BASE_URL}/live/host/orders`, {
         headers: getAuthHeaders()
       });
 
       if (response.ok) {
         const data = await response.json();
-        return data.streams || [];
+
+        // Flatten orders if needed, or use as-is
+        const allOrders = (data.orders || []).map(o => ({
+          ...o,
+          buyerUsername: o.buyer?.username || 'Unknown Buyer',
+          product: o.productName ? { name: o.productName, price: o.productPrice } : null
+        }));
+
+        setOrders(allOrders);
+      } else {
+        console.error('Failed to fetch host orders');
       }
     } catch (error) {
-      console.error('Error fetching my streams:', error);
-      return [];
+      console.error('Error fetching host orders:', error);
     }
   };
 
-  const fetchHostOrders = async () => {
-    const streams = await fetchMyStreams();
-    const allOrders = [];
-
-    for (const stream of streams) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/live/${stream._id}/orders`, {
-          headers: getAuthHeaders()
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const products = stream.products || [];
-          const streamOrders = (data.orders || []).map(o => ({
-            ...o,
-            buyerUsername: o.buyer?.username || 'Unknown Buyer',
-            product: products[o.productIndex],
-            streamTitle: stream.title,
-            streamId: stream._id
-          }));
-          allOrders.push(...streamOrders);
-        }
-      } catch (error) {
-        console.error(`Error fetching orders for stream ${stream._id}:`, error);
-      }
-    }
-
-    setOrders(allOrders);
-  };
 
   const handleFollowToggle = async () => {
     if (followLoading || !user) return;
@@ -1578,16 +1560,22 @@ const ProfileScreen = ({ userId: propUserId }) => {
             {isOwnProfile && (
               <button
                 onClick={async () => {
-                  setLoading(true);
-                  await fetchHostOrders();
-                  setLoading(false);
-                  setShowOrders(true);
+                  try {
+                    setLoading(true);
+                    await fetchHostOrders(); // Calls the new /live/host/orders API
+                    setShowOrders(true);
+                  } catch (error) {
+                    console.error('Error loading orders:', error);
+                  } finally {
+                    setLoading(false);
+                  }
                 }}
                 className="p-2 hover:bg-[#2C2C33] rounded-full transition-colors"
               >
                 <ShoppingBag className="w-5 h-5" />
               </button>
             )}
+
 
             <button
               onClick={() => {
