@@ -501,13 +501,33 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
 
     socketRef.current.on('connect', () => console.log('Connected'));
 
-    socketRef.current.on('new-message', (data) => {
+    // socketRef.current.on('new-message', (data) => {
+    //   const { message, conversation } = data;
+    //   setMessages(prev => {
+    //     const newMessages = [...prev];
+    //     if (!newMessages.some(m => m._id === message._id) &&
+    //         ((selectedConversation && message.conversation === selectedConversation._id) ||
+    //          (selectedGroup && message.conversation === selectedGroup.conversation._id))) {
+    //       newMessages.push(message);
+    //     }
+    //     return newMessages;
+    //   });
+    //   if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
+    //     fetchSignedUrl(message._id, message.key);
+    //   }
+    //   scrollToBottom();
+    //   setConversations(prev => prev.map(conv =>
+    //     conv._id === conversation._id ? { ...conv, lastMessage: message, updatedAt: new Date() } : conv
+    //   ));
+    // });
+
+     socketRef.current.on('new-message', (data) => {
       const { message, conversation } = data;
+      // Only add to messages if it's for the currently selected DM conversation
       setMessages(prev => {
         const newMessages = [...prev];
         if (!newMessages.some(m => m._id === message._id) &&
-            ((selectedConversation && message.conversation === selectedConversation._id) ||
-             (selectedGroup && message.conversation === selectedGroup.conversation._id))) {
+            selectedConversation && message.conversation === selectedConversation._id) {
           newMessages.push(message);
         }
         return newMessages;
@@ -516,11 +536,11 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         fetchSignedUrl(message._id, message.key);
       }
       scrollToBottom();
+      // Only update DM conversations, not groups
       setConversations(prev => prev.map(conv =>
         conv._id === conversation._id ? { ...conv, lastMessage: message, updatedAt: new Date() } : conv
       ));
     });
-
     socketRef.current.on('new-group-message', (data) => {
       const { message, groupId } = data;
       setMessages(prev => {
