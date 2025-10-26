@@ -1011,37 +1011,39 @@ const HostLiveStream = ({ onBack }) => {
 
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="font-semibold mb-4">Add Product/Ad</h3>
+
                 <select
                   value={newProduct.type}
                   onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2"
                 >
                   <option value="product">Product</option>
                   <option value="ad">Ad</option>
                 </select>
+
                 <input
                   placeholder="Name"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2"
                 />
+
                 <input
                   placeholder="Description"
                   value={newProduct.description}
                   onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2"
                 />
-
 
                 <input
                   type="number"
                   placeholder="Price"
                   value={newProduct.price}
                   onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2"
                 />
 
-                {/* === IMAGE PICKER + PREVIEW === */}
+                {/* ✅ IMAGE FILE UPLOAD + PREVIEW */}
                 <div className="mb-2">
                   <label className="block text-sm font-medium mb-1">Image</label>
                   <input
@@ -1049,84 +1051,88 @@ const HostLiveStream = ({ onBack }) => {
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) {
-                        setNewProduct({ ...newProduct, imageFile: file });
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
-                        };
-                        reader.readAsDataURL(file);
-                      }
+                      if (!file) return;
+
+                      setNewProduct({ ...newProduct, imageFile: file });
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setNewProduct((prev) => ({ ...prev, imagePreview: reader.result}));
+                      };
+                      reader.readAsDataURL(file);
                     }}
-                    className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                    className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
                   />
+
                   {newProduct.imagePreview && (
-                    <div className="mt-2">
-                      <img
-                        src={newProduct.imagePreview}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg border border-gray-600"
-                      />
-                    </div>
+                    <img
+                      src={newProduct.imagePreview}
+                      alt="Preview"
+                      className="mt-2 w-full h-48 object-cover rounded-lg border border-gray-600"
+                    />
                   )}
                 </div>
+
                 <input
-                  placeholder="Image URL (Optional)"
-                  value={newProduct.imageUrl}
-                  onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
-                />
-                <input
-                  placeholder="Link (for ad or product)"
+                  placeholder="Link (optional for product/ad)"
                   value={newProduct.link}
                   onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2"
                 />
+
                 <button
                   onClick={async () => {
-                    if (!newProduct.name || !newProduct.price || (!newProduct.imageFile && !newProduct.imageUrl)) {
-                      setError('Name, price, and image are required');
+                    if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
+                      setError("Name, price and image are required");
                       return;
                     }
 
                     const formData = new FormData();
-                    formData.append('type', newProduct.type);
-                    formData.append('name', newProduct.name);
-                    formData.append('description', newProduct.description);
-                    formData.append('price', newProduct.price.toString());
-                    if (newProduct.imageFile) {
-                      formData.append('image', newProduct.imageFile);
-                    }
-                    if (newProduct.link) {
-                      formData.append('link', newProduct.link);
-                    }
+                    formData.append("type", newProduct.type);
+                    formData.append("name", newProduct.name);
+                    formData.append("description", newProduct.description);
+                    formData.append("price", newProduct.price.toString());
+                    formData.append("file", newProduct.imageFile); // ✅ FILE KEY NAME FIXED
+
+                    if (newProduct.link) formData.append("link", newProduct.link);
+
                     try {
-                      const token = localStorage.getItem('token');
+                      const token = localStorage.getItem("token");
                       const response = await fetch(`${API_URL}/live/${streamData.streamId}/add-product`, {
-                        method: 'POST',
-                        headers: {
-                          ...(token && { 'Authorization': `Bearer ${token}` })
-                        },
-                        body: formData
+                        method: "POST",
+                        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+                        body: formData,
                       });
+
                       const data = await response.json();
+
                       if (response.ok) {
-                        setProducts([...products, { ...data.product, index: products.length }]);
-                        setNewProduct({ type: 'product', name: '', description: '', price: 0, imageUrl: '', link: '', imageFile: null, imagePreview: '' });
-                        setError('');
+                        // ✅ Always use signed URL returned from server
+                        setProducts([...products, data.product]);
+                        setNewProduct({
+                          type: "product",
+                          name: "",
+                          description: "",
+                          price: 0,
+                          imageFile: null,
+                          imagePreview: "",
+                          link: "",
+                        });
+                        setError("");
                       } else {
-                        setError(data.msg || 'Failed to add product');
+                        setError(data.msg || "Failed to add product");
                       }
-                    } catch (err) {
-                      setError('Failed to add product');
+                    } catch {
+                      setError("Failed to add product");
                     }
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold mt-2"
                 >
                   Add
                 </button>
+
                 <div className="mt-4">
                   <h4 className="font-semibold mb-2">Added Items</h4>
+
                   {products.length === 0 ? (
                     <p className="text-gray-400 text-sm">No items added yet</p>
                   ) : (
@@ -1137,9 +1143,14 @@ const HostLiveStream = ({ onBack }) => {
                         )}
                         <div className="flex-1">
                           <p className="font-medium">{p.name}</p>
-                          <p className="text-sm text-gray-400">${p.price} ({Math.ceil(p.price * 100)} coins)</p>
+                          <p className="text-sm text-gray-400">${p.price}</p>
                           {p.link && (
-                            <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 underline">
+                            <a
+                              href={p.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-400 underline"
+                            >
                               View Link
                             </a>
                           )}
@@ -1149,6 +1160,7 @@ const HostLiveStream = ({ onBack }) => {
                   )}
                 </div>
               </div>
+
             </div>
 
             <div className="lg:col-span-2 space-y-4">
