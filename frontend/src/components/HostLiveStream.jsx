@@ -180,7 +180,9 @@ const HostLiveStream = ({ onBack }) => {
     description: '',
     price: 0,
     imageUrl: '',
-    link: ''
+    link: '',
+    imageFile: null,
+    imagePreview: ''
   });
   const [orders, setOrders] = useState([]);
   const [coinBalance, setCoinBalance] = useState(0);
@@ -192,7 +194,7 @@ const HostLiveStream = ({ onBack }) => {
   const localVideoRef = useRef(null);
   const commentsEndRef = useRef(null);
 
- 
+
 
   // Persist stream state in localStorage
   const saveStreamState = () => {
@@ -761,36 +763,36 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
   // Handle browser back button
- useEffect(() => {
-  // Only run when the stream is LIVE
-  if (!isLive) return;
+  useEffect(() => {
+    // Only run when the stream is LIVE
+    if (!isLive) return;
 
-  // 1. Prevent the default “unsaved changes” warning
-  const handleBeforeUnload = (e) => {
-    e.preventDefault();
-    e.returnValue = ''; // Required for Chrome
-  };
-  window.addEventListener('beforeunload', handleBeforeUnload);
+    // 1. Prevent the default “unsaved changes” warning
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ''; // Required for Chrome
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
-  // 2. Catch the browser back button (popstate)
-  const onPopState = (e) => {
-    e.preventDefault();               // Block navigation
-    setShowConfirmEnd(true);          // Show YOUR modal
+    // 2. Catch the browser back button (popstate)
+    const onPopState = (e) => {
+      e.preventDefault();               // Block navigation
+      setShowConfirmEnd(true);          // Show YOUR modal
 
-    // Push the current URL again so the next back press works
+      // Push the current URL again so the next back press works
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', onPopState);
+
+    // 3. Push ONE dummy state so the first back press triggers popstate
     window.history.pushState(null, '', window.location.href);
-  };
-  window.addEventListener('popstate', onPopState);
 
-  // 3. Push ONE dummy state so the first back press triggers popstate
-  window.history.pushState(null, '', window.location.href);
-
-  // Cleanup
-  return () => {
-    window.removeEventListener('beforeunload', handleBeforeUnload);
-    window.removeEventListener('popstate', onPopState);
-  };
-}, [isLive]);
+    // Cleanup
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [isLive]);
 
   const endStream = async () => {
     if (!streamData?.streamId) return;
@@ -1029,6 +1031,8 @@ const HostLiveStream = ({ onBack }) => {
                   onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
+
+
                 <input
                   type="number"
                   placeholder="Price"
@@ -1036,8 +1040,38 @@ const HostLiveStream = ({ onBack }) => {
                   onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
+
+                {/* === IMAGE PICKER + PREVIEW === */}
+                <div className="mb-2">
+                  <label className="block text-sm font-medium mb-1">Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setNewProduct({ ...newProduct, imageFile: file });
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                  />
+                  {newProduct.imagePreview && (
+                    <div className="mt-2">
+                      <img
+                        src={newProduct.imagePreview}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                      />
+                    </div>
+                  )}
+                </div>
                 <input
-                  placeholder="Image URL"
+                  placeholder="Image URL (Optional)"
                   value={newProduct.imageUrl}
                   onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
@@ -1050,22 +1084,38 @@ const HostLiveStream = ({ onBack }) => {
                 />
                 <button
                   onClick={async () => {
+                    if (!newProduct.name || !newProduct.price || (!newProduct.imageFile && !newProduct.imageUrl)) {
+                      setError('Name, price, and image are required');
+                      return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('type', newProduct.type);
+                    formData.append('name', newProduct.name);
+                    formData.append('description', newProduct.description);
+                    formData.append('price', newProduct.price.toString());
+                    if (newProduct.imageFile) {
+                      formData.append('image', newProduct.imageFile);
+                    }
+                    if (newProduct.link) {
+                      formData.append('link', newProduct.link);
+                    }
                     try {
                       const token = localStorage.getItem('token');
                       const response = await fetch(`${API_URL}/live/${streamData.streamId}/add-product`, {
                         method: 'POST',
                         headers: {
-                          'Content-Type': 'application/json',
                           ...(token && { 'Authorization': `Bearer ${token}` })
                         },
-                        body: JSON.stringify(newProduct)
+                        body: formData
                       });
                       const data = await response.json();
                       if (response.ok) {
                         setProducts([...products, { ...data.product, index: products.length }]);
-                        setNewProduct({ type: 'product', name: '', description: '', price: 0, imageUrl: '', link: '' });
+                        setNewProduct({ type: 'product', name: '', description: '', price: 0, imageUrl: '', link: '', imageFile: null, imagePreview: '' });
+                        setError('');
                       } else {
-                        setError(data.msg);
+                        setError(data.msg || 'Failed to add product');
                       }
                     } catch (err) {
                       setError('Failed to add product');
@@ -1077,11 +1127,26 @@ const HostLiveStream = ({ onBack }) => {
                 </button>
                 <div className="mt-4">
                   <h4 className="font-semibold mb-2">Added Items</h4>
-                  {products.map((p, i) => (
-                    <div key={i} className="bg-gray-700 rounded-lg p-2 mb-2">
-                      <span>{p.name} - ${p.price} ({Math.ceil(p.price * 100)} coins)</span>
-                    </div>
-                  ))}
+                  {products.length === 0 ? (
+                    <p className="text-gray-400 text-sm">No items added yet</p>
+                  ) : (
+                    products.map((p, i) => (
+                      <div key={i} className="bg-gray-700 rounded-lg p-2 mb-2 flex items-center gap-3">
+                        {p.imageUrl && (
+                          <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">{p.name}</p>
+                          <p className="text-sm text-gray-400">${p.price} ({Math.ceil(p.price * 100)} coins)</p>
+                          {p.link && (
+                            <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 underline">
+                              View Link
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
