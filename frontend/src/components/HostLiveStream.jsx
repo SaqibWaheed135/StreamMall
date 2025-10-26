@@ -248,7 +248,7 @@ const HostLiveStream = ({ onBack }) => {
       return;
     }
 
-    const shareUrl = `${window.location.origin}/live/${streamData.streamId}`;
+    const shareUrl = `${window.location.origin}/host-live-stream/${streamData.streamId}`;
     const shareData = {
       title: streamData.stream?.title || 'Live Stream',
       text: streamData.stream?.description || 'Join my live stream!',
