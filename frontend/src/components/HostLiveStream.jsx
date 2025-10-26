@@ -907,34 +907,42 @@ const HostLiveStream = ({ onBack }) => {
 
         <div className="max-w-7xl mx-auto">
           <div className="bg-gray-800 rounded-lg p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 w-full">
+              {/* Left Section */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Live Indicator */}
                 <div className="flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-sm font-semibold">LIVE</span>
+                  <span className="text-sm font-semibold text-white">LIVE</span>
                 </div>
+
+                {/* Viewer Count */}
                 <div className="flex items-center gap-2 text-gray-300">
                   <Users className="w-4 h-4" />
                   <span className="text-sm">{viewerCount} viewers</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Right Section (Buttons) */}
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleShare}
-                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2"
+                  className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-white text-sm"
                 >
                   <Share2 className="w-4 h-4" />
                   Share
                 </button>
+
                 <button
                   onClick={() => setShowConfirmEnd(true)}
-                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg flex items-center gap-2"
+                  className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-white text-sm"
                 >
                   <X className="w-4 h-4" />
                   End Stream
                 </button>
               </div>
             </div>
+
             <h2 className="text-xl font-bold mt-3">{streamData?.stream?.title}</h2>
           </div>
 
@@ -1056,7 +1064,7 @@ const HostLiveStream = ({ onBack }) => {
                       setNewProduct({ ...newProduct, imageFile: file });
                       const reader = new FileReader();
                       reader.onloadend = () => {
-                        setNewProduct((prev) => ({ ...prev, imagePreview: reader.result}));
+                        setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
                       };
                       reader.readAsDataURL(file);
                     }}
