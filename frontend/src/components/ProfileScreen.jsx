@@ -1158,8 +1158,8 @@ const ProfileScreen = ({ userId: propUserId }) => {
           await fetchUserPoints();
         }
 
-        // Fetch referral points setting
-        await fetchReferralPoints();
+        // // Fetch referral points setting
+        // await fetchReferralPoints();
       }
       setLoading(false);
     };
