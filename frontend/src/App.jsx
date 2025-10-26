@@ -240,7 +240,7 @@ const App = () => {
               />
             </ProtectedRoute>
           } />
-          <Route path="/host-live-stream" element={<ProtectedRoute><HostLiveStream onBack={() => navigate('/live-stream')} /></ProtectedRoute>} />
+          <Route path="/host-live-stream" element={<ProtectedRoute><HostLiveStream onBack={() => navigate('/live-streams')} /></ProtectedRoute>} />
           <Route path="/viewer-live-stream/:streamId" element={<ProtectedRoute><ViewerLiveStreamWrapper /></ProtectedRoute>} />
         </Routes>
       </main>
