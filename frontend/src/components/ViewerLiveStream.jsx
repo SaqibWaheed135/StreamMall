@@ -1498,6 +1498,16 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       }, 3000);
     });
 
+    newSocket.on('product-added', (data) => {
+      if (data.streamId === streamId) {
+        setProducts(prev => [
+         ...prev,
+          { ...data.product } 
+        ]);
+      }
+    });
+
+
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
       setSocketConnected(false);

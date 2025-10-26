@@ -958,7 +958,7 @@ const HostLiveStream = ({ onBack }) => {
                   onChange={(e) => setNewProduct({...newProduct, link: e.target.value})}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
-                <button
+                {/* <button
                   onClick={async () => {
                     try {
                       const token = localStorage.getItem('token');
@@ -984,7 +984,42 @@ const HostLiveStream = ({ onBack }) => {
                   className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold mt-2"
                 >
                   Add
-                </button>
+                </button> */}
+                
+                 <button
+                   onClick={async () => {
+                     try {
+                       const token = localStorage.getItem('token');
+                       const response = await fetch(`${API_URL}/live/${streamData.streamId}/add-product`, {
+                         method: 'POST',
+                         headers: {
+                           'Content-Type': 'application/json',
+                           ...(token && { 'Authorization': `Bearer ${token}` })
+                         },
+                         body: JSON.stringify(newProduct)
+                       });
+                       const data = await response.json();
+                       if (response.ok) {
+                         setProducts([...products, { ...data.product, index: products.length }]);
+                         setNewProduct({type: 'product', name: '', description: '', price: 0, imageUrl: '', link: ''});
+
+                       if (socket) {
+                         socket.emit('product-added', {
+                           streamId: streamData.streamId,
+                            product: { ...data.product, index: products.length }
+                         });
+                       }
+                       } else {
+                         setError(data.msg);
+                       }
+                     } catch (err) {
+                       setError('Failed to add product');
+                     }
+                   }}
+                   className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold mt-2"
+                 >
+                   Add
+                 </button>
                 <div className="mt-4">
                   <h4 className="font-semibold mb-2">Added Items</h4>
                   {products.map((p, i) => (

@@ -1112,6 +1112,32 @@ const ProfileScreen = ({ userId: propUserId }) => {
     }
   };
 
+  // useEffect(() => {
+  //   const initializeProfile = async () => {
+  //     setLoading(true);
+  //     const storedUser = localStorage.getItem("user");
+
+  //     if (storedUser) {
+  //       const userData = JSON.parse(storedUser);
+  //       setCurrentUser(userData);
+
+  //       if (propUserId && propUserId !== userData._id && propUserId !== userData.id) {
+  //         setIsOwnProfile(false);
+  //         await fetchUserData(propUserId);
+  //         await fetchFollowStatus(propUserId);
+  //       } else {
+  //         setIsOwnProfile(true);
+  //         await fetchUserData(userData._id || userData.id);
+  //         await fetchFollowRequests();
+  //         await fetchUserPoints();
+  //       }
+  //     }
+  //     setLoading(false);
+  //   };
+
+  //   initializeProfile();
+  // }, [propUserId]);
+
   useEffect(() => {
     const initializeProfile = async () => {
       setLoading(true);
@@ -1131,12 +1157,16 @@ const ProfileScreen = ({ userId: propUserId }) => {
           await fetchFollowRequests();
           await fetchUserPoints();
         }
+
+        // Fetch referral points setting
+        await fetchReferralPoints();
       }
       setLoading(false);
     };
 
     initializeProfile();
   }, [propUserId]);
+
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -1333,7 +1363,9 @@ const ProfileScreen = ({ userId: propUserId }) => {
     );
   };
 
-  const InviteModal = ({ user, onClose }) => {
+  // Updated InviteModal component with dynamic referral points
+
+  const InviteModal = ({ user, onClose, referralPoints }) => {
     const [copied, setCopied] = useState(false);
 
     const inviteCode = user?.inviteCode || user?._id;
@@ -1394,7 +1426,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
                 <div className="flex-1">
                   <p className="font-semibold text-white">Earn Rewards!</p>
                   <p className="text-sm text-gray-300 mt-1">
-                    Get <span className="text-yellow-400 font-bold">10 coins</span> for each friend who signs up
+                    Get <span className="text-yellow-400 font-bold">{referralPoints} coins</span> for each friend who signs up
                   </p>
                 </div>
               </div>
@@ -1406,7 +1438,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
                 <p className="text-xs text-gray-400 mt-1">Total Invites</p>
               </div>
               <div className="bg-[#2C2C33]/50 rounded-lg p-4 text-center border border-[#2C2C33]">
-                <p className="text-2xl font-bold text-[#7B2FF7]">{(user.totalInvites || 0) * 10}</p>
+                <p className="text-2xl font-bold text-[#7B2FF7]">{(user.totalInvites || 0) * referralPoints}</p>
                 <p className="text-xs text-gray-400 mt-1">Coins Earned</p>
               </div>
             </div>
@@ -1823,10 +1855,12 @@ const ProfileScreen = ({ userId: propUserId }) => {
         />
       )}
       {/* Invite Modal */}
+      // Update the InviteModal component call to pass referralPoints:
       {showInviteModal && (
         <InviteModal
           user={user}
           onClose={() => setShowInviteModal(false)}
+          referralPoints={referralPoints}
         />
       )}
     </div>
