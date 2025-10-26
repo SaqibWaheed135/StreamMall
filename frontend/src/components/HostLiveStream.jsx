@@ -760,30 +760,31 @@ const HostLiveStream = ({ onBack }) => {
       setLoading(false);
     }
   };
-
-   useEffect(() => {
-    // Only attach when we are LIVE
-    const onPopState = (e) => {
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = (e) => {
       if (isLive) {
-        e.preventDefault();                 // stop immediate navigation
-        setShowConfirmEnd(true);           // show your modal
-        window.history.pushState(null, '', ''); // keep the URL
+        // Prevent navigation by pushing state back
+        window.history.pushState(null, '', window.location.pathname);
+        // Show confirmation modal
+        setShowConfirmEnd(true);
       } else {
-        onBack();                           // not live → just go back
+        // Not live, allow normal back navigation
+        onBack();
       }
     };
 
     if (isLive) {
-      window.addEventListener('popstate', onPopState);
-      // Push a dummy state so the first back click triggers popstate
-      window.history.pushState(null, '', '');
+      // Push initial state when stream starts
+      window.history.pushState(null, '', window.location.pathname);
+      window.addEventListener('popstate', handlePopState);
     }
 
     return () => {
-      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, [isLive, onBack]);
-  
+
   const endStream = async () => {
     if (!streamData?.streamId) return;
 
