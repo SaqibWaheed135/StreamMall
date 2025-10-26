@@ -251,24 +251,16 @@ const App = () => {
             } 
           />
           
-          {/* ✅ NEW: Shareable stream link - Auto-routes to viewer */}
+          {/* ✅ NEW: Shareable stream link - Handles auth internally */}
           <Route 
             path="/stream/:streamId" 
-            element={
-              <ProtectedRoute>
-                <LiveStreamRouter />
-              </ProtectedRoute>
-            } 
+            element={<LiveStreamRouter />} 
           />
           
           {/* Alternative routes (for backward compatibility) */}
           <Route 
             path="/watch/:streamId" 
-            element={
-              <ProtectedRoute>
-                <LiveStreamRouter />
-              </ProtectedRoute>
-            } 
+            element={<LiveStreamRouter />} 
           />
           
           {/* Old viewer route - kept for backward compatibility */}

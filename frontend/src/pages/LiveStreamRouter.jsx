@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Radio, Users } from 'lucide-react';
+import { Radio, Users, LogIn, UserPlus } from 'lucide-react';
 
 // Import your actual components
 import HostLiveStream from '../components/HostLiveStream';
@@ -12,6 +12,14 @@ const LiveStreamRouter = () => {
   const [searchParams] = useSearchParams();
   const [currentView, setCurrentView] = useState('home');
   const [streamId, setStreamId] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const isLoggedIn = token && isTokenValid(token);
+    setIsAuthenticated(isLoggedIn);
+  }, []);
 
   useEffect(() => {
     // Check for stream ID from various sources
@@ -23,9 +31,30 @@ const LiveStreamRouter = () => {
     if (extractedStreamId) {
       console.log('Stream ID detected:', extractedStreamId);
       setStreamId(extractedStreamId);
-      setCurrentView('viewer');
+      
+      // If not authenticated, save the stream ID and show login prompt
+      if (!isAuthenticated) {
+        // Save the intended destination
+        sessionStorage.setItem('redirectAfterLogin', `/stream/${extractedStreamId}`);
+        setCurrentView('login-required');
+      } else {
+        setCurrentView('viewer');
+      }
     }
-  }, [urlStreamId, searchParams]);
+  }, [urlStreamId, searchParams, isAuthenticated]);
+
+  // Token validation helper
+  const isTokenValid = (token) => {
+    if (!token) return false;
+    try {
+      const [, payloadBase64] = token.split('.');
+      const payload = JSON.parse(atob(payloadBase64));
+      const exp = payload.exp * 1000;
+      return Date.now() < exp;
+    } catch (e) {
+      return false;
+    }
+  };
 
   const handleStartHosting = () => {
     navigate('/host-live-stream');

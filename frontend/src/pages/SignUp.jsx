@@ -41,6 +41,75 @@ export default function Signup() {
     if (ref) sessionStorage.setItem("referralCode", ref);
   }, []);
 
+
+  const handleSignUpSuccess = (token) => {
+    // Save token
+    localStorage.setItem('token', token);
+
+    // Check for redirect URL
+    const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+
+    if (redirectUrl) {
+      // Clear the stored redirect
+      sessionStorage.removeItem('redirectAfterLogin');
+      // Navigate to the stream
+      navigate(redirectUrl);
+    } else {
+      // Default navigation to home
+      navigate('/');
+    }
+  };
+
+  // Email/Password Signup
+  // const handleSignup = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setError("");
+
+  //   if (password !== confirmPassword) {
+  //     setError("Passwords don't match");
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   if (password.length < 6) {
+  //     setError("Password must be at least 6 characters");
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   if (username.length < 3) {
+  //     setError("Username must be at least 3 characters");
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   try {
+  //     const referralCode = sessionStorage.getItem("referralCode");
+
+  //     const res = await axios.post(
+  //       "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/signup",
+  //       { username, email, password, referralCode }
+  //     );
+
+  //     sessionStorage.removeItem("referralCode");
+  //     localStorage.setItem("token", res.data.token);
+  //     localStorage.setItem("user", JSON.stringify(res.data.user));
+  //     const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+
+  //      if (redirectUrl) {
+  //       sessionStorage.removeItem('redirectAfterLogin');
+  //       navigate(redirectUrl);
+  //     } else {
+  //       navigate('/');
+  //     }
+  //   } catch (err) {
+  //     setError(err.response?.data?.msg || "Signup failed");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   // Email/Password Signup
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -76,13 +145,43 @@ export default function Signup() {
       sessionStorage.removeItem("referralCode");
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      navigate("/");
+
+      // ✅ Check for redirect
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+
+      if (redirectUrl) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectUrl);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.msg || "Signup failed");
     } finally {
       setLoading(false);
     }
   };
+
+  // Google Signup
+  // const handleGoogleResponse = async (response) => {
+  //   setGoogleLoading(true);
+  //   setError("");
+  //   try {
+  //     const idToken = response.credential;
+  //     const res = await axios.post(
+  //       "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/google",
+  //       { idToken }
+  //     );
+  //     localStorage.setItem("token", res.data.token);
+  //     localStorage.setItem("user", JSON.stringify(res.data.user));
+  //     navigate("/");
+  //   } catch (err) {
+  //     console.error("Google signup error:", err);
+  //     setError(err.response?.data?.msg || "Google signup failed");
+  //   } finally {
+  //     setGoogleLoading(false);
+  //   }
+  // };
 
   // Google Signup
   const handleGoogleResponse = async (response) => {
@@ -96,7 +195,16 @@ export default function Signup() {
       );
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      navigate("/");
+
+      // ✅ Check for redirect
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+
+      if (redirectUrl) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectUrl);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error("Google signup error:", err);
       setError(err.response?.data?.msg || "Google signup failed");
