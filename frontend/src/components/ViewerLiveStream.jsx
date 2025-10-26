@@ -111,7 +111,7 @@
 //   const [purchaseLoading, setPurchaseLoading] = useState(false);
 //   const [purchaseError, setPurchaseError] = useState('');
 //   const [step, setStep] = useState('delivery'); // 'delivery' or 'confirmation'
-  
+
 //   const [deliveryInfo, setDeliveryInfo] = useState({
 //     firstName: '',
 //     lastName: '',
@@ -128,47 +128,47 @@
 
 //   const validateDeliveryInfo = () => {
 //     const { firstName, lastName, email, phone, address, city, state, zipCode, country } = deliveryInfo;
-    
+
 //     if (!firstName.trim() || !lastName.trim()) {
 //       setPurchaseError('First and last name are required');
 //       return false;
 //     }
-    
+
 //     if (!email.trim() || !email.includes('@')) {
 //       setPurchaseError('Valid email is required');
 //       return false;
 //     }
-    
+
 //     if (!phone.trim()) {
 //       setPurchaseError('Phone number is required');
 //       return false;
 //     }
-    
+
 //     if (!address.trim()) {
 //       setPurchaseError('Address is required');
 //       return false;
 //     }
-    
+
 //     if (!city.trim()) {
 //       setPurchaseError('City is required');
 //       return false;
 //     }
-    
+
 //     if (!state.trim()) {
 //       setPurchaseError('State/Province is required');
 //       return false;
 //     }
-    
+
 //     if (!zipCode.trim()) {
 //       setPurchaseError('ZIP/Postal code is required');
 //       return false;
 //     }
-    
+
 //     if (!country.trim()) {
 //       setPurchaseError('Country is required');
 //       return false;
 //     }
-    
+
 //     return true;
 //   };
 
@@ -378,7 +378,7 @@
 //               <div className="bg-gray-700 rounded-lg p-4 space-y-3">
 //                 <h4 className="font-semibold text-lg">{product.name}</h4>
 //                 <p className="text-gray-300 text-sm">{product.description}</p>
-                
+
 //                 <div className="border-t border-gray-600 pt-3 mt-3">
 //                   <div className="flex justify-between text-sm mb-2">
 //                     <span>Product Price:</span>
@@ -520,9 +520,9 @@
 //   // NEW: Initialize Socket with proper error handling
 //   const initializeSocket = () => {
 //     console.log('Initializing socket connection...');
-    
+
 //     const token = localStorage.getItem('token');
-    
+
 //     // Create socket with proper configuration
 //     const newSocket = io(SOCKET_URL, {
 //       reconnection: true,
@@ -538,7 +538,7 @@
 //     newSocket.on('connect', () => {
 //       console.log('Socket connected! ID:', newSocket.id);
 //       setSocketConnected(true);
-      
+
 //       // Join the stream room
 //       newSocket.emit('join-stream', {
 //         streamId: streamId,
@@ -622,14 +622,14 @@
 //       console.log('Stream fetched:', data);
 //       setStream(data);
 //       setProducts(data.products.map((p, index) => ({ ...p, index })) || []);
-      
+
 //       if (data.viewerToken && data.roomUrl) {
 //         await connectToLiveKit(data.roomUrl, data.viewerToken);
 //       }
 
 //       // Initialize socket AFTER stream is loaded
 //       initializeSocket();
-      
+
 //     } catch (err) {
 //       setError(err.message);
 //     } finally {
@@ -640,7 +640,7 @@
 //   const connectToLiveKit = async (roomUrl, viewerToken) => {
 //     try {
 //       console.log('Connecting to LiveKit as viewer...');
-      
+
 //       const room = new Room();
 //       await room.connect(roomUrl, viewerToken);
 //       setLiveKitRoom(room);
@@ -715,7 +715,7 @@
 //         .catch((err) => {
 //           console.error('Audio autoplay failed:', err);
 //           setError('Click anywhere to enable audio');
-          
+
 //           const playOnInteraction = () => {
 //             audioEl.play()
 //               .then(() => {
@@ -727,7 +727,7 @@
 //               })
 //               .catch(e => console.error('Audio play failed:', e));
 //           };
-          
+
 //           document.addEventListener('click', playOnInteraction, { once: true });
 //           document.addEventListener('touchstart', playOnInteraction, { once: true });
 //         });
@@ -766,14 +766,14 @@
 //       setError('Chat not connected. Please wait...');
 //       return;
 //     }
-    
+
 //     const newComment = {
 //       id: Date.now(),
 //       username: 'You',
 //       text: comment,
 //       timestamp: new Date()
 //     };
-    
+
 //     setComments(prev => [...prev, newComment]);
 //     setComment('');
 //   };
@@ -817,7 +817,7 @@
 //           100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
 //         }
 //       `}</style>
-      
+
 //       {error && (
 //         <div className="fixed top-4 left-4 right-4 bg-yellow-500/90 text-black px-4 py-3 rounded-lg text-sm z-50">
 //           {error}
@@ -894,7 +894,7 @@
 //                   </div>
 //                 ))
 //               )}
-              
+
 //               {hearts.map((heart) => (
 //                 <div
 //                   key={heart.id}
@@ -1044,7 +1044,7 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseError, setPurchaseError] = useState('');
   const [step, setStep] = useState('delivery');
-  
+
   const [deliveryInfo, setDeliveryInfo] = useState({
     firstName: '',
     lastName: '',
@@ -1061,47 +1061,47 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
 
   const validateDeliveryInfo = () => {
     const { firstName, lastName, email, phone, address, city, state, zipCode, country } = deliveryInfo;
-    
+
     if (!firstName.trim() || !lastName.trim()) {
       setPurchaseError('First and last name are required');
       return false;
     }
-    
+
     if (!email.trim() || !email.includes('@')) {
       setPurchaseError('Valid email is required');
       return false;
     }
-    
+
     if (!phone.trim()) {
       setPurchaseError('Phone number is required');
       return false;
     }
-    
+
     if (!address.trim()) {
       setPurchaseError('Address is required');
       return false;
     }
-    
+
     if (!city.trim()) {
       setPurchaseError('City is required');
       return false;
     }
-    
+
     if (!state.trim()) {
       setPurchaseError('State/Province is required');
       return false;
     }
-    
+
     if (!zipCode.trim()) {
       setPurchaseError('ZIP/Postal code is required');
       return false;
     }
-    
+
     if (!country.trim()) {
       setPurchaseError('Country is required');
       return false;
     }
-    
+
     return true;
   };
 
@@ -1133,8 +1133,8 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
-        body: JSON.stringify({ 
-          productIndex: product.index, 
+        body: JSON.stringify({
+          productIndex: product.index,
           coinCost,
           deliveryInfo: deliveryInfo
         })
@@ -1309,7 +1309,7 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
               <div className="bg-gray-700 rounded-lg p-4 space-y-3">
                 <h4 className="font-semibold text-lg">{product.name}</h4>
                 <p className="text-gray-300 text-sm">{product.description}</p>
-                
+
                 <div className="border-t border-gray-600 pt-3 mt-3">
                   <div className="flex justify-between text-sm mb-2">
                     <span>Product Price:</span>
@@ -1448,9 +1448,9 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
 
   const initializeSocket = () => {
     console.log('Initializing socket connection...');
-    
+
     const token = localStorage.getItem('token');
-    
+
     const newSocket = io(SOCKET_URL, {
       reconnection: true,
       reconnectionDelay: 1000,
@@ -1464,7 +1464,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     newSocket.on('connect', () => {
       console.log('Socket connected! ID:', newSocket.id);
       setSocketConnected(true);
-      
+
       newSocket.emit('join-stream', {
         streamId: streamId,
         isStreamer: false
@@ -1489,8 +1489,8 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     newSocket.on('heart-sent', (data) => {
       console.log('Heart animation triggered');
       const heartId = Date.now() + Math.random();
-      setHearts(prev => [...prev, { 
-        id: heartId, 
+      setHearts(prev => [...prev, {
+        id: heartId,
         x: Math.random() * 80 + 10
       }]);
       setTimeout(() => {
@@ -1498,11 +1498,20 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       }, 3000);
     });
 
+    // newSocket.on('product-added', (data) => {
+    //   if (data.streamId === streamId) {
+    //     setProducts(prev => [
+    //      ...prev,
+    //       { ...data.product } 
+    //     ]);
+    //   }
+    // });
+
     newSocket.on('product-added', (data) => {
       if (data.streamId === streamId) {
         setProducts(prev => [
-         ...prev,
-          { ...data.product } 
+          ...prev,
+          { ...data.product, index: data.productIndex }
         ]);
       }
     });
@@ -1544,13 +1553,13 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       console.log('Stream fetched:', data);
       setStream(data);
       setProducts(data.products.map((p, index) => ({ ...p, index })) || []);
-      
+
       if (data.viewerToken && data.roomUrl) {
         await connectToLiveKit(data.roomUrl, data.viewerToken);
       }
 
       initializeSocket();
-      
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -1561,7 +1570,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   const connectToLiveKit = async (roomUrl, viewerToken) => {
     try {
       console.log('Connecting to LiveKit as viewer...');
-      
+
       const room = new Room();
       await room.connect(roomUrl, viewerToken);
       setLiveKitRoom(room);
@@ -1636,7 +1645,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
         .catch((err) => {
           console.error('Audio autoplay failed:', err);
           setError('Click anywhere to enable audio');
-          
+
           const playOnInteraction = () => {
             audioEl.play()
               .then(() => {
@@ -1648,7 +1657,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
               })
               .catch(e => console.error('Audio play failed:', e));
           };
-          
+
           document.addEventListener('click', playOnInteraction, { once: true });
           document.addEventListener('touchstart', playOnInteraction, { once: true });
         });
@@ -1687,14 +1696,14 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       setError('Chat not connected. Please wait...');
       return;
     }
-    
+
     const newComment = {
       id: Date.now(),
       username: 'You',
       text: comment,
       timestamp: new Date()
     };
-    
+
     setComments(prev => [...prev, newComment]);
     setComment('');
   };
@@ -1738,7 +1747,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
           100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
         }
       `}</style>
-      
+
       {error && (
         <div className="fixed top-4 left-4 right-4 bg-yellow-500/90 text-black px-4 py-3 rounded-lg text-sm z-50">
           {error}
@@ -1815,7 +1824,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                   </div>
                 ))
               )}
-              
+
               {hearts.map((heart) => (
                 <div
                   key={heart.id}
@@ -1841,7 +1850,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                     <p className="text-gray-400 mb-2 text-sm">{p.description}</p>
                     <p className="font-bold mb-2">${p.price}</p>
                     {p.type === 'product' ? (
-                      <button 
+                      <button
                         onClick={() => {
                           const token = localStorage.getItem('token');
                           if (!token) {
@@ -1856,9 +1865,9 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                         Buy Now
                       </button>
                     ) : (
-                      <a 
-                        href={p.link} 
-                        target="_blank" 
+                      <a
+                        href={p.link}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm block text-center"
                       >
