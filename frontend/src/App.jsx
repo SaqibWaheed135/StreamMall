@@ -32,6 +32,7 @@ import PointsWithdrawalScreen from "./components/PointsWithdrawalScreen.jsx";
 import HostLiveStream from "./components/HostLiveStream.jsx";
 import ViewerLiveStream from "./components/ViewerLiveStream.jsx";
 import LiveStreamsListing from './components/LiveStream.jsx';
+import LiveStreamRouter from "./pages/LiveStreamRouter.jsx";
 
 
 // ✅ Load Poppins font dynamically
@@ -50,9 +51,6 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
     { id: "live", icon: CircleDot, label: "LIVE", path: "/live-streams" },
     { id: "search", icon: Search, label: "Discover", path: "/search" },
     { id: "messages", icon: MessageSquare, label: "Messages", path: "/messaging" },
-
-
-
     { id: "profile", icon: User, label: "Profile", path: "/profile" },
   ];
 
@@ -126,14 +124,13 @@ const ProtectedRoute = ({ children }) => {
 };
 
 // --------------------
-// Wrapper for ViewerLiveStream
+// Wrapper for ViewerLiveStream (OLD - for backward compatibility)
 // --------------------
 const ViewerLiveStreamWrapper = ({ onBack }) => {
   const { streamId } = useParams();
   const navigate = useNavigate();
   
   const handleBack = () => {
-    // Navigate back to live streams listing
     navigate('/live-streams');
   };
 
@@ -231,17 +228,58 @@ const App = () => {
           <Route path="/messages/:conversationId" element={<ProtectedRoute><MessagingScreen /></ProtectedRoute>} />
           <Route path="/live-browse" element={<ProtectedRoute><LiveBrowse /></ProtectedRoute>} />
           <Route path="/live/:streamId" element={<LiveViewer />} />
-          {/* Updated Live Stream Routes */}
+          
+          {/* ✅ UPDATED: Live Stream Routes with LiveStreamRouter */}
+          
+          {/* Main live streams listing page */}
           <Route path="/live-streams" element={
             <ProtectedRoute>
               <LiveStreamsListing
                 onStartStream={() => navigate('/host-live-stream')}
-                onJoinStream={(streamId) => navigate(`/viewer-live-stream/${streamId}`)}
+                onJoinStream={(streamId) => navigate(`/stream/${streamId}`)}
               />
             </ProtectedRoute>
           } />
-          <Route path="/host-live-stream" element={<ProtectedRoute><HostLiveStream onBack={() => navigate('/live-streams')} /></ProtectedRoute>} />
-          <Route path="/viewer-live-stream/:streamId" element={<ProtectedRoute><ViewerLiveStreamWrapper /></ProtectedRoute>} />
+          
+          {/* Host live stream */}
+          <Route 
+            path="/host-live-stream" 
+            element={
+              <ProtectedRoute>
+                <HostLiveStream onBack={() => navigate('/live-streams')} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* ✅ NEW: Shareable stream link - Auto-routes to viewer */}
+          <Route 
+            path="/stream/:streamId" 
+            element={
+              <ProtectedRoute>
+                <LiveStreamRouter />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Alternative routes (for backward compatibility) */}
+          <Route 
+            path="/watch/:streamId" 
+            element={
+              <ProtectedRoute>
+                <LiveStreamRouter />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Old viewer route - kept for backward compatibility */}
+          <Route 
+            path="/viewer-live-stream/:streamId" 
+            element={
+              <ProtectedRoute>
+                <ViewerLiveStreamWrapper />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </main>
 

@@ -242,32 +242,33 @@ const HostLiveStream = ({ onBack }) => {
   };
 
   // **NEW: Handle share functionality**
-  const handleShare = async () => {
-    if (!streamData?.streamId) {
-      setError('No stream active to share');
-      return;
-    }
+ const handleShare = async () => {
+  if (!streamData?.streamId) {
+    setError('No stream active to share');
+    return;
+  }
 
-    const shareUrl = `${window.location.origin}/host-live-stream/${streamData.streamId}`;
-    const shareData = {
-      title: streamData.stream?.title || 'Live Stream',
-      text: streamData.stream?.description || 'Join my live stream!',
-      url: shareUrl,
-    };
-
-    try {
-      if (navigator.share && isMobile()) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        setError('Stream link copied to clipboard!');
-        setTimeout(() => setError(''), 3000);
-      }
-    } catch (err) {
-      console.error('Share failed:', err);
-      setError('Failed to share stream link');
-    }
+  // ✅ UPDATED: Use /stream/ route so viewers open in viewer mode
+  const shareUrl = `${window.location.origin}/stream/${streamData.streamId}`;
+  const shareData = {
+    title: streamData.stream?.title || 'Live Stream',
+    text: streamData.stream?.description || 'Join my live stream!',
+    url: shareUrl,
   };
+
+  try {
+    if (navigator.share && isMobile()) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      setError('Stream link copied to clipboard!');
+      setTimeout(() => setError(''), 3000);
+    }
+  } catch (err) {
+    console.error('Share failed:', err);
+    setError('Failed to share stream link');
+  }
+};
 
   // **NEW: Add viewport meta tag for mobile**
   useEffect(() => {
