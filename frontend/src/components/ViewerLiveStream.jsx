@@ -1460,7 +1460,8 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   const [userCoinBalance, setUserCoinBalance] = useState(0);
   const [socket, setSocket] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
-  const [showStreamEnded, setShowStreamEnded] = useState(false); // NEW
+  const [showStreamEnded, setShowStreamEnded] = useState(false); 
+  const [endedStreamData, setEndedStreamData] = useState(null); 
   const commentsEndRef = useRef(null);
 
   useEffect(() => {
