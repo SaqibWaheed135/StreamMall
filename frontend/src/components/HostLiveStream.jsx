@@ -457,6 +457,13 @@ const HostLiveStream = ({ onBack }) => {
         }
       });
 
+      newSocket.on('stream-ended', (data) => {
+       if (data.streamId === streamData.streamId) {
+          window.alert('The host has ended the stream.');
+          onBack();  // Navigate back to live-streams page
+        }
+      });
+
       newSocket.on('error', (error) => {
         console.error('Socket error:', error);
       });

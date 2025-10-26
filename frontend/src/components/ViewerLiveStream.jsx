@@ -1498,21 +1498,19 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       }, 3000);
     });
 
-    // newSocket.on('product-added', (data) => {
-    //   if (data.streamId === streamId) {
-    //     setProducts(prev => [
-    //      ...prev,
-    //       { ...data.product } 
-    //     ]);
-    //   }
-    // });
-
     newSocket.on('product-added', (data) => {
       if (data.streamId === streamId) {
         setProducts(prev => [
           ...prev,
           { ...data.product, index: data.productIndex }
         ]);
+      }
+    });
+
+    newSocket.on('stream-ended', (data) => {
+      if (data.streamId === streamId) {
+        window.alert('The host has ended the stream.');
+        onBack();  // Navigate back to live-streams page
       }
     });
 
