@@ -192,28 +192,7 @@ const HostLiveStream = ({ onBack }) => {
   const localVideoRef = useRef(null);
   const commentsEndRef = useRef(null);
 
-  useEffect(() => {
-    // Only attach when we are LIVE
-    const onPopState = (e) => {
-      if (isLive) {
-        e.preventDefault();                 // stop immediate navigation
-        setShowConfirmEnd(true);           // show your modal
-        window.history.pushState(null, '', ''); // keep the URL
-      } else {
-        onBack();                           // not live → just go back
-      }
-    };
-
-    if (isLive) {
-      window.addEventListener('popstate', onPopState);
-      // Push a dummy state so the first back click triggers popstate
-      window.history.pushState(null, '', '');
-    }
-
-    return () => {
-      window.removeEventListener('popstate', onPopState);
-    };
-  }, [isLive, onBack]);
+ 
 
   // Persist stream state in localStorage
   const saveStreamState = () => {
@@ -782,6 +761,29 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
+   useEffect(() => {
+    // Only attach when we are LIVE
+    const onPopState = (e) => {
+      if (isLive) {
+        e.preventDefault();                 // stop immediate navigation
+        setShowConfirmEnd(true);           // show your modal
+        window.history.pushState(null, '', ''); // keep the URL
+      } else {
+        onBack();                           // not live → just go back
+      }
+    };
+
+    if (isLive) {
+      window.addEventListener('popstate', onPopState);
+      // Push a dummy state so the first back click triggers popstate
+      window.history.pushState(null, '', '');
+    }
+
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [isLive, onBack]);
+  
   const endStream = async () => {
     if (!streamData?.streamId) return;
 
