@@ -87,50 +87,19 @@ const LiveStreamRouter = () => {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Host Card */}
           <div className="bg-gray-800 rounded-xl p-8 hover:bg-gray-750 transition-colors">
-            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-6 mx-auto">
-              <Radio className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-bold mb-3 text-center">Start Streaming</h2>
-            <p className="text-gray-400 mb-6 text-center">
-              Go live and share your content with viewers worldwide
-            </p>
-            <button
-              onClick={handleStartHosting}
-              className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-semibold transition-colors"
-            >
-              Start Live Stream
-            </button>
-          </div>
-
-          {/* Viewer Card */}
-          <div className="bg-gray-800 rounded-xl p-8 hover:bg-gray-750 transition-colors">
             <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-6 mx-auto">
               <Users className="w-8 h-8" />
             </div>
             <h2 className="text-2xl font-bold mb-3 text-center">Watch Streams</h2>
             <p className="text-gray-400 mb-6 text-center">
-              Enter a stream ID to join an ongoing live stream
+              Join an ongoing live stream by login or signup
             </p>
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Enter Stream ID"
-                onChange={(e) => setStreamId(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && streamId) {
-                    handleJoinAsViewer(streamId);
-                  }
-                }}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
-              />
-              <button
-                onClick={() => streamId && handleJoinAsViewer(streamId)}
-                disabled={!streamId}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-3 rounded-lg font-semibold transition-colors"
-              >
-                Join Stream
-              </button>
-            </div>
+            <button
+              onClick={handleStartHosting}
+             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-3 rounded-lg font-semibold transition-colors"
+            >
+              Join Live Stream
+            </button>
           </div>
         </div>
 
