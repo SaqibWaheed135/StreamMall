@@ -1855,7 +1855,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
         />
       )}
       {/* Invite Modal */}
-      // Update the InviteModal component call to pass referralPoints:
+      {/* // Update the InviteModal component call to pass referralPoints: */}
       {showInviteModal && (
         <InviteModal
           user={user}
