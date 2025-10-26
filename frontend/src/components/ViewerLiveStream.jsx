@@ -1019,7 +1019,7 @@
 // export default ViewerLiveStream;  
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Users, Heart, MessageCircle, Send, X } from 'lucide-react';
+import { Camera, Users, Heart, MessageCircle, Send, X, AlertCircle, Clock, Eye, HeartIcon } from 'lucide-react';
 import io from 'socket.io-client';
 
 let Room, RoomEvent, Track;
