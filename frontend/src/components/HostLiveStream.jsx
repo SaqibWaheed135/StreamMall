@@ -761,29 +761,36 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
   // Handle browser back button
-  useEffect(() => {
-    const handlePopState = (e) => {
-      if (isLive) {
-        // Prevent navigation by pushing state back
-        window.history.pushState(null, '', window.location.pathname);
-        // Show confirmation modal
-        setShowConfirmEnd(true);
-      } else {
-        // Not live, allow normal back navigation
-        onBack();
-      }
-    };
+ useEffect(() => {
+  // Only run when the stream is LIVE
+  if (!isLive) return;
 
-    if (isLive) {
-      // Push initial state when stream starts
-      window.history.pushState(null, '', window.location.pathname);
-      window.addEventListener('popstate', handlePopState);
-    }
+  // 1. Prevent the default “unsaved changes” warning
+  const handleBeforeUnload = (e) => {
+    e.preventDefault();
+    e.returnValue = ''; // Required for Chrome
+  };
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [isLive, onBack]);
+  // 2. Catch the browser back button (popstate)
+  const onPopState = (e) => {
+    e.preventDefault();               // Block navigation
+    setShowConfirmEnd(true);          // Show YOUR modal
+
+    // Push the current URL again so the next back press works
+    window.history.pushState(null, '', window.location.href);
+  };
+  window.addEventListener('popstate', onPopState);
+
+  // 3. Push ONE dummy state so the first back press triggers popstate
+  window.history.pushState(null, '', window.location.href);
+
+  // Cleanup
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.removeEventListener('popstate', onPopState);
+  };
+}, [isLive]);
 
   const endStream = async () => {
     if (!streamData?.streamId) return;
