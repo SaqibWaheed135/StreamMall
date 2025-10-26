@@ -21,20 +21,20 @@ const loadLiveKit = async () => {
 // **MOBILE DETECTION HELPER**
 const isMobile = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-         window.innerWidth <= 768;
+    window.innerWidth <= 768;
 };
 
 // **MOBILE-OPTIMIZED CAMERA CONSTRAINTS**
 const getCameraConstraints = () => {
   const mobile = isMobile();
-  
+
   return {
     video: {
       // Mobile-specific settings
       ...(mobile && {
         width: { ideal: 640 },
         height: { ideal: 480 },
-        aspectRatio: { ideal: 16/9 },
+        aspectRatio: { ideal: 16 / 9 },
         facingMode: 'user',
       }),
       // Desktop/Laptop settings
@@ -192,6 +192,29 @@ const HostLiveStream = ({ onBack }) => {
   const localVideoRef = useRef(null);
   const commentsEndRef = useRef(null);
 
+  useEffect(() => {
+    // Only attach when we are LIVE
+    const onPopState = (e) => {
+      if (isLive) {
+        e.preventDefault();                 // stop immediate navigation
+        setShowConfirmEnd(true);           // show your modal
+        window.history.pushState(null, '', ''); // keep the URL
+      } else {
+        onBack();                           // not live → just go back
+      }
+    };
+
+    if (isLive) {
+      window.addEventListener('popstate', onPopState);
+      // Push a dummy state so the first back click triggers popstate
+      window.history.pushState(null, '', '');
+    }
+
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [isLive, onBack]);
+
   // Persist stream state in localStorage
   const saveStreamState = () => {
     if (isLive && streamData) {
@@ -335,17 +358,17 @@ const HostLiveStream = ({ onBack }) => {
     try {
       const constraints = getCameraConstraints();
       console.log('📱 Using constraints:', constraints);
-      
+
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setLocalStream(stream);
-      
+
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
         localVideoRef.current.muted = true;
         localVideoRef.current.style.objectFit = 'cover';
         localVideoRef.current.style.objectPosition = 'center';
         await localVideoRef.current.play();
-        
+
         if (isMobile()) {
           localVideoRef.current.style.width = '100%';
           localVideoRef.current.style.height = '100%';
@@ -404,10 +427,10 @@ const HostLiveStream = ({ onBack }) => {
           }]);
         } else if (message.type === 'heart') {
           const heartId = Date.now() + Math.random();
-          setHearts(prev => [...prev, { 
-            id: heartId, 
+          setHearts(prev => [...prev, {
+            id: heartId,
             x: Math.random() * 80 + 10,
-            from: participant?.identity 
+            from: participant?.identity
           }]);
           setTimeout(() => {
             setHearts(prev => prev.filter(h => h.id !== heartId));
@@ -434,9 +457,9 @@ const HostLiveStream = ({ onBack }) => {
 
       newSocket.on('connect', () => {
         console.log('Socket reconnected');
-        newSocket.emit('join-stream', { 
-          streamId: streamData.streamId, 
-          isStreamer: true 
+        newSocket.emit('join-stream', {
+          streamId: streamData.streamId,
+          isStreamer: true
         });
         newSocket.emit('subscribe-to-stream-earnings', {
           streamId: streamData.streamId
@@ -454,10 +477,10 @@ const HostLiveStream = ({ onBack }) => {
 
       newSocket.on('heart-sent', (data) => {
         const heartId = Date.now() + Math.random();
-        setHearts(prev => [...prev, { 
-          id: heartId, 
+        setHearts(prev => [...prev, {
+          id: heartId,
           x: Math.random() * 80 + 10,
-          from: data.username 
+          from: data.username
         }]);
         setTimeout(() => {
           setHearts(prev => prev.filter(h => h.id !== heartId));
@@ -466,10 +489,10 @@ const HostLiveStream = ({ onBack }) => {
 
       newSocket.on('new-order', (data) => {
         setOrders(prev => {
-          const orderExists = prev.some(o => 
-            o._id === data.order._id || 
-            (o.productIndex === data.order.productIndex && 
-             o.buyer === data.order.buyer)
+          const orderExists = prev.some(o =>
+            o._id === data.order._id ||
+            (o.productIndex === data.order.productIndex &&
+              o.buyer === data.order.buyer)
           );
           return orderExists ? prev : [...prev, {
             ...data.order,
@@ -512,12 +535,12 @@ const HostLiveStream = ({ onBack }) => {
           token: localStorage.getItem('token')
         }
       });
-      
+
       newSocket.on('connect', () => {
         console.log('Socket connected');
-        newSocket.emit('join-stream', { 
-          streamId: streamData.streamId, 
-          isStreamer: true 
+        newSocket.emit('join-stream', {
+          streamId: streamData.streamId,
+          isStreamer: true
         });
         newSocket.emit('subscribe-to-stream-earnings', {
           streamId: streamData.streamId
@@ -535,10 +558,10 @@ const HostLiveStream = ({ onBack }) => {
 
       newSocket.on('heart-sent', (data) => {
         const heartId = Date.now() + Math.random();
-        setHearts(prev => [...prev, { 
-          id: heartId, 
+        setHearts(prev => [...prev, {
+          id: heartId,
           x: Math.random() * 80 + 10,
-          from: data.username 
+          from: data.username
         }]);
         setTimeout(() => {
           setHearts(prev => prev.filter(h => h.id !== heartId));
@@ -547,10 +570,10 @@ const HostLiveStream = ({ onBack }) => {
 
       newSocket.on('new-order', (data) => {
         setOrders(prev => {
-          const orderExists = prev.some(o => 
-            o._id === data.order._id || 
-            (o.productIndex === data.order.productIndex && 
-             o.buyer === data.order.buyer)
+          const orderExists = prev.some(o =>
+            o._id === data.order._id ||
+            (o.productIndex === data.order.productIndex &&
+              o.buyer === data.order.buyer)
           );
           return orderExists ? prev : [...prev, {
             ...data.order,
@@ -679,10 +702,10 @@ const HostLiveStream = ({ onBack }) => {
           }]);
         } else if (message.type === 'heart') {
           const heartId = Date.now() + Math.random();
-          setHearts(prev => [...prev, { 
-            id: heartId, 
+          setHearts(prev => [...prev, {
+            id: heartId,
             x: Math.random() * 80 + 10,
-            from: participant?.identity 
+            from: participant?.identity
           }]);
           setTimeout(() => {
             setHearts(prev => prev.filter(h => h.id !== heartId));
@@ -905,9 +928,9 @@ const HostLiveStream = ({ onBack }) => {
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3">
-              <div 
+              <div
                 className="bg-black rounded-lg mb-4 relative overflow-hidden"
-                style={{ 
+                style={{
                   aspectRatio: '16/9',
                   width: '100%'
                 }}
@@ -976,9 +999,9 @@ const HostLiveStream = ({ onBack }) => {
 
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="font-semibold mb-4">Add Product/Ad</h3>
-                <select 
+                <select
                   value={newProduct.type}
-                  onChange={(e) => setNewProduct({...newProduct, type: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 >
                   <option value="product">Product</option>
@@ -987,32 +1010,32 @@ const HostLiveStream = ({ onBack }) => {
                 <input
                   placeholder="Name"
                   value={newProduct.name}
-                  onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Description"
                   value={newProduct.description}
-                  onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={newProduct.price}
-                  onChange={(e) => setNewProduct({...newProduct, price: parseFloat(e.target.value)})}
+                  onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Image URL"
                   value={newProduct.imageUrl}
-                  onChange={(e) => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   placeholder="Link (for ad or product)"
                   value={newProduct.link}
-                  onChange={(e) => setNewProduct({...newProduct, link: e.target.value})}
+                  onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2 focus:outline-none focus:border-blue-500"
                 />
                 <button
@@ -1030,7 +1053,7 @@ const HostLiveStream = ({ onBack }) => {
                       const data = await response.json();
                       if (response.ok) {
                         setProducts([...products, { ...data.product, index: products.length }]);
-                        setNewProduct({type: 'product', name: '', description: '', price: 0, imageUrl: '', link: ''});
+                        setNewProduct({ type: 'product', name: '', description: '', price: 0, imageUrl: '', link: '' });
                       } else {
                         setError(data.msg);
                       }
@@ -1179,9 +1202,9 @@ const HostLiveStream = ({ onBack }) => {
             </div>
           )}
 
-          <div 
+          <div
             className="relative bg-black rounded-lg mb-6 overflow-hidden"
-            style={{ 
+            style={{
               aspectRatio: '16/9',
               width: '100%',
               maxWidth: '100vw'
@@ -1200,32 +1223,30 @@ const HostLiveStream = ({ onBack }) => {
                 height: '100%'
               }}
             />
-            
+
             {isMobile() && (
               <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs z-10">
                 📱 Rotate to landscape for best view
               </div>
             )}
-            
+
             <div className="absolute top-4 right-4 flex space-x-2 z-10">
               <button
                 onClick={toggleCamera}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${
-                  isCameraOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
-                }`}
+                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isCameraOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
+                  }`}
               >
                 {isCameraOn ? <Camera className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <button
                 onClick={toggleMic}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${
-                  isMicOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
-                }`}
+                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isMicOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
+                  }`}
               >
                 {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
             </div>
-            
+
             {!localStream && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-5">
                 <div className="text-center">
