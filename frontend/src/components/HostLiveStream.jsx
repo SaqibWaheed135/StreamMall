@@ -118,32 +118,111 @@ const HostLiveStream = ({ onBack }) => {
     return false;
   };
 
-  const handleShare = async () => {
-    if (!streamData?.streamId) {
-      setError('No stream active to share');
+ const ShareModal = ({ isOpen, stream, onClose }) => {
+  if (!isOpen) return null;
+
+  const shareUrl = `${window.location.origin}/stream/${stream?.streamId}`;
+  const shareText = encodeURIComponent(stream?.stream?.title || "Live Stream");
+
+  const shareLinks = {
+    whatsapp: `https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(shareUrl)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${shareText}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`,
+    messenger: `fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`,
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    alert("Link copied to clipboard!");
+  };
+
+  const handleShareClick = (platform) => {
+    if (!platform) {
+      handleCopy();
       return;
     }
-
-    const shareUrl = `${window.location.origin}/stream/${streamData.streamId}`;
-    const shareData = {
-      title: streamData.stream?.title || 'Live Stream',
-      text: streamData.stream?.description || 'Join my live stream!',
-      url: shareUrl,
-    };
-
-    try {
-      if (navigator.share && isMobile()) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        setError('Stream link copied to clipboard!');
-        setTimeout(() => setError(''), 3000);
-      }
-    } catch (err) {
-      console.error('Share failed:', err);
-      setError('Failed to share stream link');
-    }
+    window.open(platform, "_blank");
   };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-2xl shadow-lg w-80 animate-fadeIn relative">
+        
+        {/* Close Button */}
+        <button className="absolute top-3 right-3 text-gray-600 hover:text-black" onClick={onClose}>
+          <FaTimes size={18} />
+        </button>
+
+        <h2 className="text-xl font-bold text-center mb-4">Share Live Stream</h2>
+
+        {/* Share Buttons */}
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <button className="share-btn bg-green-500" onClick={() => handleShareClick(shareLinks.whatsapp)}>
+            <FaWhatsapp size={22} />
+            <span>WhatsApp</span>
+          </button>
+
+          <button className="share-btn bg-blue-500" onClick={() => handleShareClick(shareLinks.telegram)}>
+            <FaTelegramPlane size={22} />
+            <span>Telegram</span>
+          </button>
+
+          <button className="share-btn bg-blue-700" onClick={() => handleShareClick(shareLinks.facebook)}>
+            <FaFacebookF size={22} />
+            <span>Facebook</span>
+          </button>
+
+          <button className="share-btn bg-sky-500" onClick={() => handleShareClick(shareLinks.twitter)}>
+            <FaTwitter size={22} />
+            <span>Twitter</span>
+          </button>
+
+          <button className="share-btn bg-indigo-500" onClick={() => handleShareClick(shareLinks.messenger)}>
+            <FaFacebookMessenger size={22} />
+            <span>Messenger</span>
+          </button>
+
+          <button className="share-btn bg-gray-600" onClick={handleCopy}>
+            <FaCopy size={22} />
+            <span>Copy</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Simple styles to keep UI clean */}
+      <style jsx>{`
+        .share-btn {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          align-items: center;
+          justify-content: center;
+          padding: 10px;
+          border-radius: 12px;
+          color: white;
+          font-size: 12px;
+          font-weight: 500;
+          transition: 0.2s ease;
+        }
+
+        .share-btn:hover {
+          filter: brightness(0.9);
+          transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.25s ease-in-out;
+        }
+      `}</style>
+    </div>
+  );
+};
 
   useEffect(() => {
     const viewport = document.querySelector('meta[name="viewport"]');
