@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../assets/logo.png";
+import { API_BASE_URL } from "../config/api";
 
 // Load Poppins font dynamically
 const poppinsLink = document.createElement("link");
@@ -60,55 +61,6 @@ export default function Signup() {
     }
   };
 
-  // Email/Password Signup
-  // const handleSignup = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   setError("");
-
-  //   if (password !== confirmPassword) {
-  //     setError("Passwords don't match");
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   if (password.length < 6) {
-  //     setError("Password must be at least 6 characters");
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   if (username.length < 3) {
-  //     setError("Username must be at least 3 characters");
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   try {
-  //     const referralCode = sessionStorage.getItem("referralCode");
-
-  //     const res = await axios.post(
-  //       "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/signup",
-  //       { username, email, password, referralCode }
-  //     );
-
-  //     sessionStorage.removeItem("referralCode");
-  //     localStorage.setItem("token", res.data.token);
-  //     localStorage.setItem("user", JSON.stringify(res.data.user));
-  //     const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
-
-  //      if (redirectUrl) {
-  //       sessionStorage.removeItem('redirectAfterLogin');
-  //       navigate(redirectUrl);
-  //     } else {
-  //       navigate('/');
-  //     }
-  //   } catch (err) {
-  //     setError(err.response?.data?.msg || "Signup failed");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   // Email/Password Signup
   const handleSignup = async (e) => {
@@ -138,7 +90,7 @@ export default function Signup() {
       const referralCode = sessionStorage.getItem("referralCode");
 
       const res = await axios.post(
-        "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/signup",
+        `${API_BASE_URL}/api/auth/signup`,
         { username, email, password, referralCode }
       );
 
@@ -162,26 +114,6 @@ export default function Signup() {
     }
   };
 
-  // Google Signup
-  // const handleGoogleResponse = async (response) => {
-  //   setGoogleLoading(true);
-  //   setError("");
-  //   try {
-  //     const idToken = response.credential;
-  //     const res = await axios.post(
-  //       "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/google",
-  //       { idToken }
-  //     );
-  //     localStorage.setItem("token", res.data.token);
-  //     localStorage.setItem("user", JSON.stringify(res.data.user));
-  //     navigate("/");
-  //   } catch (err) {
-  //     console.error("Google signup error:", err);
-  //     setError(err.response?.data?.msg || "Google signup failed");
-  //   } finally {
-  //     setGoogleLoading(false);
-  //   }
-  // };
 
   // Google Signup
   const handleGoogleResponse = async (response) => {
@@ -190,7 +122,7 @@ export default function Signup() {
     try {
       const idToken = response.credential;
       const res = await axios.post(
-        "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/google",
+        `${API_BASE_URL}/api/auth/google`,
         { idToken }
       );
       localStorage.setItem("token", res.data.token);

@@ -3,6 +3,7 @@ import { Search, TrendingUp, Hash, User, Play, Heart, UserCheck, UserPlus, Messa
 import NotificationsScreen from './NotificationsScreen';
 import AddFriendsScreen from './AddFriendScreen';
 import GoogleAd from './GoogleAd';
+import { API_BASE_URL } from '../config/api';
 
 const SearchScreen = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,8 +18,6 @@ const SearchScreen = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAddFriends, setShowAddFriends] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   const filters = ['Top', 'Users'];
 

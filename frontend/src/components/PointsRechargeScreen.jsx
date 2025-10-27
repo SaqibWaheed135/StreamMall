@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, CreditCard, DollarSign, Star, Gift, History, CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, Calendar, Lock, Upload, Copy, QrCode, ExternalLink, RefreshCw } from 'lucide-react';
 import { QRCodeCanvas } from "qrcode.react";
+import { API_BASE_URL } from '../config/api';
 
 const PointsRechargeScreen = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('recharge');
@@ -40,7 +41,6 @@ const PointsRechargeScreen = ({ onBack }) => {
   const hasAlertedRef = useRef(false);
   const pollingIntervalRef = useRef(null);
 
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");

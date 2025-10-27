@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, UserPlus, UserCheck, UserX, Clock, Send, Users, Search, User } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const FollowRequestsScreen = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('received'); // 'received' or 'sent'
@@ -9,8 +10,6 @@ const FollowRequestsScreen = ({ onBack }) => {
   const [processingRequest, setProcessingRequest] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredReceivedRequests, setFilteredReceivedRequests] = useState([]);
-
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {

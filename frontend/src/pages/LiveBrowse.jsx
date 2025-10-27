@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Users, Clock, Search, Filter } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const LiveBrowse = () => {
   const [liveStreams, setLiveStreams] = useState([]);
@@ -123,7 +124,7 @@ const LiveBrowse = () => {
     const fetchLiveStreams = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://streammall-backend-73a4b072d5eb.herokuapp.com/api/live', {
+        const response = await fetch(`${API_BASE_URL}/api/live`, {
           credentials: 'include'
         });
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL = "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/admin/auth/getAd"; // ✅ your backend endpoint
 
 const AdBanner = () => {
   const [ads, setAds] = useState([]);
@@ -32,7 +32,7 @@ const AdBanner = () => {
 
   const fetchAds = async () => {
     try {
-      const res = await axios.get(API_URL);
+      const res = await axios.get(API_BASE_URL);
       const fetchedAds = res.data.data;
 
       if (fetchedAds && fetchedAds.length > 0) {

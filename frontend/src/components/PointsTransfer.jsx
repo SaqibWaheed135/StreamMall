@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, AlertCircle, CheckCircle, Loader2, ArrowUpRight, ArrowDownLeft, User, Calendar, Filter, TrendingUp, Search } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const PointsTransfer = () => {
   // Transfer form state
@@ -32,8 +33,6 @@ const PointsTransfer = () => {
   const searchRef = useRef(null);
 
   const [historyLoading, setHistoryLoading] = useState(true);
-
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   // API call helper function
   const makeAPICall = async (url, options = {}) => {

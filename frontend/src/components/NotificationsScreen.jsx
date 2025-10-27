@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Bell, User, UserCheck, UserX, Clock, Heart, MessageCircle, UserPlus, DollarSign, CheckCircle } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const NotificationsScreen = ({ onBack }) => {
   const [followRequests, setFollowRequests] = useState([]);
   const [withdrawalNotifications, setWithdrawalNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingRequest, setProcessingRequest] = useState(null);
-
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {

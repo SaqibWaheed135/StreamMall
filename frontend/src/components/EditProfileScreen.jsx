@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Camera, X, Save, User, Mail, Calendar, MapPin, Link, Eye, EyeOff } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const EditProfileScreen = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,6 @@ const EditProfileScreen = ({ onBack }) => {
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Radio, Users, Eye, Clock, Search, Filter, X, Play } from 'lucide-react';
-
-const API_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
+import { API_BASE_URL } from '../config/api';
 
 const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
   const [streams, setStreams] = useState([]);
@@ -18,7 +17,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
 
   const fetchLiveStreams = async () => {
     try {
-      const response = await fetch(`${API_URL}/live`);
+      const response = await fetch(`${API_BASE_URL}/live`);
       const data = await response.json();
 
       if (!response.ok) {

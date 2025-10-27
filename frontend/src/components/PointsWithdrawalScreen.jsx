@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, DollarSign, Star, History, Clock, CheckCircle, XCircle, AlertCircle, Loader2, User, Mail, Phone, CreditCard, Building, RefreshCw, Wallet } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const PointsWithdrawalScreen = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('withdraw');
@@ -32,8 +33,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
   });
 
   const [validationErrors, setValidationErrors] = useState({});
-
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");

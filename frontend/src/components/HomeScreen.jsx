@@ -20,8 +20,7 @@ import HostLiveStream from "./HostLiveStream";
 import PointsTransfer from "./PointsTransfer";
 import Logo from "../assets/logo.png";
 import { useNavigate, useRoutes } from "react-router-dom";
-
-const API_BASE_URL = "https://streammall-backend-73a4b072d5eb.herokuapp.com/api";
+import { API_BASE_URL } from "../config/api";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");

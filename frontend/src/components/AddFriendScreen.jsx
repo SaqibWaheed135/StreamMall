@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, User, UserPlus, UserCheck, Shield, MessageCircle, Users } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const AddFriendsScreen = ({ onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -8,8 +9,6 @@ const AddFriendsScreen = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userFollowStatus, setUserFollowStatus] = useState({});
-
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {

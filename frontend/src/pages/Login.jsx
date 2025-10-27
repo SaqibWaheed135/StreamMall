@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../assets/logo.png";
+import { API_BASE_URL } from "../config/api";
 
 // Load Poppins font dynamically
 const poppinsLink = document.createElement("link");
@@ -51,51 +52,15 @@ export default function Login() {
       navigate('/');
     }
   };
-  // Email/Password Login
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   setError("");
-  //   try {
-  //     const response = await axios.post(
-  //       "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/login",
-  //       { email, password }
-  //     );
-  //     const data = await response.json();
-  //     if (response.ok) {
-  //       // ✅ Save token
-  //       localStorage.setItem('token', data.token);
-  //       localStorage.setItem("user", JSON.stringify(res.data.user));
-
-
-  //       // ✅ Check for redirect
-  //       const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
-
-  //       if (redirectUrl) {
-  //         sessionStorage.removeItem('redirectAfterLogin');
-  //         navigate(redirectUrl);
-  //       } else {
-  //         navigate('/');
-  //       }
-  //     } else {
-  //       setError(data.msg || 'Login failed');
-  //     }
-
-  //   } catch (err) {
-  //     setError(err.response?.data?.msg || "Login failed");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // Email/Password Login
+ 
+ // Email/Password Login
 const handleLogin = async (e) => {
   e.preventDefault();
   setLoading(true);
   setError("");
   try {
     const response = await axios.post(
-      "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/login",
+      `${API_BASE_URL}/api/auth/login`,
       { email, password }
     );
     
@@ -121,34 +86,13 @@ const handleLogin = async (e) => {
 };
 
   // Google Login
-  // const handleGoogleResponse = async (response) => {
-  //   setGoogleLoading(true);
-  //   setError("");
-  //   try {
-  //     const idToken = response.credential;
-  //     const res = await axios.post(
-  //       "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/google",
-  //       { idToken }
-  //     );
-  //     localStorage.setItem("token", res.data.token);
-  //     localStorage.setItem("user", JSON.stringify(res.data.user));
-  //     navigate("/");
-  //   } catch (err) {
-  //     console.error("Google login error:", err);
-  //     setError(err.response?.data?.msg || "Google login failed");
-  //   } finally {
-  //     setGoogleLoading(false);
-  //   }
-  // };
-
-  // Google Login
 const handleGoogleResponse = async (response) => {
   setGoogleLoading(true);
   setError("");
   try {
     const idToken = response.credential;
     const res = await axios.post(
-      "https://streammall-backend-73a4b072d5eb.herokuapp.com/api/auth/google",
+      `${API_BASE_URL}/api/auth/google`,
       { idToken }
     );
     localStorage.setItem("token", res.data.token);

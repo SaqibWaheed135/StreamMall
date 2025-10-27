@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Send, ArrowLeft, Phone, Video, MoreVertical, Smile, Paperclip, Search, Trash2, Image, Play, X, Mic, Users, Plus, UserPlus, Settings, Crown, Shield, UserMinus, Check, Globe, Lock, Copy, LogOut } from 'lucide-react';
 import io from 'socket.io-client';
+import { API_BASE_URL } from '../config/api';
 
 // Group List Component
 const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoinGroup, searchQuery, setSearchQuery }) => {
@@ -461,8 +462,6 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordingIntervalRef = useRef(null);
-
-  const API_BASE_URL = 'https://streammall-backend-73a4b072d5eb.herokuapp.com/api';
 
   const API_CONFIG = useMemo(() => ({
     baseUrl: API_BASE_URL,
