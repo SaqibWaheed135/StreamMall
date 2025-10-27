@@ -2053,29 +2053,57 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
+  // useEffect(() => {
+  //   if (!isLive) return;
+
+  //   const handleBeforeUnload = (e) => {
+  //     e.preventDefault();
+  //     e.returnValue = '';
+  //   };
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
+
+  //   const onPopState = (e) => {
+  //     e.preventDefault();
+  //     setShowConfirmEnd(true);
+  //     window.history.pushState(null, '', window.location.href);
+  //   };
+  //   window.addEventListener('popstate', onPopState);
+
+  //   window.history.pushState(null, '', window.location.href);
+
+  //   return () => {
+  //     window.removeEventListener('beforeunload', handleBeforeUnload);
+  //     window.removeEventListener('popstate', onPopState);
+  //   };
+  // }, [isLive]);
+
   useEffect(() => {
-    if (!isLive) return;
+  if (!isLive) return;
 
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+  const handleBeforeUnload = (e) => {
+    e.preventDefault();
+    e.returnValue = ''; // Warn user on refresh/close tab
+  };
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
-    const onPopState = (e) => {
-      e.preventDefault();
-      setShowConfirmEnd(true);
-      window.history.pushState(null, '', window.location.href);
-    };
-    window.addEventListener('popstate', onPopState);
-
+  const blockBackNavigation = () => {
+    // Lock navigation to current page
     window.history.pushState(null, '', window.location.href);
+    setShowConfirmEnd(true); // show your "End Stream" modal
+  };
 
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', onPopState);
-    };
-  }, [isLive]);
+  // Push a state to keep user on same page
+  window.history.pushState(null, '', window.location.href);
+
+  // This fires on swipe back / browser back button
+  window.addEventListener('popstate', blockBackNavigation);
+
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.removeEventListener('popstate', blockBackNavigation);
+  };
+}, [isLive]);
+
 
   const endStream = async () => {
     if (!streamData?.streamId) return;
