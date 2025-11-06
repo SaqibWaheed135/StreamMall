@@ -14,11 +14,9 @@ import logo from "./assets/logo.png";
 import AdBanner from "./components/AdBanner.jsx";
 import HomeScreen from "./components/HomeScreen.jsx";
 import SearchScreen from "./components/SearchScreen.jsx";
-import UploadScreen from "./components/UploadScreen.jsx";
 import LiveScreen from "./components/LiveStream.jsx";
 import ProfileScreen from "./components/ProfileScreen.jsx";
 import LiveBrowse from "./pages/LiveBrowse.jsx";
-import LiveViewer from "./components/LiveViewer.jsx";
 import EditProfileScreen from "./components/EditProfileScreen.jsx";
 import AddFriendsScreen from "./components/AddFriendScreen.jsx";
 import PointsTransfer from "./components/PointsTransfer.jsx";
@@ -213,7 +211,6 @@ const App = () => {
           {/* Protected */}
           <Route path="/" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><SearchScreen /></ProtectedRoute>} />
-          <Route path="/upload" element={<ProtectedRoute><UploadScreen /></ProtectedRoute>} />
           <Route path="/live" element={<ProtectedRoute><LiveScreen /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
           <Route path="/profile/:userId" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
@@ -227,7 +224,6 @@ const App = () => {
           <Route path="/messaging" element={<ProtectedRoute><MessagingScreen /></ProtectedRoute>} />
           <Route path="/messages/:conversationId" element={<ProtectedRoute><MessagingScreen /></ProtectedRoute>} />
           <Route path="/live-browse" element={<ProtectedRoute><LiveBrowse /></ProtectedRoute>} />
-          <Route path="/live/:streamId" element={<LiveViewer />} />
           
           {/* ✅ UPDATED: Live Stream Routes with LiveStreamRouter */}
           
