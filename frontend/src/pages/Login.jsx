@@ -60,7 +60,7 @@ const handleLogin = async (e) => {
   setError("");
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/api/auth/login`,
+      `${API_BASE_URL}/auth/login`,
       { email, password }
     );
     
@@ -92,7 +92,7 @@ const handleGoogleResponse = async (response) => {
   try {
     const idToken = response.credential;
     const res = await axios.post(
-      `${API_BASE_URL}/api/auth/google`,
+      `${API_BASE_URL}/auth/google`,
       { idToken }
     );
     localStorage.setItem("token", res.data.token);

@@ -1,4 +1,6 @@
 import React from "react";
+import { AlertCircle, Clock, Eye, HeartIcon } from 'lucide-react';
+
 const StreamEndedModal = ({ streamData, onNavigate }) => {
   useEffect(() => {
     const timer = setTimeout(() => onNavigate(), 4000);

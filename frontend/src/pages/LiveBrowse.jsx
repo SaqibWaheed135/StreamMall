@@ -124,7 +124,7 @@ const LiveBrowse = () => {
     const fetchLiveStreams = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/live`, {
+        const response = await fetch(`${API_BASE_URL}/live`, {
           credentials: 'include'
         });
 

@@ -90,7 +90,7 @@ export default function Signup() {
       const referralCode = sessionStorage.getItem("referralCode");
 
       const res = await axios.post(
-        `${API_BASE_URL}/api/auth/signup`,
+        `${API_BASE_URL}/auth/signup`,
         { username, email, password, referralCode }
       );
 
@@ -122,7 +122,7 @@ export default function Signup() {
     try {
       const idToken = response.credential;
       const res = await axios.post(
-        `${API_BASE_URL}/api/auth/google`,
+        `${API_BASE_URL}/auth/google`,
         { idToken }
       );
       localStorage.setItem("token", res.data.token);

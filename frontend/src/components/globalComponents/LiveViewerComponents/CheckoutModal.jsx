@@ -1,4 +1,7 @@
 import React from "react";
+import { API_BASE_URL } from "../../../config/api";
+import {  X } from 'lucide-react';
+
 
 const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }) => {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -87,7 +90,7 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/live/${streamId}/purchase-with-coins`, {
+      const response = await fetch(`${API_BASE_URL}/live/${streamId}/purchase-with-coins`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
