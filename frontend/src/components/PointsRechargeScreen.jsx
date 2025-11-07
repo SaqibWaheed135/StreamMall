@@ -682,6 +682,95 @@ const PointsRechargeScreen = ({ onBack }) => {
     hasAlertedRef.current = false;
   };
 
+  // Add this function to your PointsRechargeScreen component
+  // Place it after the resetForm function and before the loading check
+
+  const handleRecharge = async () => {
+    try {
+      // Validate form first
+      if (!validateForm()) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      setRecharging(true);
+
+      const amount = selectedAmount || parseFloat(customAmount);
+      const pointsToAdd = calculatePoints(amount);
+
+      // For bank transfer method
+      if (selectedPaymentMethod === 'bank') {
+        // Prepare FormData for file upload
+        const formData = new FormData();
+
+        // Add main fields
+        formData.append('amount', amount.toString());
+        formData.append('pointsToAdd', pointsToAdd.toString());
+        formData.append('method', 'bank');
+
+        // Add details as a JSON string
+        const details = {
+          fullName: paymentDetails.fullName,
+          email: paymentDetails.email,
+          phone: paymentDetails.phone,
+          transactionId: paymentDetails.transactionId,
+        };
+        formData.append('details', JSON.stringify(details));
+
+        // Add screenshot file
+        if (paymentDetails.transactionScreenshot) {
+          formData.append('transactionScreenshot', paymentDetails.transactionScreenshot);
+        }
+
+        // Get token for authorization
+        const token = localStorage.getItem('token');
+
+        // Send request to backend
+        const response = await fetch(`${API_BASE_URL}/recharges/request`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            // Don't set Content-Type, let browser set it with boundary for FormData
+          },
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Success - show success message
+          alert(`✅ Recharge request submitted successfully!\n\nRequest ID: ${data.recharge.requestId}\nAmount: $${data.recharge.amount}\nPoints: ${data.recharge.pointsToAdd.toLocaleString()}\n\nYour request is being reviewed. You'll receive points once approved by admin.`);
+
+          // Refresh data
+          await fetchPointsBalance();
+          await fetchPointsHistory();
+
+          // Reset form and go to history tab
+          resetForm();
+          setActiveTab('history');
+        } else {
+          // Handle errors
+          const errorMsg = data.errors?.[0]?.msg || data.msg || 'Failed to submit recharge request';
+          alert(`❌ Error: ${errorMsg}`);
+        }
+      } else if (selectedPaymentMethod === 'card' || selectedPaymentMethod === 'paypal') {
+        // For card/PayPal - these would integrate with payment gateways
+        alert('Card and PayPal payments are currently not available. Please use Bank Transfer or USDT.');
+      } else {
+        alert('Invalid payment method selected');
+      }
+    } catch (error) {
+      console.error('Error submitting recharge:', error);
+      alert('❌ Failed to submit recharge request. Please check your connection and try again.');
+    } finally {
+      setRecharging(false);
+    }
+  };
+
+  // Now update the button onClick to use this function:
+  // Replace the button code with this:
+
+
   // Loading screen with skeleton
   if (loading) {
     return <RechargeSkeleton />;
@@ -719,8 +808,8 @@ const PointsRechargeScreen = ({ onBack }) => {
 
         <div className="p-4 max-w-md mx-auto">
           <div className={`rounded-xl p-4 mb-6 ${paymentStatus === 'approved' ? 'bg-green-900/50 border border-green-500' :
-              paymentStatus === 'expired' ? 'bg-red-900/50 border border-red-500' :
-                'bg-yellow-900/50 border border-yellow-500'
+            paymentStatus === 'expired' ? 'bg-red-900/50 border border-red-500' :
+              'bg-yellow-900/50 border border-yellow-500'
             }`}>
             <div className="text-center">
               {paymentStatus === 'approved' ? (
@@ -1182,7 +1271,7 @@ const PointsRechargeScreen = ({ onBack }) => {
               </div>
             )}
 
-            <button
+            {/* <button
               onClick={() => {
                 // This would be your handleRecharge function
                 alert('Recharge functionality would be implemented here');
@@ -1201,8 +1290,31 @@ const PointsRechargeScreen = ({ onBack }) => {
                   <span>{selectedPaymentMethod === 'bank' ? 'Submit Recharge Request' : `Complete Payment - ${selectedAmount || customAmount}`}</span>
                 </div>
               )}
-            </button>
+            </button> */}
 
+
+
+            <button
+              onClick={handleRecharge}
+              disabled={recharging || !selectedAmount && !customAmount}
+              className="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-pink-700 hover:to-purple-700 transition-all"
+            >
+              {recharging ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>{selectedPaymentMethod === 'bank' ? 'Submitting Request...' : 'Processing Payment...'}</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center space-x-2">
+                  <Lock className="w-5 h-5" />
+                  <span>
+                    {selectedPaymentMethod === 'bank'
+                      ? 'Submit Recharge Request'
+                      : `Complete Payment - $${selectedAmount || customAmount}`}
+                  </span>
+                </div>
+              )}
+            </button>
             <div className="bg-gray-800 rounded-lg p-4 text-center">
               <div className="flex items-center justify-center space-x-2 mb-2">
                 <Lock className="w-4 h-4 text-green-400" />
@@ -1279,8 +1391,8 @@ const PointsRechargeScreen = ({ onBack }) => {
           <button
             onClick={() => setActiveTab('recharge')}
             className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'recharge'
-                ? 'bg-[#FF2B55] text-white'
-                : 'text-gray-400 hover:text-white'
+              ? 'bg-[#FF2B55] text-white'
+              : 'text-gray-400 hover:text-white'
               }`}
           >
             <CreditCard className="w-4 h-4 inline mr-2" />
@@ -1289,8 +1401,8 @@ const PointsRechargeScreen = ({ onBack }) => {
           <button
             onClick={() => setActiveTab('history')}
             className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'history'
-                ? 'bg-[#FF2B55] text-white'
-                : 'text-gray-400 hover:text-white'
+              ? 'bg-[#FF2B55] text-white'
+              : 'text-gray-400 hover:text-white'
               }`}
           >
             <History className="w-4 h-4 inline mr-2" />
@@ -1311,8 +1423,8 @@ const PointsRechargeScreen = ({ onBack }) => {
                       setCustomAmount('');
                     }}
                     className={`relative p-4 rounded-xl border-2 transition-all ${selectedAmount === option.amount
-                        ? 'bg-[#FF2B55] bg-red-600/20'
-                        : 'border-gray-700 bg-gray-900 hover:border-gray-600'
+                      ? 'bg-[#FF2B55] bg-red-600/20'
+                      : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                       }`}
                   >
                     <div className="flex items-center justify-between">
@@ -1383,8 +1495,8 @@ const PointsRechargeScreen = ({ onBack }) => {
                       key={method.id}
                       onClick={() => setSelectedPaymentMethod(method.id)}
                       className={`w-full p-4 rounded-lg border-2 transition-all ${selectedPaymentMethod === method.id
-                          ? 'border-red-500 bg-red-600/20'
-                          : 'border-gray-700 bg-gray-900 hover:border-gray-600'
+                        ? 'border-red-500 bg-red-600/20'
+                        : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                         }`}
                     >
                       <div className="flex items-center justify-between">
@@ -1439,7 +1551,7 @@ const PointsRechargeScreen = ({ onBack }) => {
           </div>
         )}
 
-        {activeTab === 'history' && (
+       {activeTab === 'history' && (
           <div>
             {(!history || history.length === 0) ? (
               <div className="text-center py-12">
@@ -1448,10 +1560,6 @@ const PointsRechargeScreen = ({ onBack }) => {
                 <p className="text-gray-500">Your points transactions will appear here</p>
               </div>
             ) : (
-              <HistorySkeleton />
-            )}
-
-            {history.length > 0 && (
               <div className="space-y-3">
                 {history.map((transaction, index) => (
                   <div
