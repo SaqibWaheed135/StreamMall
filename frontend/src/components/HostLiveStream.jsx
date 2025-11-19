@@ -358,7 +358,7 @@ const HostLiveStream = ({ onBack }) => {
         timestamp: data.timestamp
       }]);
       setCoinBalance(prev => prev + data.amount);
-      
+
       setShowTipNotification({
         username: data.tipper.username,
         amount: data.amount,
@@ -704,7 +704,7 @@ const HostLiveStream = ({ onBack }) => {
         `}</style>
 
         {showTipNotification && (
-          <div 
+          <div
             className="fixed top-20 right-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-4 rounded-lg shadow-2xl z-50 flex items-center gap-3"
             style={{ animation: 'slideIn 0.3s ease-out' }}
           >
@@ -938,7 +938,8 @@ const HostLiveStream = ({ onBack }) => {
                       };
                       reader.readAsDataURL(file);
                     }}
-                    className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-gradient-to-r from-pink-600 to-pink-500 file:text-white hover:file:shadow-lg"
+
                   />
 
                   {newProduct.imagePreview && (
@@ -954,7 +955,8 @@ const HostLiveStream = ({ onBack }) => {
                   placeholder="Link (optional for product/ad)"
                   value={newProduct.link}
                   onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-2"
+                  className="w-full bg-white border border-[#ffb3c6] rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+
                 />
 
                 <button
@@ -1002,9 +1004,9 @@ const HostLiveStream = ({ onBack }) => {
                       setError("Failed to add product");
                     }
                   }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold mt-2"
+                 className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 text-white py-3 rounded-xl font-semibold transition"
                 >
-                  Add
+                  Add Item
                 </button>
 
                 <div className="mt-4">
@@ -1038,19 +1040,21 @@ const HostLiveStream = ({ onBack }) => {
                 </div>
               </div>
 
-              <div className="bg-gray-800 rounded-lg p-4">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Gift className="w-5 h-5 text-yellow-500" />
+              <div className="bg-white/80 border border-white/70 rounded-3xl shadow-lg p-6">
+                <h3 className="font-semibold text-pink-700 flex items-center gap-2 mb-4">
+
+                  <Gift className="w-5 h-5 text-amber-500" />
                   Recent Tips ({tips.length})
                 </h3>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
+                <div className="space-y-2 max-h-48 overflow-y-auto">
                   {tips.slice(-5).reverse().map((tip) => (
-                    <div key={tip.id} className="bg-gray-700 rounded-lg p-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div key={tip.id} className="bg-white border border-[#ffb3c6] rounded-2xl px-4 py-2 flex items-center justify-between text-sm shadow-sm">
+                      <div className="flex items-center gap-2 text-gray-700">
                         <span className="text-2xl">{getGiftIcon(tip.giftType)}</span>
                         <span className="text-sm text-gray-300">{tip.username}</span>
                       </div>
-                      <span className="text-yellow-400 font-semibold">+{tip.amount}</span>
+                      <span className="text-pink-600 font-semibold">+{tip.amount}</span>
+
                     </div>
                   ))}
                   {tips.length === 0 && (
@@ -1062,16 +1066,18 @@ const HostLiveStream = ({ onBack }) => {
             </div>
 
             <div className="lg:col-span-2 space-y-4">
-              <div className="bg-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <div className="bg-white/80 border border-white/70 rounded-3xl shadow-lg p-6 max-h-[400px] overflow-y-auto">
+
+                <h3 className="font-semibold text-pink-700 flex items-center gap-2 mb-4">
+
                   📦 Orders ({orders.length})
                 </h3>
                 {orders.length === 0 ? (
-                  <p className="text-gray-400 text-sm">No orders yet</p>
+                  <p className="text-gray-500 text-sm">No orders yet</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {orders.map((order, i) => (
-                      <div key={i} className="bg-gray-700 rounded-lg p-3">
+                      <div key={i} className="bg-white border border-[#ffb3c6] rounded-2xl p-3 shadow-sm">
                         <button
                           onClick={() => {
                             const product = products[order.productIndex];
@@ -1080,12 +1086,13 @@ const HostLiveStream = ({ onBack }) => {
                               product
                             });
                           }}
-                          className="w-full text-left hover:bg-gray-600 p-2 rounded transition-colors"
+                          className="w-full text-left hover:bg-[#ffe0ea]/60 p-3 rounded-2xl transition"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <p className="font-semibold text-sm">{products[order.productIndex]?.name}</p>
-                              <p className="text-xs text-gray-400">By: {order.buyer?.username || order.buyerUsername}</p>
+                              <p className="font-semibold text-gray-800">
+                                {products[order.productIndex]?.name}</p>
+                              <p className="text-xs text-gray-500">By: {order.buyer?.username || order.buyerUsername}</p>
                               <p className="text-xs text-yellow-300 mt-1">+{Math.ceil((products[order.productIndex]?.price || 0) * 100)} coins</p>
                             </div>
                             <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -1097,30 +1104,39 @@ const HostLiveStream = ({ onBack }) => {
                 )}
               </div>
 
-              <div className="bg-gray-800 rounded-lg h-[400px] flex flex-col">
-                <div className="p-4 border-b border-gray-700">
-                  <h3 className="font-semibold flex items-center gap-2">
+              <div className="bg-white/80 border border-white/70 rounded-3xl shadow-lg h-[400px] flex flex-col">
+
+                <div className="p-5 border-b border-[#ffb3c6]/70 bg-white/70 rounded-t-3xl">
+                  <h3 className="font-semibold text-pink-700 flex items-center gap-2">
+
                     <MessageCircle className="w-5 h-5" />
                     Live Chat
                   </h3>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/60">
+
                   {comments.map((c) => (
-                    <div key={c.id} className="text-sm">
-                      <span className="font-semibold text-blue-400">@{c.username}: </span>
-                      <span className="text-gray-300">{c.text}</span>
+                    <div key={c.id}
+                      className="text-sm bg-white border border-[#ffb3c6]/70 rounded-2xl px-4 py-2 shadow-sm"
+
+                    >
+                      <span className="font-semibold text-pink-600">@{c.username}: </span>
+
+                      <span className="text-gray-700">{c.text}</span>
                     </div>
                   ))}
                   {comments.length === 0 && (
                     <div className="text-center text-gray-500 mt-20">
-                      <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                      <MessageCircle className="w-12 h-12 mx-auto mb-3 text-pink-300" />
+
                       <p className="text-sm">Waiting for comments...</p>
                     </div>
                   )}
                   <div ref={commentsEndRef} />
                 </div>
-                <div className="p-4 border-t border-gray-700">
-                  <div className="flex items-center gap-2 text-gray-400 text-xs">
+                <div className="p-4 border-t border-[#ffb3c6]/70 bg-white/70 rounded-b-3xl">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+
                     <Heart className="w-4 h-4 text-pink-500" />
                     <span>Viewers can send hearts and comments</span>
                   </div>
@@ -1165,35 +1181,39 @@ const HostLiveStream = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#FFC0CB] via-[#ffb3c6] to-[#ff99b3] text-gray-900 p-4 sm:p-6">
       <button
         onClick={handleBack}
-        className="mb-4 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg"
+        className="inline-flex items-center gap-2 bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] px-4 py-2 rounded-xl font-semibold transition mb-6 shadow-sm"
       >
+
         ← Back to Streams
       </button>
 
-      <div className="max-w-md mx-auto mt-10">
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Radio className="w-6 h-6 text-red-500" />
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white/80 border border-white/70 rounded-3xl shadow-2xl p-6 sm:p-8 backdrop-blur-xl">
+          <h1 className="text-3xl font-bold text-pink-700 mb-6 flex items-center gap-3">
+            <Radio className="w-8 h-8 text-pink-500" />
             Start Live Stream
           </h1>
 
           {error && (
-            <div className="bg-red-500/20 border border-red-500 text-red-500 p-3 rounded mb-4 text-sm">
+            <div className="bg-[#ffe4e6] border border-[#fb7185] text-[#be123c] px-4 py-3 rounded-2xl text-sm font-medium mb-4">
               {error}
             </div>
           )}
 
+
           {!liveKitReady && (
-            <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-500 p-3 rounded mb-4 text-sm">
-              ⚠️ LiveKit not loaded. Run: <code className="bg-black/30 px-1 rounded">npm install livekit-client</code>
+            <div className="bg-amber-100 border border-amber-300 text-amber-700 px-4 py-3 rounded-2xl text-sm font-medium mb-4">
+              ⚠️ LiveKit not loaded. Run: <code className="bg-white px-1 rounded">npm install livekit-client</code>
             </div>
           )}
 
+
           <div
-            className="relative bg-black rounded-lg mb-6 overflow-hidden"
+            className="relative bg-black rounded-3xl mb-6 overflow-hidden shadow-lg"
+
             style={{
               aspectRatio: '16/9',
               width: '100%',
@@ -1223,25 +1243,32 @@ const HostLiveStream = ({ onBack }) => {
             <div className="absolute top-4 right-4 flex space-x-2 z-10">
               <button
                 onClick={toggleCamera}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isCameraOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isCameraOn
+                  ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
+                  : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
                   }`}
               >
+
                 {isCameraOn ? <Camera className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <button
                 onClick={toggleMic}
-                className={`w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${isMicOn ? 'bg-black/50 hover:bg-black/70' : 'bg-red-500 hover:bg-red-600'
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isMicOn
+                  ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
+                  : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
                   }`}
               >
+
                 {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
             </div>
 
             {!localStream && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-5">
-                <div className="text-center">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+
+                <div className="text-center text-white/80">
                   <Camera className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-                  <p className="text-gray-400 text-sm">Requesting camera access...</p>
+                  <p className="font-medium text-sm">Requesting camera access...</p>
                 </div>
               </div>
             )}
@@ -1255,7 +1282,7 @@ const HostLiveStream = ({ onBack }) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="What's your stream about?"
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+                className="w-full bg-white border border-[#ffb3c6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
                 maxLength={100}
               />
               <p className="text-gray-400 text-xs mt-1">{title.length}/100</p>
@@ -1267,7 +1294,8 @@ const HostLiveStream = ({ onBack }) => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add more details..."
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 resize-none"
+                className="w-full bg-white border border-[#ffb3c6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-400 transition resize-none"
+
                 rows={3}
                 maxLength={500}
               />
@@ -1282,7 +1310,7 @@ const HostLiveStream = ({ onBack }) => {
                 value={entryFee}
                 onChange={(e) => setEntryFee(Math.max(0, parseInt(e.target.value) || 0))}
                 placeholder="0 = Free to watch"
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+                className="w-full bg-white border border-[#ffb3c6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
                 min="0"
               />
               <p className="text-xs text-gray-400 mt-1">
@@ -1293,10 +1321,11 @@ const HostLiveStream = ({ onBack }) => {
             <button
               onClick={startStream}
               disabled={loading || !liveKitReady}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-3 rounded-lg font-semibold transition-colors"
+              className="w-full bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-xl hover:shadow-pink-200 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-semibold text-lg transition-all"
             >
-              {loading ? 'Starting...' : '🔴 Go LIVE'}
+              {loading ? 'Starting…' : '🔴 Go LIVE'}
             </button>
+
           </div>
         </div>
       </div>
