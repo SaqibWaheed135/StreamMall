@@ -199,7 +199,7 @@ const App = () => {
           "linear-gradient(135deg, rgba(255,43,85,0.08), rgba(123,47,247,0.08))",
       }}
     >
-      <main className="pb-[60px]">
+      <main className="pb-[120px] bg-[#FFC0CB]">
         <Routes>
           {/* Public */}
           <Route path="/login" element={<Login />} />
