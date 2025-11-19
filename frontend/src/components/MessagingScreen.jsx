@@ -11,35 +11,35 @@ const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoin
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-gray-800">
+      <div className="p-4 border-b border-[#ff99b3] bg-[#FFC0CB]/95 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold flex items-center">
             <Users className="w-5 h-5 mr-2" />
             Groups
           </h2>
           <div className="flex items-center space-x-2">
-            <button onClick={onJoinGroup} className="p-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors" title="Join Group">
+            <button onClick={onJoinGroup} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors" title="Join Group">
               <UserPlus className="w-5 h-5" />
             </button>
-            <button onClick={onCreateGroup} className="p-2 bg-[#FF2B55] hover:bg-[#FF2B55] rounded-full transition-colors" title="Create Group">
+            <button onClick={onCreateGroup} className="p-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-full transition-colors text-white" title="Create Group">
               <Plus className="w-5 h-5" />
             </button>
           </div>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
             type="text"
             placeholder="Search groups..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-[#FF2B55] text-white placeholder-gray-400"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-[#ff99b3] rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 text-black placeholder-gray-500"
           />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         {filteredGroups.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
+          <div className="p-8 text-center text-gray-700">
             <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p className="text-lg">No groups yet</p>
             <p className="text-sm">Create or join a group to get started!</p>
@@ -50,7 +50,7 @@ const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoin
               <button
                 key={group._id}
                 onClick={() => onSelectGroup(group)}
-                className={`w-full p-4 text-left hover:bg-gray-900 transition-colors ${selectedGroup?._id === group._id ? 'bg-gray-800' : ''}`}
+                className={`w-full p-4 text-left hover:bg-[#ffb3c6] transition-colors ${selectedGroup?._id === group._id ? 'bg-[#ffb3c6]' : ''}`}
               >
                 <div className="flex items-center space-x-3">
                   <div className="relative">
@@ -107,11 +107,11 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Create New Group</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-full">
+          <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -124,7 +124,7 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter group name"
               maxLength={100}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF2B55] text-white"
+              className="w-full px-4 py-2 bg-white border border-[#ff99b3] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-black"
               required
             />
           </div>
@@ -136,7 +136,7 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
               placeholder="What's this group about?"
               maxLength={500}
               rows={3}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF2B55] text-white resize-none"
+              className="w-full px-4 py-2 bg-white border border-[#ff99b3] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-black resize-none"
             />
           </div>
           <div>
@@ -145,39 +145,39 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
               <button
                 type="button"
                 onClick={() => setType('private')}
-                className={`w-full p-3 text-left border rounded-lg transition-colors ${type === 'private' ? 'border-[#FF2B55] bg-[#FF2B55]' : 'border-gray-700 hover:border-gray-600'}`}
+                className={`w-full p-3 text-left border rounded-lg transition-colors ${type === 'private' ? 'border-[#ff99b3] bg-[#ffb3c6]' : 'border-[#ff99b3] hover:bg-[#ffb3c6]'}`}
               >
                 <div className="flex items-center">
                   <Lock className="w-5 h-5 mr-3" />
                   <div>
                     <div className="font-medium">Private</div>
-                    <div className="text-sm text-gray-400">Only invited members can join</div>
+                    <div className="text-sm text-gray-700">Only invited members can join</div>
                   </div>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setType('public')}
-                className={`w-full p-3 text-left border rounded-lg transition-colors ${type === 'public' ? 'border-[#FF2B55] bg-[#FF2B55]' : 'border-gray-700 hover:border-gray-600'}`}
+                className={`w-full p-3 text-left border rounded-lg transition-colors ${type === 'public' ? 'border-[#ff99b3] bg-[#ffb3c6]' : 'border-[#ff99b3] hover:bg-[#ffb3c6]'}`}
               >
                 <div className="flex items-center">
                   <Globe className="w-5 h-5 mr-3" />
                   <div>
                     <div className="font-medium">Public</div>
-                    <div className="text-sm text-gray-400">Anyone can join with invite code</div>
+                    <div className="text-sm text-gray-700">Anyone can join with invite code</div>
                   </div>
                 </div>
               </button>
             </div>
           </div>
           <div className="flex justify-end space-x-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:text-black transition-colors">
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim() || creating}
-              className="px-6 py-2 bg-[#FF2B55] hover:bg-[#FF2B55] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors"
+              className="px-6 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 disabled:bg-[#ffb3c6] disabled:cursor-not-allowed rounded-lg transition-colors text-white"
             >
               {creating ? 'Creating...' : 'Create Group'}
             </button>
@@ -207,12 +207,12 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gray-900 p-6 border-b border-gray-800 z-10">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-[#FFC0CB] p-6 border-b border-[#ff99b3] z-10">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Group Info</h3>
-            <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-full">
+            <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -225,8 +225,8 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
               className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
             />
             <h2 className="text-2xl font-bold">{group.name}</h2>
-            {group.description && <p className="text-gray-400 mt-2">{group.description}</p>}
-            <div className="flex items-center justify-center space-x-4 mt-4 text-sm text-gray-400">
+            {group.description && <p className="text-gray-700 mt-2">{group.description}</p>}
+            <div className="flex items-center justify-center space-x-4 mt-4 text-sm text-gray-700">
               <span className="flex items-center">
                 {group.type === 'public' ? <Globe className="w-4 h-4 mr-1" /> : <Lock className="w-4 h-4 mr-1" />}
                 {group.type === 'public' ? 'Public' : 'Private'}
@@ -236,15 +236,15 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
             </div>
           </div>
           {group.type === 'public' && group.inviteCode && (
-            <div className="bg-gray-800 rounded-lg p-4">
+            <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium mb-1">Invite Code</p>
-                  <p className="text-gray-400 text-sm font-mono">{group.inviteCode}</p>
+                  <p className="text-gray-700 text-sm font-mono">{group.inviteCode}</p>
                 </div>
                 <button
                   onClick={copyInviteCode}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors flex items-center space-x-2"
+                  className="px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white rounded-lg transition-colors flex items-center space-x-2"
                 >
                   {inviteCodeCopied ? (
                     <>
@@ -269,7 +269,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
             {showMembers && (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {group.members.map((member) => (
-                  <div key={member._id} className="flex items-center justify-between p-2 hover:bg-gray-800 rounded-lg">
+                  <div key={member._id} className="flex items-center justify-between p-2 hover:bg-[#ffb3c6] rounded-lg">
                     <div className="flex items-center space-x-3">
                       <img
                         src={member.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.user.username)}&background=random&color=fff&size=200&bold=true`}
@@ -312,7 +312,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
               <h4 className="font-semibold mb-3">Pending Requests ({group.pendingRequests.length})</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {group.pendingRequests.map((request) => (
-                  <div key={request._id} className="flex items-center justify-between p-2 bg-gray-800 rounded-lg">
+                  <div key={request._id} className="flex items-center justify-between p-2 bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg">
                     <div className="flex items-center space-x-3">
                       <img
                         src={request.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(request.user.username)}&background=random&color=fff&size=200&bold=true`}
@@ -321,19 +321,19 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
                       />
                       <div>
                         <p className="font-medium">{request.user.username}</p>
-                        <p className="text-xs text-gray-400">{new Date(request.requestedAt).toLocaleString()}</p>
+                        <p className="text-xs text-gray-700">{new Date(request.requestedAt).toLocaleString()}</p>
                       </div>
                     </div>
                     <div className="flex space-x-2">
                       <button
                         onClick={() => onUpdateGroup('approve-request', request.user._id)}
-                        className="p-2 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
+                        className="p-2 bg-green-600 hover:bg-green-700 rounded-full transition-colors text-white"
                       >
                         <Check className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onUpdateGroup('reject-request', request.user._id)}
-                        className="p-2 bg-red-600 hover:bg-red-700 rounded-full transition-colors"
+                        className="p-2 bg-red-600 hover:bg-red-700 rounded-full transition-colors text-white"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -343,11 +343,11 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
               </div>
             </div>
           )}
-          <div className="border-t border-gray-800 pt-4 space-y-2">
+          <div className="border-t border-[#ff99b3] pt-4 space-y-2">
             {!isAdmin && (
               <button
                 onClick={onLeaveGroup}
-                className="w-full p-3 text-left text-red-400 hover:bg-red-900/20 rounded-lg transition-colors flex items-center"
+                className="w-full p-3 text-left text-red-600 hover:bg-red-100 rounded-lg transition-colors flex items-center"
               >
                 <LogOut className="w-5 h-5 mr-3" />
                 Leave Group
@@ -356,7 +356,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
             {isAdmin && (
               <button
                 onClick={onDeleteGroup}
-                className="w-full p-3 text-left text-red-400 hover:bg-red-900/20 rounded-lg transition-colors flex items-center"
+                className="w-full p-3 text-left text-red-600 hover:bg-red-100 rounded-lg transition-colors flex items-center"
               >
                 <Trash2 className="w-5 h-5 mr-3" />
                 Delete Group
@@ -386,11 +386,11 @@ const JoinGroupModal = ({ show, onClose, onJoinGroup }) => {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Join Group</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-full">
+          <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -401,20 +401,18 @@ const JoinGroupModal = ({ show, onClose, onJoinGroup }) => {
               type="text"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value)}
+              className="w-full px-4 py-2 bg-white border border-[#ff99b3] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-black"
               placeholder="Enter invite code"
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF2B55] text-white font-mono"
-              required
             />
-            <p className="text-xs text-gray-400 mt-2">Ask the group admin for the invite code</p>
           </div>
           <div className="flex justify-end space-x-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:text-black transition-colors">
               Cancel
             </button>
             <button
               type="submit"
               disabled={!inviteCode.trim() || joining}
-              className="px-6 py-2 bg-[#FF2B55]hover:bg-[#FF2B55] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors"
+              className="px-6 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 disabled:bg-[#ffb3c6] disabled:cursor-not-allowed rounded-lg transition-colors text-white"
             >
               {joining ? 'Joining...' : 'Join Group'}
             </button>
@@ -1192,37 +1190,34 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#FFC0CB] text-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF2B55] mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading messages...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p>Loading messages...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex relative">
+    <div className="min-h-screen bg-[#FFC0CB] text-black flex relative">
       {dragActive && (
-        <div className="absolute inset-0 bg-[#FF2B55] bg-opacity-20 z-50 flex items-center justify-center">
-          <div className="text-center">
-            <Paperclip className="w-12 h-12 mx-auto mb-4 text-[#FF2B55]" />
-            <p className="text-xl font-semibold">Drop images or videos to send</p>
-          </div>
+        <div className="absolute inset-0 bg-pink-600/20 z-50 flex items-center justify-center">
+          <div className="bg-black/60 text-white px-4 py-2 rounded-lg">Drop files to upload</div>
         </div>
       )}
-      <div className={`w-full md:w-1/3 border-r border-gray-800 flex flex-col ${selectedConversation || selectedGroup ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-4 border-b border-gray-800">
+      <div className={`w-full md:w-1/3 border-r border-[#ff99b3] flex flex-col ${selectedConversation || selectedGroup ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-4 border-b border-[#ff99b3]">
           <div className="flex space-x-2 mb-4">
             <button
               onClick={() => setActiveTab('dm')}
-              className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'dm' ? 'bg-[#FF2B55] text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+              className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'dm' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
             >
               Direct Messages
             </button>
             <button
               onClick={() => setActiveTab('groups')}
-              className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'groups' ? 'bg-[#FF2B55] text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+              className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'groups' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
             >
               Groups
             </button>
@@ -1230,21 +1225,21 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         </div>
         {activeTab === 'dm' ? (
           <>
-            <div className="p-4 border-b border-gray-800">
+            <div className="p-4 border-b border-[#ff99b3]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <input
                   type="text"
                   placeholder="Search conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-[#FF2B55] text-white placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-[#ff99b3] rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 text-black placeholder-gray-500"
                 />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
               {filteredConversations.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">
+                <div className="p-8 text-center text-gray-700">
                   <div className="mb-4">
                     <svg className="w-16 h-16 mx-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -1262,7 +1257,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                       <button
                         key={conversation._id}
                         onClick={() => selectConversation(conversation)}
-                        className={`w-full p-4 text-left hover:bg-gray-900 transition-colors ${selectedConversation?._id === conversation._id ? 'bg-gray-800' : ''}`}
+                        className={`w-full p-4 text-left hover:bg-[#ffb3c6] transition-colors ${selectedConversation?._id === conversation._id ? 'bg-[#FFC0CB]' : ''}`}
                       >
                         <div className="flex items-center space-x-3">
                           <img
@@ -1274,13 +1269,13 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                             <div className="flex items-center justify-between">
                               <h3 className="font-semibold truncate">{otherParticipant.username}</h3>
                               {conversation.lastMessage && (
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-gray-700">
                                   {formatMessageTime(conversation.lastMessage.createdAt)}
                                 </span>
                               )}
                             </div>
                             {conversation.lastMessage && (
-                              <p className="text-sm text-gray-400 truncate">
+                              <p className="text-sm text-gray-700 truncate">
                                 {conversation.lastMessage.sender === (currentUser?.id || currentUser?._id) ? 'You: ' : ''}
                                 {conversation.lastMessage.type !== 'text' ? (
                                   <span className="flex items-center">
@@ -1321,14 +1316,14 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       >
         {selectedConversation || selectedGroup ? (
           <>
-            <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+            <div className="p-4 border-b border-[#ff99b3] flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => {
                     setSelectedConversation(null);
                     setSelectedGroup(null);
                   }}
-                  className="md:hidden p-2 hover:bg-gray-800 rounded-full transition-colors"
+                  className="md:hidden p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -1341,7 +1336,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                     />
                     <div>
                       <h2 className="font-semibold">{selectedGroup.name}</h2>
-                      <p className="text-xs text-gray-400">{selectedGroup.members.length} members</p>
+                      <p className="text-xs text-gray-700">{selectedGroup.members.length} members</p>
                     </div>
                   </>
                 ) : (
@@ -1356,7 +1351,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                         />
                         <div>
                           <h2 className="font-semibold">{otherParticipant.username}</h2>
-                          <p className="text-xs text-gray-400">Active now</p>
+                          <p className="text-xs text-gray-700">Active now</p>
                         </div>
                       </>
                     ) : null;
@@ -1365,28 +1360,28 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
               </div>
               <div className="flex items-center space-x-2">
                 {selectedGroup && (
-                  <button onClick={() => setShowGroupInfoModal(true)} className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                  <button onClick={() => setShowGroupInfoModal(true)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                     <Settings className="w-5 h-5" />
                   </button>
                 )}
                 {!selectedGroup && (
                   <>
-                    <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                    <button className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                       <Phone className="w-5 h-5" />
                     </button>
-                    <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                    <button className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                       <Video className="w-5 h-5" />
                     </button>
                   </>
                 )}
-                <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                <button className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                   <MoreVertical className="w-5 h-5" />
                 </button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
+                <div className="text-center py-8 text-gray-700">
                   <p>Start your conversation!</p>
                 </div>
               ) : (
@@ -1404,18 +1399,18 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                 })
               )}
               {typingUsers.length > 0 && (
-                <div className="flex items-center space-x-2 text-gray-400 text-sm">
+                <div className="flex items-center space-x-2 text-gray-700 text-sm">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                   <span>{typingUsers[0].username} is typing...</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
-            <div className="p-4 border-t border-gray-800">
+            <div className="p-4 border-t border-[#ff99b3] bg-white/70 backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <input
                   ref={fileInputRef}
@@ -1425,8 +1420,8 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-gray-800 rounded-full transition-colors">
-                  <Paperclip className="w-5 h-5 text-gray-400" />
+                <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
+                  <Paperclip className="w-5 h-5 text-gray-600" />
                 </button>
                 <div className="flex-1 relative">
                   <input
@@ -1442,10 +1437,10 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                     }}
                     placeholder="Type a message..."
                     disabled={sending || recording}
-                    className="w-full px-4 py-2 pr-12 bg-gray-900 border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-[#FF2B55] text-white placeholder-gray-400"
+                    className="w-full px-4 py-2 pr-12 bg-white border border-[#ff99b3] rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 text-black placeholder-gray-500"
                   />
-                  <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-700 rounded-full transition-colors">
-                    <Smile className="w-4 h-4 text-gray-400" />
+                  <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-[#ffb3c6] rounded-full transition-colors">
+                    <Smile className="w-4 h-4 text-gray-600" />
                   </button>
                 </div>
                 {recording ? (
@@ -1456,32 +1451,32 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                   <button
                     onClick={startRecording}
                     disabled={sending || newMessage.trim()}
-                    className="p-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full transition-colors"
+                    className="p-2 bg-white border border-[#ff99b3] hover:bg-[#ffb3c6] disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors"
                   >
-                    <Mic className="w-5 h-5 text-white" />
+                    <Mic className="w-5 h-5 text-pink-700" />
                   </button>
                 )}
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim() || sending || recording}
-                  className="p-2 bg-[#FF2B55] hover:bg-[#FF2B55] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full transition-colors"
+                  className="p-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 disabled:bg-[#ffb3c6] disabled:cursor-not-allowed rounded-full transition-colors text-white"
                 >
                   {sending ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <Send className="w-5 h-5 text-white" />
+                    <Send className="w-5 h-5" />
                   )}
                 </button>
               </div>
               {recording && (
-                <div className="mt-2 text-center text-sm text-gray-400">
+                <div className="mt-2 text-center text-sm text-gray-700">
                   Recording... {formatDuration(recordingDuration)}
                 </div>
               )}
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400">
+          <div className="flex-1 flex items-center justify-center text-gray-700">
             <div className="text-center">
               <div className="mb-4">
                 <svg className="w-20 h-20 mx-auto opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1495,26 +1490,26 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         )}
       </div>
       {deleteModal.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold mb-4">Delete Message</h3>
-            <p className="text-gray-400 mb-6">Choose how you'd like to delete this message:</p>
+            <p className="text-gray-700 mb-6">Choose how you'd like to delete this message:</p>
             <div className="space-y-3">
-              <button onClick={() => deleteMessage('me')} className="w-full p-3 text-left hover:bg-gray-800 rounded-lg transition-colors">
+              <button onClick={() => deleteMessage('me')} className="w-full p-3 text-left hover:bg-[#ffb3c6] rounded-lg transition-colors">
                 <div className="font-medium">Delete for me</div>
-                <div className="text-sm text-gray-400">This message will only be deleted from your view</div>
+                <div className="text-sm text-gray-700">This message will only be deleted from your view</div>
               </button>
               {deleteModal.canDeleteForEveryone && (
-                <button onClick={() => deleteMessage('everyone')} className="w-full p-3 text-left hover:bg-gray-800 rounded-lg transition-colors">
+                <button onClick={() => deleteMessage('everyone')} className="w-full p-3 text-left hover:bg-[#ffb3c6] rounded-lg transition-colors">
                   <div className="font-medium">Delete for everyone</div>
-                  <div className="text-sm text-gray-400">This message will be deleted for all participants</div>
+                  <div className="text-sm text-gray-700">This message will be deleted for all participants</div>
                 </button>
               )}
             </div>
             <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => setDeleteModal({ show: false, message: null, canDeleteForEveryone: false })}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-gray-700 hover:text-black transition-colors"
               >
                 Cancel
               </button>
@@ -1523,38 +1518,38 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         </div>
       )}
       {mediaModal.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Send Media</h3>
-              <button onClick={() => setMediaModal({ show: false, files: [] })} className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+              <button onClick={() => setMediaModal({ show: false, files: [] })} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4 mb-6">
               {mediaModal.files.map((file, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
+                <div key={index} className="flex items-center space-x-3 p-3 bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg">
                   <div className="flex-shrink-0">
                     {file.type.startsWith('image/') ? (
-                      <div className="w-12 h-12 bg-gray-700 rounded-lg overflow-hidden">
+                      <div className="w-12 h-12 bg-white rounded-lg overflow-hidden border border-[#ff99b3]">
                         <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
-                        <Play className="w-6 h-6 text-[#FF2B55]" />
+                      <div className="w-12 h-12 bg-white rounded-lg border border-[#ff99b3] flex items-center justify-center">
+                        <Play className="w-6 h-6 text-pink-700" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{file.name}</p>
-                    <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
+                    <p className="text-sm text-gray-700">{formatFileSize(file.size)}</p>
                   </div>
                   <button
                     onClick={() => {
                       const newFiles = mediaModal.files.filter((_, i) => i !== index);
                       setMediaModal({ ...mediaModal, files: newFiles });
                     }}
-                    className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+                    className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1562,13 +1557,13 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
               ))}
             </div>
             <div className="flex justify-end space-x-3">
-              <button onClick={() => setMediaModal({ show: false, files: [] })} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
+              <button onClick={() => setMediaModal({ show: false, files: [] })} className="px-4 py-2 text-gray-700 hover:text-black transition-colors">
                 Cancel
               </button>
               <button
                 onClick={uploadFiles}
                 disabled={uploading || mediaModal.files.length === 0}
-                className="px-6 py-2 bg-[#FF2B55]hover:bg-[#FF2B55] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center space-x-2"
+                className="px-6 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 disabled:bg-[#ffb3c6] disabled:cursor-not-allowed rounded-lg transition-colors flex items-center space-x-2 text-white"
               >
                 {uploading ? (
                   <>
@@ -1585,21 +1580,21 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
             </div>
             {uploading && (
               <div className="mt-4">
-                <div className="bg-gray-700 rounded-full h-2">
-                  <div className="bg-[#FF2B55] h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                <div className="bg-white rounded-full h-2 border border-[#ff99b3]">
+                  <div className="bg-pink-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
                 </div>
-                <p className="text-sm text-gray-400 mt-2 text-center">Uploading files... {uploadProgress}%</p>
+                <p className="text-sm text-gray-700 mt-2 text-center">Uploading files... {uploadProgress}%</p>
               </div>
             )}
           </div>
         </div>
       )}
       {audioUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Voice Message</h3>
-              <button onClick={cancelRecording} className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+              <button onClick={cancelRecording} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1607,16 +1602,16 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
               <audio controls className="w-full">
                 <source src={audioUrl} type="audio/webm" />
               </audio>
-              <p className="text-sm text-gray-400 mt-2">Duration: {formatDuration(recordingDuration)}</p>
+              <p className="text-sm text-gray-700 mt-2">Duration: {formatDuration(recordingDuration)}</p>
             </div>
             <div className="flex justify-end space-x-3">
-              <button onClick={cancelRecording} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
+              <button onClick={cancelRecording} className="px-4 py-2 text-gray-700 hover:text-black transition-colors">
                 Cancel
               </button>
               <button
                 onClick={sendAudioMessage}
                 disabled={uploading}
-                className="px-6 py-2 bg-[#FF2B55] hover:bg-[#FF2B55] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center space-x-2"
+                className="px-6 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 disabled:bg-[#ffb3c6] disabled:cursor-not-allowed rounded-lg transition-colors flex items-center space-x-2 text-white"
               >
                 {uploading ? (
                   <>

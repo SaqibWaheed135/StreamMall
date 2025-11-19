@@ -445,12 +445,12 @@ const SearchScreen = () => {
   const getFollowButtonStyle = (userId) => {
     const status = userFollowStatus[userId] || {};
     if (status.hasPendingRequest) {
-      return "bg-gray-600 text-white cursor-not-allowed";
+      return "bg-[#ffb3c6] text-gray-700 cursor-not-allowed";
     }
     if (status.isFollowing) {
-      return "bg-gray-800 text-white border border-gray-600 hover:bg-gray-700";
+      return "bg-white text-pink-700 border border-[#ff99b3] hover:bg-[#ffb3c6]";
     }
-    return "bg-[#FF2B55] text-white hover:bg-[#FF2B55]";
+    return "bg-gradient-to-r from-pink-600 to-pink-500 text-white hover:opacity-90";
   };
 
   // Format numbers
@@ -469,7 +469,7 @@ const SearchScreen = () => {
       return (
         <div className="space-y-4">
           {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} className="bg-gray-900 p-4 rounded-xl animate-pulse">
+            <div key={i} className="bg-white/70 border border-[#ff99b3] p-4 rounded-xl animate-pulse">
               <div className="h-6 bg-gray-700 rounded w-32 mb-2"></div>
               <div className="h-4 bg-gray-700 rounded w-20"></div>
             </div>
@@ -480,7 +480,7 @@ const SearchScreen = () => {
 
     if (hashtagResults.length === 0 && searchTerm.trim()) {
       return (
-        <div className="text-center py-8 text-gray-400">
+        <div className="text-center py-8 text-gray-700">
           <Hash className="w-16 h-16 mx-auto mb-4 opacity-50" />
           <p className="text-lg">No hashtags found</p>
         </div>
@@ -490,12 +490,12 @@ const SearchScreen = () => {
     return (
       <div className="space-y-3">
         {hashtagResults.map((hashtag) => (
-          <div key={hashtag.tag} className="bg-gray-900 rounded-xl p-4 hover:bg-gray-800 transition-colors cursor-pointer">
+          <div key={hashtag.tag} className="bg-white/70 border border-[#ff99b3] rounded-xl p-4 hover:bg-[#ffb3c6] transition-colors cursor-pointer">
             <div className="flex items-center space-x-3">
               <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${hashtag.color}`}></div>
               <div className="flex-1">
-                <p className="font-bold text-white text-lg">{hashtag.tag}</p>
-                <p className="text-gray-400 text-sm">{formatNumber(hashtag.videoCount)} videos</p>
+                <p className="font-bold text-pink-700 text-lg">{hashtag.tag}</p>
+                <p className="text-gray-700 text-sm">{formatNumber(hashtag.videoCount)} videos</p>
               </div>
             </div>
           </div>
@@ -506,13 +506,13 @@ const SearchScreen = () => {
             <h3 className="text-lg font-bold mb-3">Videos</h3>
             <div className="grid grid-cols-3 gap-2">
               {videoResults.slice(0, 9).map((video) => (
-                <div key={video._id} className="relative aspect-[9/16] bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform">
+                <div key={video._id} className="relative aspect-[9/16] bg-white/70 border border-[#ff99b3] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform">
                   <video
                     src={video.url}
                     className="w-full h-full object-cover"
                     muted
                   />
-                  <div className="absolute bottom-2 left-2 flex items-center space-x-1 text-white text-xs">
+                  <div className="absolute bottom-2 left-2 flex items-center space-x-1 text-pink-700 text-xs">
                     <Play className="w-3 h-3" />
                     <span>{formatNumber(video.likesCount || 0)}</span>
                   </div>
@@ -534,7 +534,7 @@ const SearchScreen = () => {
       return (
         <div className="space-y-4">
           {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} className="bg-gray-900 p-4 rounded-xl animate-pulse">
+            <div key={i} className="bg-white/70 border border-[#ff99b3] p-4 rounded-xl animate-pulse">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
                 <div className="flex-1">
@@ -551,7 +551,7 @@ const SearchScreen = () => {
 
     if (usersToShow.length === 0) {
       return (
-        <div className="text-center py-8 text-gray-400">
+        <div className="text-center py-8 text-gray-700">
           <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
           <p className="text-lg">
             {isShowingFriends ? 'No friends yet' : 'No users found'}
@@ -570,7 +570,7 @@ const SearchScreen = () => {
           const isFriend = followStatus.relationship === 'mutual';
 
           return (
-            <div key={user._id} className="bg-gray-900 p-4 rounded-xl hover:bg-gray-800 transition-colors">
+            <div key={user._id} className="bg-white/70 border border-[#ff99b3] p-4 rounded-xl hover:bg-[#ffb3c6] transition-colors">
               <div className="flex items-center space-x-3">
                 <button onClick={() => goToProfile(user)} className="flex items-center space-x-3 flex-1">
                   <div className="relative">
@@ -583,16 +583,16 @@ const SearchScreen = () => {
                       }}
                     />
                     {user.isVerified && (
-                      <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
+                      <div className="absolute -bottom-1 -right-1 bg-pink-600 rounded-full p-1">
                         <Shield className="w-2 h-2 text-white" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 text-left">
                     <div className="flex items-center space-x-1">
-                      <p className="font-bold text-white">{user.username}</p>
+                      <p className="font-bold text-pink-700">{user.username}</p>
                       {user.isVerified && (
-                        <Shield className="w-4 h-4 text-blue-500" />
+                        <Shield className="w-4 h-4 text-pink-600" />
                       )}
                       {isFriend && (
                         <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
@@ -606,7 +606,7 @@ const SearchScreen = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-700 text-sm">
                       {formatNumber(user.followersCount || 0)} followers
                       {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
                     </p>
@@ -618,7 +618,7 @@ const SearchScreen = () => {
                   {(isFriend || followStatus.canMessage) && (
                     <button
                       onClick={() => startConversation(user)}
-                      className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
+                      className="p-2 bg-pink-600 hover:bg-pink-700 rounded-full transition-colors"
                       title="Send Message"
                     >
                       <MessageCircle className="w-4 h-4 text-white" />
@@ -652,10 +652,10 @@ const SearchScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#FFC0CB] text-black">
       {/* Header */}
       {/* <GoogleAd slot="8700754425" /> */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10">
+      <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10">
         <div className="p-4">
           {/* Top bar with title, friends button, and notifications */}
           <div className="flex items-center justify-between mb-4">
@@ -664,7 +664,7 @@ const SearchScreen = () => {
               {/* Add Friends Button */}
               <button
                 onClick={() => setShowAddFriends(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-[#FF2B55] hover:bg-[#E0264B] rounded-full transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-full transition-colors text-white"
               >
                 <UserPlus className="w-5 h-5" />
                 <span className="text-sm font-medium">Add Friends</span>
@@ -673,11 +673,11 @@ const SearchScreen = () => {
               {/* Notifications Button */}
               <button
                 onClick={() => setShowNotifications(true)}
-                className="relative p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+                className="relative p-2 bg-white border border-[#ff99b3] hover:bg-[#ffb3c6] rounded-full transition-colors"
               >
                 <Bell className="w-6 h-6" />
                 {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-pink-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                     {notificationCount > 9 ? '9+' : notificationCount}
                   </span>
                 )}
@@ -687,7 +687,7 @@ const SearchScreen = () => {
 
           {/* Search Bar */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600" />
             <input
               type="text"
               placeholder={
@@ -696,7 +696,7 @@ const SearchScreen = () => {
               }
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full bg-gray-800/50 text-white pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-gray-800"
+              className="w-full bg-white border border-[#ff99b3] text-black pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
           </div>
 
@@ -707,8 +707,8 @@ const SearchScreen = () => {
                 key={filter}
                 onClick={() => handleFilterChange(filter)}
                 className={`px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-colors ${activeFilter === filter
-                  ? 'bg-white text-black'
-                  : 'bg-gray-800 text-white hover:bg-gray-700'
+                  ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white'
+                  : 'bg-white text-gray-700 hover:bg-[#ffb3c6]'
                   }`}
               >
                 {filter}
@@ -727,7 +727,7 @@ const SearchScreen = () => {
                 {searchTerm.trim() ? 'Search Results' : 'Your Friends'}
               </h2>
               {!searchTerm.trim() && (
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-gray-700">
                   {friendsList.length} friends
                 </span>
               )}
@@ -766,33 +766,31 @@ const SearchScreen = () => {
               <div className="space-y-3">
                 <button
                   onClick={() => setActiveFilter('Users')}
-                  className="w-full bg-gray-900 p-4 rounded-xl hover:bg-gray-800 transition-colors text-left"
+                  className="w-full bg-white/70 border border-[#ff99b3] p-4 rounded-xl hover:bg-[#ffb3c6] transition-colors text-left"
                 >
                   <div className="flex items-center space-x-3">
-                    <User className="w-6 h-6 text-[#FF2B55]" />
+                    <User className="w-6 h-6 text-pink-700" />
                     <div>
                       <p className="font-bold">Find People & Friends</p>
-                      <p className="text-gray-400 text-sm">Discover new creators and see your friends</p>
+                      <p className="text-gray-700 text-sm">Discover new creators and see your friends</p>
                     </div>
                   </div>
                 </button>
 
-
-
                 <button
                   onClick={() => setShowNotifications(true)}
-                  className="w-full bg-gray-900 p-4 rounded-xl hover:bg-gray-800 transition-colors text-left"
+                  className="w-full bg-white/70 border border-[#ff99b3] p-4 rounded-xl hover:bg-[#ffb3c6] transition-colors text-left"
                 >
                   <div className="flex items-center space-x-3 justify-between">
                     <div className="flex items-center space-x-3">
                       <Bell className="w-6 h-6 text-yellow-500" />
                       <div>
                         <p className="font-bold">Notifications</p>
-                        <p className="text-gray-400 text-sm">Follow requests and updates</p>
+                        <p className="text-gray-700 text-sm">Follow requests and updates</p>
                       </div>
                     </div>
                     {notificationCount > 0 && (
-                      <span className="bg-red-500 text-white text-sm px-2 py-1 rounded-full">
+                      <span className="bg-pink-600 text-white text-sm px-2 py-1 rounded-full">
                         {notificationCount}
                       </span>
                     )}

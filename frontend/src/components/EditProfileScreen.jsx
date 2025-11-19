@@ -252,24 +252,24 @@ const EditProfileScreen = ({ onBack }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#FFC0CB] text-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading profile...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#FFC0CB] text-black">
       {/* Header */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10 p-4">
+      <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -278,7 +278,7 @@ const EditProfileScreen = ({ onBack }) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#FF2B55] text-white rounded-lg hover:bg-[#FF2B55] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -293,27 +293,27 @@ const EditProfileScreen = ({ onBack }) => {
       <div className="p-4 space-y-6">
         {/* General Error */}
         {errors.general && (
-          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4">
-            <p className="text-red-400">{errors.general}</p>
+          <div className="bg-[#ffb3c6]/40 border border-[#ff99b3] rounded-lg p-4">
+            <p className="text-pink-800">{errors.general}</p>
           </div>
         )}
 
         {/* Avatar Section */}
-        <div className="bg-gray-900 rounded-xl p-6">
+        <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Profile Picture</h2>
           <div className="flex items-center space-x-4">
             <div className="relative">
               <img
                 src={avatarPreview || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.username || 'User')}&background=random&color=fff&size=200&bold=true`}
                 alt="Profile"
-                className="w-20 h-20 rounded-full object-cover border-2 border-gray-700"
+                className="w-20 h-20 rounded-full object-cover border-2 border-[#ff99b3]"
                 onError={(e) => {
                   e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.username || 'User')}&background=random&color=fff&size=200&bold=true`;
                 }}
               />
               <label
                 htmlFor="avatar-upload"
-                className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
               >
                 <Camera className="w-5 h-5 text-white" />
               </label>
@@ -329,7 +329,7 @@ const EditProfileScreen = ({ onBack }) => {
               <div className="flex space-x-3">
                 <label
                   htmlFor="avatar-upload"
-                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer text-sm"
+                  className="px-4 py-2 bg-white border border-[#ff99b3] text-black rounded-lg hover:bg-[#ffb3c6] transition-colors cursor-pointer text-sm"
                 >
                   Change Photo
                 </label>
@@ -343,9 +343,9 @@ const EditProfileScreen = ({ onBack }) => {
                 )}
               </div>
               {errors.avatar && (
-                <p className="text-red-400 text-sm mt-2">{errors.avatar}</p>
+                <p className="text-red-600 text-sm mt-2">{errors.avatar}</p>
               )}
-              <p className="text-gray-400 text-xs mt-2">
+              <p className="text-gray-700 text-xs mt-2">
                 JPEG, PNG, GIF, or WebP. Max 5MB.
               </p>
             </div>
@@ -353,12 +353,12 @@ const EditProfileScreen = ({ onBack }) => {
         </div>
 
         {/* Personal Information */}
-        <div className="bg-gray-900 rounded-xl p-6">
+        <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Personal Information</h2>
           <div className="space-y-4">
             {/* Username */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="w-4 h-4 inline mr-2" />
                 Username
               </label>
@@ -367,17 +367,17 @@ const EditProfileScreen = ({ onBack }) => {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                 placeholder="Enter your username"
               />
               {errors.username && (
-                <p className="text-red-400 text-sm mt-1">{errors.username}</p>
+                <p className="text-red-600 text-sm mt-1">{errors.username}</p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Mail className="w-4 h-4 inline mr-2" />
                 Email
               </label>
@@ -386,18 +386,18 @@ const EditProfileScreen = ({ onBack }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                 placeholder="Enter your email"
               />
               {errors.email && (
-                <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                <p className="text-red-600 text-sm mt-1">{errors.email}</p>
               )}
             </div>
 
             {/* First Name & Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   First Name
                 </label>
                 <input
@@ -405,12 +405,12 @@ const EditProfileScreen = ({ onBack }) => {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="First name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name
                 </label>
                 <input
@@ -418,7 +418,7 @@ const EditProfileScreen = ({ onBack }) => {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Last name"
                 />
               </div>
@@ -426,7 +426,7 @@ const EditProfileScreen = ({ onBack }) => {
 
             {/* Date of Birth */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="w-4 h-4 inline mr-2" />
                 Date of Birth
               </label>
@@ -435,16 +435,16 @@ const EditProfileScreen = ({ onBack }) => {
                 name="dateOfBirth"
                 value={formData.dateOfBirth}
                 onChange={handleInputChange}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
               />
               {errors.dateOfBirth && (
-                <p className="text-red-400 text-sm mt-1">{errors.dateOfBirth}</p>
+                <p className="text-red-600 text-sm mt-1">{errors.dateOfBirth}</p>
               )}
             </div>
 
             {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <MapPin className="w-4 h-4 inline mr-2" />
                 Location
               </label>
@@ -453,14 +453,14 @@ const EditProfileScreen = ({ onBack }) => {
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                 placeholder="City, Country"
               />
             </div>
 
             {/* Website */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Link className="w-4 h-4 inline mr-2" />
                 Website
               </label>
@@ -469,18 +469,18 @@ const EditProfileScreen = ({ onBack }) => {
                 name="website"
                 value={formData.website}
                 onChange={handleInputChange}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                 placeholder="https://yourwebsite.com"
               />
               {errors.website && (
-                <p className="text-red-400 text-sm mt-1">{errors.website}</p>
+                <p className="text-red-600 text-sm mt-1">{errors.website}</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Bio */}
-        <div className="bg-gray-900 rounded-xl p-6">
+        <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Bio</h2>
           <div className="relative">
             <textarea
@@ -489,27 +489,27 @@ const EditProfileScreen = ({ onBack }) => {
               onChange={handleInputChange}
               rows={4}
               maxLength={160}
-              className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+              className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
               placeholder="Tell people about yourself..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-gray-700">
               {formData.bio.length}/160
             </div>
           </div>
           {errors.bio && (
-            <p className="text-red-400 text-sm mt-1">{errors.bio}</p>
+            <p className="text-red-600 text-sm mt-1">{errors.bio}</p>
           )}
         </div>
 
         {/* Privacy Settings - FIXED */}
-        <div className="bg-gray-900 rounded-xl p-6">
+        <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Privacy Settings</h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              {formData.isPrivate ? <EyeOff className="w-5 h-5 text-gray-400" /> : <Eye className="w-5 h-5 text-gray-400" />}
+              {formData.isPrivate ? <EyeOff className="w-5 h-5 text-pink-700" /> : <Eye className="w-5 h-5 text-pink-700" />}
               <div>
-                <p className="font-medium text-white">Private Account</p>
-                <p className="text-sm text-gray-400">
+                <p className="font-medium text-black">Private Account</p>
+                <p className="text-sm text-gray-700">
                   Only approved followers can see your posts, videos, and profile details
                 </p>
               </div>
@@ -522,22 +522,22 @@ const EditProfileScreen = ({ onBack }) => {
                 onChange={handleInputChange}
                 className="sr-only peer"
               />
-              <div className="relative w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF2B55]"></div>
+              <div className="relative w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
             </label>
           </div>
         </div>
 
         {/* Account Actions */}
-        <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4 text-red-400">Danger Zone</h2>
+        <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4 text-red-600">Danger Zone</h2>
           <div className="space-y-3">
-            <button className="w-full p-3 text-left bg-red-600/20 border border-red-600/50 rounded-lg text-red-400 hover:bg-red-600/30 transition-colors">
+            <button className="w-full p-3 text-left bg-red-100 border border-red-300 rounded-lg text-red-700 hover:bg-red-200 transition-colors">
               <p className="font-medium">Deactivate Account</p>
-              <p className="text-sm text-red-300">Temporarily disable your account</p>
+              <p className="text-sm text-red-600">Temporarily disable your account</p>
             </button>
-            <button className="w-full p-3 text-left bg-red-600/20 border border-red-600/50 rounded-lg text-red-400 hover:bg-red-600/30 transition-colors">
+            <button className="w-full p-3 text-left bg-red-100 border border-red-300 rounded-lg text-red-700 hover:bg-red-200 transition-colors">
               <p className="font-medium">Delete Account</p>
-              <p className="text-sm text-red-300">Permanently delete your account and all data</p>
+              <p className="text-sm text-red-600">Permanently delete your account and all data</p>
             </button>
           </div>
         </div>
@@ -547,7 +547,7 @@ const EditProfileScreen = ({ onBack }) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full flex items-center justify-center space-x-2 py-3 bg-[#FF2B55] text-white rounded-lg hover:bg-[#FF2B55] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {saving ? (
               <>

@@ -53,7 +53,7 @@ const PointsRechargeScreen = ({ onBack }) => {
   // Skeleton components
   const Skeleton = ({ className = "", children, ...props }) => (
     <div
-      className={`animate-pulse bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded ${className}`}
+      className={`animate-pulse bg-gradient-to-r from-[#ffb3c6] via-[#ff99b3] to-[#ffb3c6] bg-[length:200%_100%] animate-shimmer rounded ${className}`}
       {...props}
     >
       {children}
@@ -61,7 +61,7 @@ const PointsRechargeScreen = ({ onBack }) => {
   );
 
   const RechargeSkeleton = () => (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#FFC0CB] text-black">
       {/* Custom styles for shimmer effect */}
       <style jsx>{`
         @keyframes shimmer {
@@ -76,7 +76,7 @@ const PointsRechargeScreen = ({ onBack }) => {
         
         .animate-shimmer {
           animation: shimmer 2s infinite linear;
-          background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+          background: linear-gradient(90deg, #ffb3c6 25%, #ff99b3 50%, #ffb3c6 75%);
           background-size: 200% 100%;
         }
         
@@ -86,7 +86,7 @@ const PointsRechargeScreen = ({ onBack }) => {
       `}</style>
 
       {/* Header Skeleton */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10 p-4">
+      <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Skeleton className="w-10 h-10 rounded-full" />
@@ -104,7 +104,7 @@ const PointsRechargeScreen = ({ onBack }) => {
 
       <div className="p-4">
         {/* Balance Card Skeleton */}
-        <div className="bg-gray-900 rounded-xl p-6 mb-6 relative overflow-hidden">
+        <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-6 mb-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-2">
@@ -116,7 +116,7 @@ const PointsRechargeScreen = ({ onBack }) => {
         </div>
 
         {/* Tabs Skeleton */}
-        <div className="bg-gray-900 rounded-lg p-1 mb-6">
+        <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-1 mb-6">
           <div className="flex">
             <div className="flex-1 py-3 px-4">
               <Skeleton className="h-6 w-20 mx-auto" />
@@ -134,7 +134,7 @@ const PointsRechargeScreen = ({ onBack }) => {
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="grid grid-cols-1 gap-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="p-4 rounded-xl bg-gray-900 relative overflow-hidden">
+                <div key={i} className="p-4 rounded-xl bg-white/70 backdrop-blur-sm border border-[#ff99b3] relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
                   <div className="flex items-center justify-between">
                     <div className="text-left">
@@ -165,7 +165,7 @@ const PointsRechargeScreen = ({ onBack }) => {
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <div key={i} className="p-4 rounded-lg bg-gray-900 relative overflow-hidden">
+                <div key={i} className="p-4 rounded-lg bg-white/70 backdrop-blur-sm border border-[#ff99b3] relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -185,7 +185,7 @@ const PointsRechargeScreen = ({ onBack }) => {
           <Skeleton className="h-14 w-full rounded-xl" />
 
           {/* Usage Info Skeleton */}
-          <div className="bg-gray-900 rounded-lg p-4 relative overflow-hidden">
+          <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
             <Skeleton className="h-5 w-24 mb-2" />
             <div className="space-y-1">
@@ -202,7 +202,7 @@ const PointsRechargeScreen = ({ onBack }) => {
   const HistorySkeleton = () => (
     <div className="space-y-3">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-gray-900 rounded-lg p-4 relative overflow-hidden">
+        <div key={i} className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -778,8 +778,8 @@ const PointsRechargeScreen = ({ onBack }) => {
 
   if (showUsdtPayment && usdtPaymentData) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10 p-4">
+      <div className="min-h-screen bg-[#FFC0CB] text-black">
+        <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
@@ -789,17 +789,17 @@ const PointsRechargeScreen = ({ onBack }) => {
                   if (timerInterval) clearInterval(timerInterval);
                   if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
                 }}
-                className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <h1 className="text-xl font-bold">USDT Payment</h1>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-yellow-400">
+              <div className="text-lg font-bold text-pink-700">
                 {usdtPaymentData.amount} USDT
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-700">
                 {usdtPaymentData.pointsToAdd.toLocaleString()} points
               </p>
             </div>
@@ -807,28 +807,28 @@ const PointsRechargeScreen = ({ onBack }) => {
         </div>
 
         <div className="p-4 max-w-md mx-auto">
-          <div className={`rounded-xl p-4 mb-6 ${paymentStatus === 'approved' ? 'bg-green-900/50 border border-green-500' :
-            paymentStatus === 'expired' ? 'bg-red-900/50 border border-red-500' :
-              'bg-yellow-900/50 border border-yellow-500'
+          <div className={`rounded-xl p-4 mb-6 ${paymentStatus === 'approved' ? 'bg-green-100 border border-green-500' :
+            paymentStatus === 'expired' ? 'bg-red-100 border border-red-500' :
+              'bg-yellow-100 border border-yellow-500'
             }`}>
             <div className="text-center">
               {paymentStatus === 'approved' ? (
                 <>
-                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-green-400">Payment Confirmed!</h3>
-                  <p className="text-green-300">Points have been added to your account</p>
+                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2" />
+                  <h3 className="text-lg font-bold text-green-700">Payment Confirmed!</h3>
+                  <p className="text-green-700">Points have been added to your account</p>
                 </>
               ) : paymentStatus === 'expired' ? (
                 <>
-                  <XCircle className="w-12 h-12 text-red-400 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-red-400">Order Expired</h3>
-                  <p className="text-red-300">Please create a new order</p>
+                  <XCircle className="w-12 h-12 text-red-600 mx-auto mb-2" />
+                  <h3 className="text-lg font-bold text-red-700">Order Expired</h3>
+                  <p className="text-red-700">Please create a new order</p>
                 </>
               ) : (
                 <>
-                  <Clock className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-yellow-400">Waiting for Payment</h3>
-                  <p className="text-yellow-300">Send USDT to the address below</p>
+                  <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-2" />
+                  <h3 className="text-lg font-bold text-yellow-700">Waiting for Payment</h3>
+                  <p className="text-yellow-700">Send USDT to the address below</p>
                 </>
               )}
             </div>
@@ -836,7 +836,7 @@ const PointsRechargeScreen = ({ onBack }) => {
 
           {paymentStatus === 'pending' && (
             <>
-              <div className="bg-gray-900 rounded-xl p-4 mb-6 text-center">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6 text-center">
                 <h3 className="text-lg font-semibold mb-4">Scan QR Code</h3>
                 <div className="bg-white p-4 rounded-lg inline-block">
                   <QRCodeCanvas
@@ -845,65 +845,65 @@ const PointsRechargeScreen = ({ onBack }) => {
                     includeMargin={true}
                   />
                 </div>
-                <p className="text-gray-400 text-sm mt-2">Scan with your USDT wallet</p>
+                <p className="text-gray-700 text-sm mt-2">Scan with your USDT wallet</p>
               </div>
 
-              <div className="bg-gray-900 rounded-xl p-4 mb-6">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
                 <h3 className="text-lg font-semibold mb-4">Wallet Address (TRC20)</h3>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-mono break-all text-gray-300 flex-1">
+                  <p className="text-sm font-mono break-all text-gray-800 flex-1">
                     {usdtPaymentData.walletAddress}
                   </p>
                   <button
                     onClick={() => copyToClipboard(usdtPaymentData.walletAddress)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm flex items-center"
+                    className="bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white px-2 py-1 rounded text-sm flex items-center"
                   >
                     <Copy className="w-4 h-4 mr-1" />
                     Copy
                   </button>
                 </div>
-                {copyMsg && <p className="text-green-600 text-sm mt-1">{copyMsg}</p>}
+                {copyMsg && <p className="text-green-700 text-sm mt-1">{copyMsg}</p>}
               </div>
 
-              <div className="bg-gray-900 rounded-xl p-4 mb-6">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
                 <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Requested Amount:</span>
+                    <span className="text-gray-700">Requested Amount:</span>
                     <span className="font-bold">{usdtPaymentData.originalAmount} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Payable Amount:</span>
-                    <span className="font-bold text-red-400">{usdtPaymentData.amount} USDT</span>
+                    <span className="text-gray-700">Payable Amount:</span>
+                    <span className="font-bold text-red-600">{usdtPaymentData.amount} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Network:</span>
+                    <span className="text-gray-700">Network:</span>
                     <span className="font-bold">TRC20 (Tron)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Points:</span>
-                    <span className="font-bold text-yellow-400">{usdtPaymentData.pointsToAdd.toLocaleString()}</span>
+                    <span className="text-gray-700">Points:</span>
+                    <span className="font-bold text-pink-700">{usdtPaymentData.pointsToAdd.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Order ID:</span>
+                    <span className="text-gray-700">Order ID:</span>
                     <span className="font-mono text-sm">{usdtPaymentData.orderId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Expires in:</span>
+                    <span className="text-gray-700">Expires in:</span>
                     <span className="font-bold">{formatTime(countdown)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 mb-6">
-                <p className="text-red-300 text-sm text-center">
+              <div className="bg-red-100 border border-red-500 rounded-lg p-4 mb-6">
+                <p className="text-red-700 text-sm text-center">
                   ⚠️ Send exactly {usdtPaymentData.amount} USDT (otherwise payment won't be detected)
                 </p>
               </div>
 
-              <div className="bg-gray-900 rounded-xl p-4 mb-6">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
                 <h3 className="text-lg font-semibold mb-4">Instructions</h3>
-                <div className="space-y-2 text-sm text-gray-300">
+                <div className="space-y-2 text-sm text-gray-800">
                   <p>1. Send exactly <strong>{usdtPaymentData.amount} USDT</strong> to the wallet address above</p>
                   <p>2. Make sure to use the <strong>TRC20 network</strong></p>
                   <p>3. Payment will be confirmed automatically within 1-5 minutes</p>
@@ -914,7 +914,7 @@ const PointsRechargeScreen = ({ onBack }) => {
               <button
                 onClick={() => checkUsdtPayment(usdtPaymentData.orderId)}
                 disabled={checkingPayment}
-                className="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed mb-6 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed mb-6 flex items-center justify-center space-x-2 text-white"
               >
                 {checkingPayment ? (
                   <>
@@ -934,15 +934,15 @@ const PointsRechargeScreen = ({ onBack }) => {
                   href={usdtPaymentData.paymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-lg font-semibold mb-6 flex items-center justify-center space-x-2"
+                  className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold mb-6 flex items-center justify-center space-x-2"
                 >
                   <ExternalLink className="w-5 h-5" />
                   <span>Open in Wallet</span>
                 </a>
               )}
 
-              <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
-                <p className="text-red-300 text-sm text-center">
+              <div className="bg-red-100 border border-red-500 rounded-lg p-4">
+                <p className="text-red-700 text-sm text-center">
                   ⚠️ Only send USDT on TRC20 network. Sending other tokens or using wrong network will result in loss of funds.
                 </p>
               </div>
@@ -955,23 +955,23 @@ const PointsRechargeScreen = ({ onBack }) => {
 
   if (showCheckout) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10 p-4">
+      <div className="min-h-screen bg-[#FFC0CB] text-black">
+        <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowCheckout(false)}
-                className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <h1 className="text-xl font-bold">Payment Details</h1>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-yellow-400">
+              <div className="text-lg font-bold text-pink-700">
                 ${selectedAmount || customAmount}
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-700">
                 {calculatePoints(selectedAmount || parseFloat(customAmount)).toLocaleString()} points
               </p>
             </div>
@@ -979,8 +979,8 @@ const PointsRechargeScreen = ({ onBack }) => {
         </div>
 
         <div className="p-4 max-w-md mx-auto">
-          <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl p-6 mb-6">
-            <div className="text-center text-white">
+          <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-6 mb-6">
+            <div className="text-center text-black">
               <h3 className="text-lg font-bold mb-2">Order Summary</h3>
               <div className="flex justify-between items-center mb-2">
                 <span>Amount:</span>
@@ -988,7 +988,7 @@ const PointsRechargeScreen = ({ onBack }) => {
               </div>
               <div className="flex justify-between items-center mb-2">
                 <span>Points:</span>
-                <span className="font-bold text-yellow-300">
+                <span className="font-bold text-pink-700">
                   {calculatePoints(selectedAmount || parseFloat(customAmount)).toLocaleString()}
                 </span>
               </div>
@@ -1000,7 +1000,7 @@ const PointsRechargeScreen = ({ onBack }) => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-gray-900 rounded-xl p-4">
+            <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2" />
                 Personal Information
@@ -1013,11 +1013,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                     placeholder="Full Name"
                     value={paymentDetails.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.fullName ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.fullName ? 'border-red-500' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.fullName && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.fullName}</p>
+                    <p className="text-red-700 text-sm mt-1">{validationErrors.fullName}</p>
                   )}
                 </div>
 
@@ -1027,11 +1027,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                     placeholder="Email Address"
                     value={paymentDetails.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.email ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.email ? 'border-red-500' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.email && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.email}</p>
+                    <p className="text-red-700 text-sm mt-1">{validationErrors.email}</p>
                   )}
                 </div>
 
@@ -1041,18 +1041,18 @@ const PointsRechargeScreen = ({ onBack }) => {
                     placeholder="Phone Number"
                     value={paymentDetails.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.phone ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.phone ? 'border-red-500' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.phone && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.phone}</p>
+                    <p className="text-red-700 text-sm mt-1">{validationErrors.phone}</p>
                   )}
                 </div>
               </div>
             </div>
 
             {selectedPaymentMethod === 'card' && (
-              <div className="bg-gray-900 rounded-xl p-4">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <CreditCard className="w-5 h-5 mr-2" />
                   Card Information
@@ -1065,11 +1065,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                       placeholder="Cardholder Name"
                       value={paymentDetails.cardholderName}
                       onChange={(e) => handleInputChange('cardholderName', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cardholderName ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cardholderName ? 'border-red-500' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.cardholderName && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.cardholderName}</p>
+                      <p className="text-red-700 text-sm mt-1">{validationErrors.cardholderName}</p>
                     )}
                   </div>
 
@@ -1080,11 +1080,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                       value={paymentDetails.cardNumber}
                       onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
                       maxLength="19"
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cardNumber ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cardNumber ? 'border-red-500' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.cardNumber && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.cardNumber}</p>
+                      <p className="text-red-700 text-sm mt-1">{validationErrors.cardNumber}</p>
                     )}
                   </div>
 
@@ -1096,11 +1096,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                         value={paymentDetails.expiryDate}
                         onChange={(e) => handleInputChange('expiryDate', formatExpiryDate(e.target.value))}
                         maxLength="5"
-                        className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.expiryDate ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.expiryDate ? 'border-red-500' : 'border-[#ff99b3]'
                           }`}
                       />
                       {validationErrors.expiryDate && (
-                        <p className="text-red-400 text-sm mt-1">{validationErrors.expiryDate}</p>
+                        <p className="text-red-700 text-sm mt-1">{validationErrors.expiryDate}</p>
                       )}
                     </div>
                     <div>
@@ -1109,11 +1109,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                         placeholder="CVV"
                         value={paymentDetails.cvv}
                         onChange={(e) => handleInputChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
-                        className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cvv ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cvv ? 'border-red-500' : 'border-[#ff99b3]'
                           }`}
                       />
                       {validationErrors.cvv && (
-                        <p className="text-red-400 text-sm mt-1">{validationErrors.cvv}</p>
+                        <p className="text-red-700 text-sm mt-1">{validationErrors.cvv}</p>
                       )}
                     </div>
                   </div>
@@ -1131,11 +1131,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                       placeholder="Street Address"
                       value={paymentDetails.address}
                       onChange={(e) => handleInputChange('address', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.address ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.address ? 'border-red-500' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.address && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.address}</p>
+                      <p className="text-red-700 text-sm mt-1">{validationErrors.address}</p>
                     )}
                   </div>
 
@@ -1146,11 +1146,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                         placeholder="City"
                         value={paymentDetails.city}
                         onChange={(e) => handleInputChange('city', e.target.value)}
-                        className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.city ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.city ? 'border-red-500' : 'border-[#ff99b3]'
                           }`}
                       />
                       {validationErrors.city && (
-                        <p className="text-red-400 text-sm mt-1">{validationErrors.city}</p>
+                        <p className="text-red-700 text-sm mt-1">{validationErrors.city}</p>
                       )}
                     </div>
                     <div>
@@ -1159,11 +1159,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                         placeholder="ZIP Code"
                         value={paymentDetails.zipCode}
                         onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                        className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.zipCode ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.zipCode ? 'border-red-500' : 'border-[#ff99b3]'
                           }`}
                       />
                       {validationErrors.zipCode && (
-                        <p className="text-red-400 text-sm mt-1">{validationErrors.zipCode}</p>
+                        <p className="text-red-700 text-sm mt-1">{validationErrors.zipCode}</p>
                       )}
                     </div>
                   </div>
@@ -1174,14 +1174,14 @@ const PointsRechargeScreen = ({ onBack }) => {
                       placeholder="State/Province"
                       value={paymentDetails.state}
                       onChange={(e) => handleInputChange('state', e.target.value)}
-                      className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                     <input
                       type="text"
                       placeholder="Country"
                       value={paymentDetails.country}
                       onChange={(e) => handleInputChange('country', e.target.value)}
-                      className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                   </div>
                 </div>
@@ -1189,7 +1189,7 @@ const PointsRechargeScreen = ({ onBack }) => {
             )}
 
             {selectedPaymentMethod === 'paypal' && (
-              <div className="bg-gray-900 rounded-xl p-4">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <DollarSign className="w-5 h-5 mr-2" />
                   PayPal Information
@@ -1201,18 +1201,18 @@ const PointsRechargeScreen = ({ onBack }) => {
                     placeholder="PayPal Email Address"
                     value={paymentDetails.paypalEmail}
                     onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.paypalEmail ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.paypalEmail ? 'border-red-500' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.paypalEmail && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.paypalEmail}</p>
+                    <p className="text-red-700 text-sm mt-1">{validationErrors.paypalEmail}</p>
                   )}
                 </div>
               </div>
             )}
 
             {selectedPaymentMethod === 'bank' && (
-              <div className="bg-gray-900 rounded-xl p-4">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <Gift className="w-5 h-5 mr-2" />
                   Bank Transfer Information
@@ -1220,13 +1220,13 @@ const PointsRechargeScreen = ({ onBack }) => {
 
                 <div className="mb-6">
                   <h4 className="text-md font-semibold mb-2">Transfer to this account:</h4>
-                  <div className="space-y-2 text-sm text-gray-300">
+                  <div className="space-y-2 text-sm text-gray-800">
                     <p><strong>Bank Name:</strong> {appBankDetails.bankName}</p>
                     <p><strong>Account Number:</strong> {appBankDetails.accountNumber}</p>
                     <p><strong>Routing Number:</strong> {appBankDetails.routingNumber}</p>
                     <p><strong>Account Holder:</strong> {appBankDetails.accountHolder}</p>
                     <p><strong>SWIFT Code:</strong> {appBankDetails.swiftCode}</p>
-                    <p className="text-gray-400">{appBankDetails.instructions}</p>
+                    <p className="text-gray-700">{appBankDetails.instructions}</p>
                   </div>
                 </div>
 
@@ -1237,11 +1237,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                       placeholder="Transaction ID/Reference"
                       value={paymentDetails.transactionId}
                       onChange={(e) => handleInputChange('transactionId', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.transactionId ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.transactionId ? 'border-red-500' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.transactionId && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.transactionId}</p>
+                      <p className="text-red-700 text-sm mt-1">{validationErrors.transactionId}</p>
                     )}
                   </div>
 
@@ -1257,47 +1257,24 @@ const PointsRechargeScreen = ({ onBack }) => {
                       />
                       <label
                         htmlFor="transaction-screenshot"
-                        className="cursor-pointer flex items-center space-x-2 p-3 bg-gray-800 border rounded-lg w-full text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        className="cursor-pointer flex items-center space-x-2 p-3 bg-white border rounded-lg w-full text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
                       >
                         <Upload className="w-5 h-5" />
                         <span>{paymentDetails.transactionScreenshot ? paymentDetails.transactionScreenshot.name : 'Choose file'}</span>
                       </label>
                     </div>
                     {validationErrors.transactionScreenshot && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.transactionScreenshot}</p>
+                      <p className="text-red-700 text-sm mt-1">{validationErrors.transactionScreenshot}</p>
                     )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* <button
-              onClick={() => {
-                // This would be your handleRecharge function
-                alert('Recharge functionality would be implemented here');
-              }}
-              disabled={recharging}
-              className="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-pink-700 hover:to-purple-700 transition-all"
-            >
-              {recharging ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>{selectedPaymentMethod === 'bank' ? 'Submitting Request...' : 'Processing Payment...'}</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  <Lock className="w-5 h-5" />
-                  <span>{selectedPaymentMethod === 'bank' ? 'Submit Recharge Request' : `Complete Payment - ${selectedAmount || customAmount}`}</span>
-                </div>
-              )}
-            </button> */}
-
-
-
             <button
               onClick={handleRecharge}
               disabled={recharging || !selectedAmount && !customAmount}
-              className="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-pink-700 hover:to-purple-700 transition-all"
+              className="w-full py-4 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
             >
               {recharging ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -1315,12 +1292,12 @@ const PointsRechargeScreen = ({ onBack }) => {
                 </div>
               )}
             </button>
-            <div className="bg-gray-800 rounded-lg p-4 text-center">
+            <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4 text-center">
               <div className="flex items-center justify-center space-x-2 mb-2">
-                <Lock className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-green-400 font-medium">Secure Payment</span>
+                <Lock className="w-4 h-4 text-green-700" />
+                <span className="text-sm text-green-700 font-medium">Secure Payment</span>
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-700">
                 Your payment information is encrypted and secure. We never store your card details.
               </p>
             </div>
@@ -1331,7 +1308,7 @@ const PointsRechargeScreen = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#FFC0CB] text-black">
       {/* Custom styles for shimmer effect */}
       <style jsx>{`
         @keyframes shimmer {
@@ -1346,7 +1323,7 @@ const PointsRechargeScreen = ({ onBack }) => {
         
         .animate-shimmer {
           animation: shimmer 2s infinite linear;
-          background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+          background: linear-gradient(90deg, #ffb3c6 25%, #ff99b3 50%, #ffb3c6 75%);
           background-size: 200% 100%;
         }
         
@@ -1355,12 +1332,12 @@ const PointsRechargeScreen = ({ onBack }) => {
         }
       `}</style>
 
-      <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10 p-4">
+      <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -1368,31 +1345,31 @@ const PointsRechargeScreen = ({ onBack }) => {
           </div>
           <div className="text-right">
             <div className="flex items-center space-x-2">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span className="text-lg font-bold text-yellow-400">{pointsBalance.toLocaleString()}</span>
+              <Star className="w-5 h-5 text-pink-700" />
+              <span className="text-lg font-bold text-pink-700">{pointsBalance.toLocaleString()}</span>
             </div>
-            <p className="text-xs text-gray-400">Current Balance</p>
+            <p className="text-xs text-gray-700">Current Balance</p>
           </div>
         </div>
       </div>
 
       <div className="p-4">
-        <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl p-6 mb-6">
+        <div className="bg-gradient-to-r from-pink-600 to-pink-500 rounded-xl p-6 mb-6">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-2">
-              <Star className="w-8 h-8 text-yellow-300" />
+              <Star className="w-8 h-8 text-white" />
               <h2 className="text-3xl font-bold text-white">{pointsBalance.toLocaleString()}</h2>
             </div>
-            <p className="text-purple-100">Available Points</p>
+            <p className="text-white/80">Available Points</p>
           </div>
         </div>
 
-        <div className="flex bg-gray-900 rounded-lg p-1 mb-6">
+        <div className="flex bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-1 mb-6">
           <button
             onClick={() => setActiveTab('recharge')}
             className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'recharge'
-              ? 'bg-[#FF2B55] text-white'
-              : 'text-gray-400 hover:text-white'
+              ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white'
+              : 'text-gray-700 hover:text-black'
               }`}
           >
             <CreditCard className="w-4 h-4 inline mr-2" />
@@ -1401,8 +1378,8 @@ const PointsRechargeScreen = ({ onBack }) => {
           <button
             onClick={() => setActiveTab('history')}
             className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'history'
-              ? 'bg-[#FF2B55] text-white'
-              : 'text-gray-400 hover:text-white'
+              ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white'
+              : 'text-gray-700 hover:text-black'
               }`}
           >
             <History className="w-4 h-4 inline mr-2" />
@@ -1423,8 +1400,8 @@ const PointsRechargeScreen = ({ onBack }) => {
                       setCustomAmount('');
                     }}
                     className={`relative p-4 rounded-xl border-2 transition-all ${selectedAmount === option.amount
-                      ? 'bg-[#FF2B55] bg-red-600/20'
-                      : 'border-gray-700 bg-gray-900 hover:border-gray-600'
+                      ? 'bg-[#ffb3c6] border-[#ff99b3]'
+                      : 'border-[#ff99b3] bg-white/70 backdrop-blur-sm hover:bg-[#ffb3c6]'
                       }`}
                   >
                     <div className="flex items-center justify-between">
@@ -1432,25 +1409,25 @@ const PointsRechargeScreen = ({ onBack }) => {
                         <div className="flex items-center space-x-2">
                           <span className="text-xl font-bold">${option.amount}</span>
                           {option.popular && (
-                            <span className="bg-yellow-400 text-black text-xs px-2 py-1 rounded-full font-medium">
+                            <span className="bg-pink-600 text-white text-xs px-2 py-1 rounded-full font-medium">
                               Popular
                             </span>
                           )}
                         </div>
                         <div className="flex items-center space-x-1 mt-1">
-                          <Star className="w-4 h-4 text-yellow-400" />
-                          <span className="text-yellow-400 font-medium">
+                          <Star className="w-4 h-4 text-pink-700" />
+                          <span className="text-pink-700 font-medium">
                             {(option.points + option.bonus).toLocaleString()} points
                           </span>
                           {option.bonus > 0 && (
-                            <span className="text-green-400 text-sm">
+                            <span className="text-green-700 text-sm">
                               (+{option.bonus} bonus)
                             </span>
                           )}
                         </div>
                       </div>
                       {selectedAmount === option.amount && (
-                        <CheckCircle className="w-6 h-6 text-pink-500" />
+                        <CheckCircle className="w-6 h-6 text-pink-700" />
                       )}
                     </div>
                   </button>
@@ -1461,7 +1438,7 @@ const PointsRechargeScreen = ({ onBack }) => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Or Enter Custom Amount</h3>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">$</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700">$</span>
                 <input
                   type="number"
                   min="1"
@@ -1471,14 +1448,14 @@ const PointsRechargeScreen = ({ onBack }) => {
                     setCustomAmount(e.target.value);
                     setSelectedAmount(null);
                   }}
-                  className="w-full pl-8 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full pl-8 pr-4 py-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   placeholder="Enter amount (1-500)"
                 />
               </div>
               {customAmount && (
                 <div className="mt-2 flex items-center space-x-1 text-sm">
-                  <Star className="w-4 h-4 text-yellow-400" />
-                  <span className="text-yellow-400">
+                  <Star className="w-4 h-4 text-pink-700" />
+                  <span className="text-pink-700">
                     You'll get {calculatePoints(parseFloat(customAmount)).toLocaleString()} points
                   </span>
                 </div>
@@ -1495,8 +1472,8 @@ const PointsRechargeScreen = ({ onBack }) => {
                       key={method.id}
                       onClick={() => setSelectedPaymentMethod(method.id)}
                       className={`w-full p-4 rounded-lg border-2 transition-all ${selectedPaymentMethod === method.id
-                        ? 'border-red-500 bg-red-600/20'
-                        : 'border-gray-700 bg-gray-900 hover:border-gray-600'
+                        ? 'border-[#ff99b3] bg-[#ffb3c6]'
+                        : 'border-[#ff99b3] bg-white/70 backdrop-blur-sm hover:bg-[#ffb3c6]'
                         }`}
                     >
                       <div className="flex items-center justify-between">
@@ -1504,11 +1481,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                           <IconComponent className="w-6 h-6" />
                           <div className="text-left">
                             <span className="text-sm font-medium block">{method.name}</span>
-                            <span className="text-xs text-gray-400">{method.description}</span>
+                            <span className="text-xs text-gray-700">{method.description}</span>
                           </div>
                         </div>
                         {selectedPaymentMethod === method.id && (
-                          <CheckCircle className="w-5 h-5 text-pink-500" />
+                          <CheckCircle className="w-5 h-5 text-pink-700" />
                         )}
                       </div>
                     </button>
@@ -1520,7 +1497,7 @@ const PointsRechargeScreen = ({ onBack }) => {
             <button
               onClick={proceedToCheckout}
               disabled={!selectedAmount && !customAmount || recharging}
-              className="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-pink-700 hover:to-purple-700 transition-all"
+              className="w-full py-4 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
             >
               <div className="flex items-center justify-center space-x-2">
                 {recharging ? (
@@ -1539,9 +1516,9 @@ const PointsRechargeScreen = ({ onBack }) => {
               </div>
             </button>
 
-            <div className="bg-gray-900 rounded-lg p-4">
+            <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4">
               <h4 className="font-semibold mb-2">Points Usage</h4>
-              <ul className="text-sm text-gray-400 space-y-1">
+              <ul className="text-sm text-gray-700 space-y-1">
                 <li>• Send virtual gifts to creators</li>
                 <li>• Boost your videos for more visibility</li>
                 <li>• Access premium features and filters</li>
@@ -1555,27 +1532,27 @@ const PointsRechargeScreen = ({ onBack }) => {
           <div>
             {(!history || history.length === 0) ? (
               <div className="text-center py-12">
-                <History className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                <p className="text-gray-400 text-lg mb-2">No transaction history</p>
-                <p className="text-gray-500">Your points transactions will appear here</p>
+                <History className="w-16 h-16 mx-auto mb-4 text-gray-700" />
+                <p className="text-gray-700 text-lg mb-2">No transaction history</p>
+                <p className="text-gray-600">Your points transactions will appear here</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {history.map((transaction, index) => (
                   <div
                     key={transaction._id || transaction.transactionId || index}
-                    className="bg-gray-900 rounded-lg p-4"
+                    className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         {getTransactionIcon(getCategoryForIcon(transaction))}
                         <div>
                           <p className="font-medium">{transaction.description || transaction.categoryDisplay || 'Transaction'}</p>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-gray-700">
                             {formatDate(transaction.createdAt || transaction.requestedAt)}
                           </p>
                           {transaction.transactionId && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-600 mt-1">
                               ID: {transaction.transactionId}
                             </p>
                           )}
@@ -1585,7 +1562,7 @@ const PointsRechargeScreen = ({ onBack }) => {
                         <p className={`font-bold text-lg ${getTransactionColor(getCategoryForColor(transaction))}`}>
                           {transaction.amount > 0 ? '+' : ''}{transaction.amount || transaction.pointsToAdd}
                         </p>
-                        <p className="text-xs text-gray-400">points</p>
+                        <p className="text-xs text-gray-700">points</p>
                       </div>
                     </div>
                   </div>

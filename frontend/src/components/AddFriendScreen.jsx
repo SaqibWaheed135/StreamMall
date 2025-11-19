@@ -253,12 +253,12 @@ const AddFriendsScreen = ({ onBack }) => {
   const getFollowButtonStyle = (userId) => {
     const status = userFollowStatus[userId] || {};
     if (status.hasPendingRequest) {
-      return "bg-gray-600 text-white cursor-not-allowed";
+      return "bg-[#ffb3c6] text-gray-700 cursor-not-allowed";
     }
     if (status.isFollowing) {
-      return "bg-gray-800 text-white border border-gray-600 hover:bg-gray-700";
+      return "bg-white text-pink-700 border border-[#ff99b3] hover:bg-[#ffb3c6]";
     }
-    return "bg-[#FF2B55] text-white hover:bg-[#FF2B55]";
+    return "bg-gradient-to-r from-pink-600 to-pink-500 text-white hover:opacity-90";
   };
 
   // Format numbers
@@ -277,7 +277,7 @@ const AddFriendsScreen = ({ onBack }) => {
     const isFriend = followStatus.relationship === 'mutual';
 
     return (
-      <div key={user._id} className="bg-gray-900 p-4 rounded-xl hover:bg-gray-800 transition-colors">
+      <div key={user._id} className="bg-white/70 border border-[#ff99b3] p-4 rounded-xl hover:bg-[#ffb3c6] transition-colors">
         <div className="flex items-center space-x-3">
           <button onClick={() => goToProfile(user)} className="flex items-center space-x-3 flex-1">
             <div className="relative">
@@ -290,16 +290,16 @@ const AddFriendsScreen = ({ onBack }) => {
                 }}
               />
               {user.isVerified && (
-                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
+                <div className="absolute -bottom-1 -right-1 bg-pink-600 rounded-full p-1">
                   <Shield className="w-2 h-2 text-white" />
                 </div>
               )}
             </div>
             <div className="flex-1 text-left">
               <div className="flex items-center space-x-1">
-                <p className="font-bold text-white">{user.username}</p>
+                <p className="font-bold text-pink-700">{user.username}</p>
                 {user.isVerified && (
-                  <Shield className="w-4 h-4 text-blue-500" />
+                  <Shield className="w-4 h-4 text-pink-600" />
                 )}
                 {isFriend && (
                   <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
@@ -318,7 +318,7 @@ const AddFriendsScreen = ({ onBack }) => {
                   </span>
                 )}
               </div>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-700 text-sm">
                 {formatNumber(user.followersCount || 0)} followers
                 {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
               </p>
@@ -330,7 +330,7 @@ const AddFriendsScreen = ({ onBack }) => {
             {(isFriend || followStatus.canMessage) && (
               <button
                 onClick={() => startConversation(user)}
-                className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
+                className="p-2 bg-pink-600 hover:bg-pink-700 rounded-full transition-colors"
                 title="Send Message"
               >
                 <MessageCircle className="w-4 h-4 text-white" />
@@ -357,14 +357,14 @@ const AddFriendsScreen = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#FFC0CB] text-black">
       {/* Header */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10">
+      <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10">
         <div className="p-4">
           <div className="flex items-center space-x-4 mb-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
@@ -373,13 +373,13 @@ const AddFriendsScreen = ({ onBack }) => {
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600" />
             <input
               type="text"
               placeholder="Search for people to follow..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full bg-gray-800/50 text-white pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:bg-gray-800"
+              className="w-full bg-white border border-[#ff99b3] text-black pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
           </div>
         </div>
@@ -393,7 +393,7 @@ const AddFriendsScreen = ({ onBack }) => {
             {loading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }, (_, i) => (
-                  <div key={i} className="bg-gray-900 p-4 rounded-xl animate-pulse">
+                  <div key={i} className="bg-white/70 border border-[#ff99b3] p-4 rounded-xl animate-pulse">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
                       <div className="flex-1">
@@ -406,7 +406,7 @@ const AddFriendsScreen = ({ onBack }) => {
                 ))}
               </div>
             ) : searchResults.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-gray-700">
                 <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg">No users found</p>
                 <p className="text-sm">Try a different search term</p>
@@ -424,7 +424,7 @@ const AddFriendsScreen = ({ onBack }) => {
             {loading ? (
               <div className="space-y-4">
                 {Array.from({ length: 10 }, (_, i) => (
-                  <div key={i} className="bg-gray-900 p-4 rounded-xl animate-pulse">
+                  <div key={i} className="bg-white/70 border border-[#ff99b3] p-4 rounded-xl animate-pulse">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
                       <div className="flex-1">
@@ -437,7 +437,7 @@ const AddFriendsScreen = ({ onBack }) => {
                 ))}
               </div>
             ) : suggestedUsers.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-gray-700">
                 <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg">No suggestions available</p>
                 <p className="text-sm">Try searching for specific users</p>
@@ -451,9 +451,9 @@ const AddFriendsScreen = ({ onBack }) => {
         )}
 
         {/* Quick Tips */}
-        <div className="bg-gray-900/50 rounded-xl p-4 mt-8">
+        <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-4 mt-8">
           <h3 className="font-bold mb-2">💡 Tips for making friends</h3>
-          <ul className="text-sm text-gray-400 space-y-1">
+          <ul className="text-sm text-gray-700 space-y-1">
             <li>• Follow users you find interesting</li>
             <li>• When they follow you back, you become friends</li>
             <li>• Friends can send direct messages to each other</li>
