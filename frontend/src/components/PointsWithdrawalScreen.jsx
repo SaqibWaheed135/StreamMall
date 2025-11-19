@@ -45,7 +45,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
   // Skeleton components
   const Skeleton = ({ className = "", children, ...props }) => (
     <div
-      className={`animate-pulse bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded ${className}`}
+      className={`animate-pulse bg-gradient-to-r from-[#ffb3c6] via-[#ff99b3] to-[#ffb3c6] bg-[length:200%_100%] animate-shimmer rounded ${className}`}
       {...props}
     >
       {children}
@@ -53,9 +53,12 @@ const PointsWithdrawalScreen = ({ onBack }) => {
   );
 
   const WithdrawalSkeleton = () => (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#FFC0CB] text-black relative overflow-hidden">
+      <div className="absolute w-[400px] h-[400px] bg-pink-300 rounded-full blur-[150px] opacity-30 top-[-100px] left-[-100px] pointer-events-none" />
+      <div className="absolute w-[400px] h-[400px] bg-pink-400 rounded-full blur-[150px] opacity-30 bottom-[-100px] right-[-100px] pointer-events-none" />
       {/* Header Skeleton */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10 p-4">
+      <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Skeleton className="w-10 h-10 rounded-full" />
@@ -74,9 +77,10 @@ const PointsWithdrawalScreen = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 relative z-10">
         {/* Balance Card Skeleton */}
-        <div className="bg-gray-900 rounded-xl p-6 mb-6 relative overflow-hidden">
+        <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-6 mb-6 relative overflow-hidden">
+
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-2">
@@ -90,7 +94,8 @@ const PointsWithdrawalScreen = ({ onBack }) => {
         </div>
 
         {/* Tabs Skeleton */}
-        <div className="bg-gray-900 rounded-lg p-1 mb-6">
+        <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-1 mb-6">
+
           <div className="flex">
             <div className="flex-1 py-3 px-4">
               <Skeleton className="h-6 w-20 mx-auto" />
@@ -115,8 +120,8 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="p-4 rounded-lg bg-gray-900 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
+                <div key={i} className="p-4 rounded-xl bg-white/70 border border-[#ff99b3] relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
                   <div className="flex items-center space-x-3">
                     <Skeleton className="w-6 h-6 rounded" />
                     <div className="flex-1">
@@ -131,8 +136,9 @@ const PointsWithdrawalScreen = ({ onBack }) => {
           </div>
 
           {/* Form Skeleton */}
-          <div className="bg-gray-900 rounded-xl p-4 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
+          <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
+
             <div className="flex items-center mb-4">
               <Skeleton className="w-5 h-5 rounded mr-2" />
               <Skeleton className="h-6 w-32" />
@@ -145,7 +151,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
           </div>
 
           {/* Submit Button Skeleton */}
-          <Skeleton className="h-14 w-full rounded-xl" />
+          <Skeleton className="h-14 w-full rounded-2xl" />
         </div>
       </div>
     </div>
@@ -157,11 +163,12 @@ const PointsWithdrawalScreen = ({ onBack }) => {
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-4 w-20" />
       </div>
-      
+
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-xl border border-gray-700 bg-gray-900 p-4 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
+          <div key={i} className="rounded-xl border border-[#ff99b3] bg-white/70 p-4 relative overflow-hidden backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
+
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <Skeleton className="w-5 h-5 rounded" />
@@ -563,13 +570,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'pending':
-        return <Clock className="w-5 h-5 text-yellow-400" />;
+        return <Clock className="w-5 h-5 text-pink-500" />;
       case 'approved':
       case 'completed':
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'rejected':
       case 'cancelled':
-        return <XCircle className="w-5 h-5 text-red-400" />;
+        return <XCircle className="w-5 h-5 text-red-500" />;
       default:
         return <Clock className="w-5 h-5 text-gray-400" />;
     }
@@ -578,30 +585,30 @@ const PointsWithdrawalScreen = ({ onBack }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
-        return 'text-yellow-400';
+        return 'text-pink-600';
       case 'approved':
       case 'completed':
-        return 'text-green-400';
+        return 'text-green-600';
       case 'rejected':
       case 'cancelled':
-        return 'text-red-400';
+        return 'text-red-500';
       default:
-        return 'text-gray-400';
+        return 'text-gray-500';
     }
   };
 
   const getStatusBg = (status) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-900/30 border-yellow-600/50';
+        return 'border border-pink-300 bg-pink-100/60';
       case 'approved':
       case 'completed':
-        return 'bg-green-900/30 border-green-600/50';
+        return 'border border-green-200 bg-green-100/60';
       case 'rejected':
       case 'cancelled':
-        return 'bg-red-900/30 border-red-600/50';
+        return 'border border-red-200 bg-red-100/60';
       default:
-        return 'bg-gray-900/30 border-gray-600/50';
+        return 'border border-gray-200 bg-white/70';
     }
   };
 
@@ -636,7 +643,10 @@ const PointsWithdrawalScreen = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#FFC0CB] text-black relative overflow-hidden">
+      <div className="absolute w-[500px] h-[500px] bg-pink-200 rounded-full blur-[180px] opacity-40 top-[-150px] left-[-150px] pointer-events-none" />
+      <div className="absolute w-[450px] h-[450px] bg-pink-400 rounded-full blur-[180px] opacity-30 bottom-[-150px] right-[-150px] pointer-events-none" />
+
       {/* Custom styles for shimmer effect */}
       <style jsx>{`
         @keyframes shimmer {
@@ -651,7 +661,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
         
         .animate-shimmer {
           animation: shimmer 2s infinite linear;
-          background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+          background: linear-gradient(90deg, #ffb3c6 25%, #ff99b3 50%, #ffb3c6 75%);
           background-size: 200% 100%;
         }
         
@@ -661,12 +671,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
       `}</style>
 
       {/* Header */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10 p-4">
+      <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -676,16 +687,16 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             <button
               onClick={refreshData}
               disabled={refreshing}
-              className="p-2 hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
+              className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
             <div className="text-right">
               <div className="flex items-center space-x-2">
-                <Star className="w-5 h-5 text-yellow-400" />
-                <span className="text-lg font-bold text-yellow-400">{pointsBalance.toLocaleString()}</span>
+                <Star className="w-5 h-5 text-pink-700" />
+                <span className="text-lg font-bold text-pink-700">{pointsBalance.toLocaleString()}</span>
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-700">
                 ≈ ${pointsToUSD(pointsBalance).toFixed(2)} USD
               </p>
             </div>
@@ -695,46 +706,46 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
       {/* Balance Card */}
       <div className="p-4">
-        <div className="bg-gradient-to-br from-green-600 to-blue-600 rounded-xl p-6 mb-6">
+        <div className="bg-white/80 backdrop-blur-md border border-[#ff99b3] rounded-2xl p-6 mb-6 shadow-lg">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-2">
-              <DollarSign className="w-8 h-8 text-green-200" />
-              <h2 className="text-3xl font-bold text-white">
+              <DollarSign className="w-8 h-8 text-pink-700" />
+              <h2 className="text-3xl font-bold text-black">
                 ${pointsToUSD(pointsBalance).toFixed(2)}
               </h2>
             </div>
-            <p className="text-green-100">Available for Withdrawal</p>
-            <p className="text-sm text-green-200 mt-1">
+            <p className="text-sm text-pink-700 font-medium">Available for Withdrawal</p>
+            <p className="text-sm text-gray-700 mt-1">
               {pointsBalance.toLocaleString()} points
             </p>
             {/* 👇 Conversion Rate Note */}
-            <p className="text-xs text-green-100 mt-2 italic">
+            <p className="text-xs text-gray-600 mt-2 italic">
               Conversion Rate: 10 points = $1
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-900/50 border border-red-500 rounded-lg p-4 mb-4 flex items-center space-x-2">
-            <AlertCircle className="w-5 h-5 text-red-400" />
-            <p className="text-red-400">{error}</p>
+          <div className="bg-red-100 border border-red-300 rounded-lg p-4 mb-4 flex items-center space-x-2 text-red-700">
+            <AlertCircle className="w-5 h-5" />
+            <p>{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="bg-green-900/50 border border-green-500 rounded-lg p-4 mb-4 flex items-center space-x-2">
-            <CheckCircle className="w-5 h-5 text-green-400" />
-            <p className="text-green-400">{success}</p>
+          <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-4 flex items-center space-x-2 text-green-700">
+            <CheckCircle className="w-5 h-5" />
+            <p>{success}</p>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex bg-gray-900 rounded-lg p-1 mb-6">
+        <div className="flex bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-1 mb-6">
           <button
             onClick={() => setActiveTab('withdraw')}
-            className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'withdraw'
-              ? 'bg-green-600 text-white'
-              : 'text-gray-400 hover:text-white'
+            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${activeTab === 'withdraw'
+              ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow'
+              : 'text-gray-600 hover:text-black'
               }`}
           >
             <DollarSign className="w-4 h-4 inline mr-2" />
@@ -742,9 +753,9 @@ const PointsWithdrawalScreen = ({ onBack }) => {
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${activeTab === 'history'
-              ? 'bg-green-600 text-white'
-              : 'text-gray-400 hover:text-white'
+            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${activeTab === 'history'
+              ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow'
+              : 'text-gray-600 hover:text-black'
               }`}
           >
             <History className="w-4 h-4 inline mr-2" />
@@ -759,26 +770,27 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Withdrawal Amount</h3>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">$</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
                 <input
                   type="number"
                   min="1"
                   max={pointsToUSD(pointsBalance)}
                   step="0.01"
+
                   value={withdrawalAmount}
                   onChange={(e) => {
                     setWithdrawalAmount(e.target.value);
                     setError('');
                     setSuccess('');
                   }}
-                  className="w-full pl-8 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full pl-8 pr-4 py-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   placeholder="Enter amount"
                 />
               </div>
               {withdrawalAmount && parseFloat(withdrawalAmount) > 0 && (
                 <div className="mt-2 flex items-center space-x-1 text-sm">
-                  <Star className="w-4 h-4 text-yellow-400" />
-                  <span className="text-yellow-400">
+                  <Star className="w-4 h-4 text-pink-600" />
+                  <span className="text-pink-700">
                     {usdToPoints(parseFloat(withdrawalAmount)).toLocaleString()} points will be deducted
                   </span>
                 </div>
@@ -796,6 +808,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   return (
                     <button
                       key={method.id}
+
                       onClick={() => {
                         if (!isDisabled) {
                           setSelectedWithdrawalMethod(method.id);
@@ -804,24 +817,26 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                         }
                       }}
                       disabled={isDisabled}
-                      className={`p-4 rounded-lg border-2 transition-all ${selectedWithdrawalMethod === method.id
-                        ? 'border-green-500 bg-green-600/20'
+                      className={`p-4 rounded-2xl border-2 transition-all text-left ${selectedWithdrawalMethod === method.id
+                        ? 'border-pink-500 bg-pink-200/60 text-black shadow-lg'
                         : isDisabled
-                          ? 'border-gray-700 bg-gray-800 opacity-50 cursor-not-allowed'
-                          : 'border-gray-700 bg-gray-900 hover:border-gray-600'
+                          ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed text-gray-500'
+                          : 'border-[#ff99b3] bg-white hover:border-pink-400 hover:shadow-md text-black'
                         }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <IconComponent className="w-6 h-6" />
+                        <div className="p-2 rounded-lg bg-pink-100">
+                          <IconComponent className="w-6 h-6 text-pink-700" />
+                        </div>
                         <div className="text-left flex-1">
                           <div className="font-medium">{method.name}</div>
-                          <div className="text-sm text-gray-400">{method.description}</div>
+                          <div className="text-sm text-gray-600">{method.description}</div>
                           <div className="text-xs text-gray-500 mt-1">
                             Min: ${method.minAmount} • {method.processingTime} • Fee: {method.fees}
                           </div>
                         </div>
                         {selectedWithdrawalMethod === method.id && !isDisabled && (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
+                          <CheckCircle className="w-5 h-5 text-pink-600" />
                         )}
                       </div>
                     </button>
@@ -831,24 +846,27 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             </div>
 
             {/* Personal Information */}
-            <div className="bg-gray-900 rounded-xl p-4">
+            <div className="bg-white/80 backdrop-blur-md border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <User className="w-5 h-5 mr-2" />
+                <div className="p-2 rounded-lg bg-pink-100 mr-2">
+                  <User className="w-5 h-5 text-pink-700" />
+                </div>
                 Personal Information
               </h3>
 
               <div className="space-y-4">
                 <div>
+
                   <input
                     type="text"
                     placeholder="Full Name"
                     value={withdrawalDetails.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.fullName ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.fullName ? 'border-red-400' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.fullName && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.fullName}</p>
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.fullName}</p>
                   )}
                 </div>
 
@@ -858,11 +876,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                     placeholder="Email Address"
                     value={withdrawalDetails.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.email ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.email ? 'border-red-400' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.email && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.email}</p>
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
                   )}
                 </div>
 
@@ -872,11 +890,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                     placeholder="Phone Number"
                     value={withdrawalDetails.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.phone ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.phone ? 'border-red-400' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.phone && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.phone}</p>
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.phone}</p>
                   )}
                 </div>
               </div>
@@ -884,32 +902,37 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
             {/* Method Specific Fields */}
             {selectedWithdrawalMethod === 'paypal' && (
-              <div className="bg-gray-900 rounded-xl p-4">
+              <div className="bg-white/80 backdrop-blur-md border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <DollarSign className="w-5 h-5 mr-2" />
+                  <div className="p-2 rounded-lg bg-pink-100 mr-2">
+                    <DollarSign className="w-5 h-5 text-pink-700" />
+                  </div>
                   PayPal Information
                 </h3>
 
                 <div>
+
                   <input
                     type="email"
                     placeholder="PayPal Email Address"
                     value={withdrawalDetails.paypalEmail}
                     onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.paypalEmail ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.paypalEmail ? 'border-red-400' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.paypalEmail && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.paypalEmail}</p>
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.paypalEmail}</p>
                   )}
                 </div>
               </div>
             )}
 
             {selectedWithdrawalMethod === 'bank' && (
-              <div className="bg-gray-900 rounded-xl p-4">
+              <div className="bg-white/80 backdrop-blur-md border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Building className="w-5 h-5 mr-2" />
+                  <div className="p-2 rounded-lg bg-pink-100 mr-2">
+                    <Building className="w-5 h-5 text-pink-700" />
+                  </div>
                   Bank Information
                 </h3>
 
@@ -920,11 +943,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                       placeholder="Bank Name"
                       value={withdrawalDetails.bankName}
                       onChange={(e) => handleInputChange('bankName', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.bankName ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.bankName ? 'border-red-400' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.bankName && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.bankName}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.bankName}</p>
                     )}
                   </div>
 
@@ -934,11 +957,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                       placeholder="Account Holder Name"
                       value={withdrawalDetails.accountHolderName}
                       onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.accountHolderName ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountHolderName ? 'border-red-400' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.accountHolderName && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.accountHolderName}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.accountHolderName}</p>
                     )}
                   </div>
 
@@ -948,11 +971,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                       placeholder="Account Number"
                       value={withdrawalDetails.accountNumber}
                       onChange={(e) => handleInputChange('accountNumber', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.accountNumber ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountNumber ? 'border-red-400' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.accountNumber && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.accountNumber}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.accountNumber}</p>
                     )}
                   </div>
 
@@ -962,7 +985,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                       placeholder="Routing Number (Optional)"
                       value={withdrawalDetails.routingNumber}
                       onChange={(e) => handleInputChange('routingNumber', e.target.value)}
-                      className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                   </div>
                 </div>
@@ -970,9 +993,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             )}
 
             {selectedWithdrawalMethod === 'card' && (
-              <div className="bg-gray-900 rounded-xl p-4">
+              <div className="bg-white/80 backdrop-blur-md border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2" />
+                  <div className="p-2 rounded-lg bg-pink-100 mr-2">
+                    <CreditCard className="w-5 h-5 text-pink-700" />
+                  </div>
                   Debit Card Information
                 </h3>
 
@@ -983,11 +1008,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                       placeholder="Cardholder Name"
                       value={withdrawalDetails.accountHolderName}
                       onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.accountHolderName ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountHolderName ? 'border-red-400' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.accountHolderName && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.accountHolderName}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.accountHolderName}</p>
                     )}
                   </div>
 
@@ -997,11 +1022,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                       placeholder="Card Number"
                       value={withdrawalDetails.accountNumber}
                       onChange={(e) => handleInputChange('accountNumber', e.target.value)}
-                      className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.accountNumber ? 'border-red-500' : 'border-gray-700'
+                      className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountNumber ? 'border-red-400' : 'border-[#ff99b3]'
                         }`}
                     />
                     {validationErrors.accountNumber && (
-                      <p className="text-red-400 text-sm mt-1">{validationErrors.accountNumber}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.accountNumber}</p>
                     )}
                   </div>
                 </div>
@@ -1009,9 +1034,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             )}
 
             {selectedWithdrawalMethod === 'usdt' && (
-              <div className="bg-gray-900 rounded-xl p-4">
+              <div className="bg-white/80 backdrop-blur-md border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Wallet className="w-5 h-5 mr-2" />
+                  <div className="p-2 rounded-lg bg-pink-100 mr-2">
+                    <Wallet className="w-5 h-5 text-pink-700" />
+                  </div>
                   USDT Wallet Information
                 </h3>
 
@@ -1021,11 +1048,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                     placeholder="USDT Wallet Address (e.g., 0x1234567890abcdef1234567890abcdef12345678)"
                     value={withdrawalDetails.usdtWalletAddress}
                     onChange={(e) => handleInputChange('usdtWalletAddress', e.target.value)}
-                    className={`w-full p-3 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${validationErrors.usdtWalletAddress ? 'border-red-500' : 'border-gray-700'
+                    className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.usdtWalletAddress ? 'border-red-400' : 'border-[#ff99b3]'
                       }`}
                   />
                   {validationErrors.usdtWalletAddress && (
-                    <p className="text-red-400 text-sm mt-1">{validationErrors.usdtWalletAddress}</p>
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.usdtWalletAddress}</p>
                   )}
                 </div>
               </div>
@@ -1035,12 +1062,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             <button
               onClick={handleWithdrawalRequest}
               disabled={processing || !withdrawalAmount || parseFloat(withdrawalAmount) <= 0}
-              className="w-full py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-green-700 hover:to-blue-700 transition-all"
+              className="w-full py-4 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-2xl font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-colors shadow-lg"
             >
               {processing ? (
                 <div className="flex items-center justify-center space-x-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Submitting Request...</span>
+
                 </div>
               ) : (
                 <div className="flex items-center justify-center space-x-2">
@@ -1051,12 +1079,12 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             </button>
 
             {/* Important Notice */}
-            <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-4">
-              <h4 className="font-semibold mb-2 text-yellow-400 flex items-center">
+            <div className="bg-pink-200/60 border border-[#ff99b3] rounded-xl p-4">
+              <h4 className="font-semibold mb-2 text-pink-700 flex items-center">
                 <AlertCircle className="w-4 h-4 mr-2" />
                 Important Notice
               </h4>
-              <ul className="text-sm text-yellow-100 space-y-1">
+              <ul className="text-sm text-pink-800 space-y-1">
                 <li>• All withdrawal requests require admin approval</li>
                 <li>• Processing may take 1-5 business days depending on method</li>
                 <li>• Points will be deducted upon approval, not upon request</li>
@@ -1072,21 +1100,21 @@ const PointsWithdrawalScreen = ({ onBack }) => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Withdrawal History</h3>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-gray-700">
                 {withdrawalHistory.length} total requests
               </div>
             </div>
 
             {withdrawalHistory.length === 0 ? (
               <div className="text-center py-12">
-                <History className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-400 mb-2">No Withdrawals Yet</h3>
-                <p className="text-gray-500 mb-4">
+                <History className="w-12 h-12 text-pink-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-black mb-2">No Withdrawals Yet</h3>
+                <p className="text-gray-600 mb-4">
                   You haven't made any withdrawal requests yet.
                 </p>
                 <button
                   onClick={() => setActiveTab('withdraw')}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
                 >
                   Make Your First Withdrawal
                 </button>
@@ -1100,55 +1128,57 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                 {withdrawalHistory.map((withdrawal) => (
                   <div
                     key={withdrawal._id}
-                    className={`rounded-xl border p-4 ${getStatusBg(withdrawal.status)}`}
+                    className={`rounded-2xl border p-4 bg-white/85 backdrop-blur-sm shadow-sm ${getStatusBg(withdrawal.status)}`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
+
                         {getMethodIcon(withdrawal.method)}
                         <div>
-                          <div className="font-semibold text-lg">${withdrawal.amount}</div>
-                          <div className="text-sm text-gray-400">
+                          <div className="font-semibold text-lg text-black">${withdrawal.amount}</div>
+                          <div className="text-sm text-gray-600">
                             {withdrawal.method.charAt(0).toUpperCase() +
                               withdrawal.method.slice(1)}
                           </div>
+
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         {getStatusIcon(withdrawal.status)}
-                        <span
-                          className={`font-medium capitalize ${getStatusColor(withdrawal.status)}`}
-                        >
+                        <span className={`font-medium capitalize ${getStatusColor(withdrawal.status)}`}>
                           {withdrawal.status}
                         </span>
+
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Request ID:</span>
-                        <span className="font-mono">{withdrawal.requestId}</span>
+                        <span className="text-gray-600">Request ID:</span>
+                        <span className="font-mono text-gray-800">{withdrawal.requestId}</span>
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Points Deducted:</span>
-                        <span className="flex items-center space-x-1">
-                          <Star className="w-3 h-3 text-yellow-400" />
+                        <span className="text-gray-600">Points Deducted:</span>
+                        <span className="flex items-center space-x-1 text-gray-800">
+                          <Star className="w-3 h-3 text-pink-600" />
                           <span>
                             {withdrawal.pointsToDeduct?.toLocaleString() ||
                               (withdrawal.amount * 10).toLocaleString()}
                           </span>
+
                         </span>
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Requested:</span>
-                        <span>{formatDate(withdrawal.requestedAt)}</span>
+                        <span className="text-gray-600">Requested:</span>
+                        <span className="text-gray-800">{formatDate(withdrawal.requestedAt)}</span>
                       </div>
 
                       {withdrawal.approvedAt && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Approved:</span>
-                          <span className="text-green-400">
+                          <span className="text-gray-600">Approved:</span>
+                          <span className="text-green-600">
                             {formatDate(withdrawal.approvedAt)}
                           </span>
                         </div>
@@ -1156,37 +1186,40 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
                       {withdrawal.completedAt && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Completed:</span>
-                          <span className="text-green-400">
+                          <span className="text-gray-600">Completed:</span>
+                          <span className="text-green-600">
                             {formatDate(withdrawal.completedAt)}
                           </span>
+
                         </div>
                       )}
 
                       {withdrawal.rejectedAt && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Rejected:</span>
-                          <span className="text-red-400">
+                          <span className="text-gray-600">Rejected:</span>
+                          <span className="text-red-500">
                             {formatDate(withdrawal.rejectedAt)}
                           </span>
                         </div>
                       )}
 
                       {withdrawal.rejectionReason && (
-                        <div className="mt-2 p-2 bg-red-900/30 border border-red-600/50 rounded">
-                          <div className="text-sm text-red-300">
+                        <div className="mt-2 p-3 bg-red-100 border border-red-300 rounded-lg">
+                          <div className="text-sm text-red-700">
                             <span className="font-medium">Rejection Reason: </span>
                             {withdrawal.rejectionReason}
                           </div>
+
                         </div>
                       )}
 
                       {withdrawal.adminNotes && (
-                        <div className="mt-2 p-2 bg-blue-900/30 border border-blue-600/50 rounded">
-                          <div className="text-sm text-blue-300">
+                        <div className="mt-2 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+                          <div className="text-sm text-blue-700">
                             <span className="font-medium">Admin Notes: </span>
                             {withdrawal.adminNotes}
                           </div>
+
                         </div>
                       )}
 
@@ -1196,27 +1229,28 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           <div className="text-xs text-gray-500 mb-2">
                             Payment Details:
                           </div>
+
                           <div className="space-y-1 text-sm">
                             {withdrawal.details.fullName && (
                               <div className="flex justify-between">
-                                <span className="text-gray-400">Name:</span>
-                                <span>{withdrawal.details.fullName}</span>
+                                <span className="text-gray-600">Name:</span>
+                                <span className="text-gray-800">{withdrawal.details.fullName}</span>
                               </div>
                             )}
 
                             {withdrawal.method === 'paypal' &&
                               withdrawal.details.paypalEmail && (
                                 <div className="flex justify-between">
-                                  <span className="text-gray-400">PayPal:</span>
-                                  <span>{withdrawal.details.paypalEmail}</span>
+                                  <span className="text-gray-600">PayPal:</span>
+                                  <span className="text-gray-800">{withdrawal.details.paypalEmail}</span>
                                 </div>
                               )}
 
                             {withdrawal.method === 'bank' &&
                               withdrawal.details.bankDetails && (
                                 <div className="flex justify-between">
-                                  <span className="text-gray-400">Bank:</span>
-                                  <span>
+                                  <span className="text-gray-600">Bank:</span>
+                                  <span className="text-gray-800">
                                     {withdrawal.details.bankDetails.bankName ||
                                       withdrawal.details.bankName}
                                   </span>
@@ -1226,8 +1260,8 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                             {withdrawal.method === 'card' &&
                               withdrawal.details.cardDetails && (
                                 <div className="flex justify-between">
-                                  <span className="text-gray-400">Card:</span>
-                                  <span>
+                                  <span className="text-gray-600">Card:</span>
+                                  <span className="text-gray-800">
                                     {withdrawal.details.cardDetails.cardholderName ||
                                       withdrawal.details.cardholderName}
                                   </span>
@@ -1237,8 +1271,8 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                             {withdrawal.method === 'usdt' &&
                               withdrawal.details.usdtDetails && (
                                 <div className="flex justify-between">
-                                  <span className="text-gray-400">USDT Wallet:</span>
-                                  <span className="font-mono truncate w-40">
+                                  <span className="text-gray-600">USDT Wallet:</span>
+                                  <span className="font-mono truncate w-40 text-gray-800">
                                     {withdrawal.details.usdtDetails.walletAddress}
                                   </span>
                                 </div>
@@ -1253,12 +1287,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           <button
                             onClick={() => cancelWithdrawal(withdrawal._id)}
                             disabled={processing}
-                            className="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:opacity-90 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {processing ? (
                               <div className="flex items-center justify-center space-x-2">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 <span>Cancelling...</span>
+
                               </div>
                             ) : (
                               'Cancel Request'
@@ -1275,28 +1310,28 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             {/* Summary Stats */}
             {withdrawalHistory.length > 0 && (
               <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="bg-gray-900 rounded-lg p-4">
+                <div className="bg-white/80 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400">
+                    <div className="text-2xl font-bold text-pink-700">
                       $
                       {withdrawalHistory
                         .filter((w) => w.status === 'completed')
                         .reduce((sum, w) => sum + w.amount, 0)
                         .toFixed(2)}
                     </div>
-                    <div className="text-sm text-gray-400">Total Withdrawn</div>
+                    <div className="text-sm text-gray-600">Total Withdrawn</div>
                   </div>
                 </div>
-                <div className="bg-gray-900 rounded-lg p-4">
+                <div className="bg-white/80 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-400">
+                    <div className="text-2xl font-bold text-pink-600">
                       $
                       {withdrawalHistory
                         .filter((w) => w.status === 'pending')
                         .reduce((sum, w) => sum + w.amount, 0)
                         .toFixed(2)}
                     </div>
-                    <div className="text-sm text-gray-400">Pending</div>
+                    <div className="text-sm text-gray-600">Pending</div>
                   </div>
                 </div>
               </div>
