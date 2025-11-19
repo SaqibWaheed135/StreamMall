@@ -243,9 +243,9 @@ const LiveRoomCard = ({ room }) => {
 };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A0A0F] via-[#111827] to-black text-white font-[Poppins]">
+    <div className="min-h-screen bg-[#FFC0CB] text-black font-[Poppins]">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-black/60 backdrop-blur border-b border-white/10">
+      <div className="sticky top-0 z-40 bg-[#FFC0CB]/95 backdrop-blur border-b border-[#ff99b3]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <img
             src={Logo}
@@ -254,22 +254,22 @@ const LiveRoomCard = ({ room }) => {
           />
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-[#FF2B55]/40">
-              <Coins className="w-5 h-5 text-[#FF2B55]" />
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#ff99b3]">
+              <Coins className="w-5 h-5 text-pink-700" />
               {pointsLoading ? (
-                <span className="font-bold text-gray-400">Loading...</span>
+                <span className="font-bold text-gray-700">Loading...</span>
               ) : (
-                <span className="font-bold">{userCoins}</span>
+                <span className="font-bold text-black">{userCoins}</span>
               )}
             </div>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-[#ffb3c6] rounded-lg transition-colors"
             >
               {showMenu ? (
-                <X className="w-6 h-6 text-[#FF2B55]" />
+                <X className="w-6 h-6 text-pink-700" />
               ) : (
-                <Menu className="w-6 h-6 text-[#FF2B55]" />
+                <Menu className="w-6 h-6 text-pink-700" />
               )}
             </button>
           </div>
@@ -277,31 +277,31 @@ const LiveRoomCard = ({ room }) => {
 
         {/* Menu Drawer */}
         {showMenu && (
-          <div className="bg-black/90 backdrop-blur border-t border-white/10 p-4 space-y-3">
-            <button className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-lg transition-colors text-left">
-              <User className="w-5 h-5 text-[#7B2FF7]" />
+          <div className="bg-[#FFC0CB] backdrop-blur border-t border-[#ff99b3] p-4 space-y-3">
+            <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left">
+              <User className="w-5 h-5 text-pink-700" />
               <span>Profile</span>
             </button>
-            <button className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/search')}>
-              <Users className="w-5 h-5 text-[#7B2FF7]" />
+            <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/search')}>
+              <Users className="w-5 h-5 text-pink-700" />
               <span>Friends</span>
             </button>
 
-            <button className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/recharge-points')}
+            <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/recharge-points')}
             >
-              <Coins className="w-5 h-5 text-[#7B2FF7]" />
+              <Coins className="w-5 h-5 text-pink-700" />
               <span>Recharge Points</span>
             </button>
 
-            <button className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/withdraw-points')}
+            <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/withdraw-points')}
             >
-              <Wallet className="w-5 h-5 text-[#7B2FF7]" />
+              <Wallet className="w-5 h-5 text-pink-700" />
               <span>Withdraw Points</span>
             </button>
 
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 p-3 hover:bg-red-500/20 rounded-lg transition-colors text-left text-red-400"
+              className="w-full flex items-center gap-3 p-3 hover:bg-red-100 rounded-lg transition-colors text-left text-red-600"
             >
               <LogOut className="w-5 h-5" />
               <span>Logout</span>
@@ -311,7 +311,7 @@ const LiveRoomCard = ({ room }) => {
       </div>
 
       {/* Tabs */}
-      <div className="sticky top-[73px] z-30 bg-black/50 backdrop-blur border-b border-white/10">
+      <div className="sticky top-[73px] z-30 bg-[#FFC0CB]/90 backdrop-blur border-b border-[#ff99b3]">
         <div className="max-w-7xl mx-auto px-4 flex gap-6 overflow-x-auto whitespace-nowrap">
           {[
             { id: "discover", label: "🔥 Discover", icon: Zap },
@@ -322,8 +322,8 @@ const LiveRoomCard = ({ room }) => {
               key={tab.id}
               onClick={() => setCurrentTab(tab.id)}
               className={`py-4 px-4 font-semibold border-b-2 transition-all ${currentTab === tab.id
-                ? "border-[#FF2B55] text-white"
-                : "border-transparent text-gray-400 hover:text-white"
+                ? "border-pink-600 text-black"
+                : "border-transparent text-gray-700 hover:text-black"
                 }`}
             >
               {tab.label}
@@ -341,17 +341,17 @@ const LiveRoomCard = ({ room }) => {
 
             {liveRooms.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
-                <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-lg">
-                  <WifiOff className="w-12 h-12 text-[#FF2B55] mb-4" />
-                  <h3 className="text-lg font-bold text-white">
+                <div className="bg-white/70 p-6 rounded-2xl border border-[#ff99b3] shadow-lg">
+                  <WifiOff className="w-12 h-12 text-pink-700 mb-4" />
+                  <h3 className="text-lg font-bold text-black">
                     No Live Streams Right Now
                   </h3>
-                  <p className="text-gray-400 text-sm mt-2">
+                  <p className="text-gray-700 text-sm mt-2">
                     Check back later or start your own live stream!
                   </p>
                   <button
                     onClick={() => setCurrentTab("create")}
-                    className="mt-4 bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] px-5 py-2 rounded-xl text-white font-semibold hover:scale-105 transition-all"
+                    className="mt-4 bg-gradient-to-r from-pink-600 to-pink-500 px-5 py-2 rounded-xl text-white font-semibold hover:scale-105 transition-all"
                   >
                     Go Live Now 🚀
                   </button>
@@ -371,22 +371,22 @@ const LiveRoomCard = ({ room }) => {
         {currentTab === "friends" && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold mb-6">Friends & Chat</h2>
-            <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
+            <div className="bg-white/70 backdrop-blur border border-[#ff99b3] rounded-2xl p-6">
               <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-cyan-400" />
+                <Users className="w-5 h-5 text-pink-700" />
                 My Friends
               </h3>
               <div className="space-y-3">
                 {friendsList.map((friend) => (
                   <div
                     key={friend._id}
-                    className="flex items-center justify-between p-3 bg-black/30 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-white border border-[#ff99b3] rounded-lg"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#FF2B55] to-[#7B2FF7] rounded-full" />
+                      <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-pink-500 rounded-full" />
                       <span className="font-semibold">{friend.username}</span>
                     </div>
-                    <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    <button className="text-pink-700 hover:opacity-80 transition-colors">
                       <MessageCircle className="w-5 h-5" />
                     </button>
                   </div>
@@ -394,7 +394,7 @@ const LiveRoomCard = ({ room }) => {
               </div>
               <button
                 onClick={() => navigate("/add-friends")}
-                className="w-full mt-4 bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] py-2 rounded-lg font-bold hover:shadow-lg transition-all"
+                className="w-full mt-4 bg-gradient-to-r from-pink-600 to-pink-500 text-white py-2 rounded-lg font-bold hover:shadow-lg transition-all"
               >
                 Add Friend
               </button>

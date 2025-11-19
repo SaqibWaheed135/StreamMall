@@ -197,12 +197,12 @@ export default function Signup() {
 
   return (
     <div
-      className="min-h-screen flex flex-col md:flex-row bg-[#0A0A0E] text-white font-[Poppins] overflow-hidden relative"
+      className="min-h-screen flex flex-col md:flex-row bg-[#FFC0CB] text-black font-[Poppins] overflow-hidden relative"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* Background Orbs */}
-      <div className="absolute w-[600px] h-[600px] bg-[#FF2B55] rounded-full blur-[200px] opacity-30 top-[-100px] left-[-200px]" />
-      <div className="absolute w-[600px] h-[600px] bg-[#7B2FF7] rounded-full blur-[200px] opacity-30 bottom-[-200px] right-[-200px]" />
+      <div className="absolute w-[600px] h-[600px] bg-pink-400 rounded-full blur-[200px] opacity-30 top-[-100px] left-[-200px]" />
+      <div className="absolute w-[600px] h-[600px] bg-pink-300 rounded-full blur-[200px] opacity-30 bottom-[-200px] right-[-200px]" />
 
       {/* ===== Desktop Layout ===== */}
       <div className="hidden md:flex md:w-1/2 flex-col justify-center items-center text-center relative z-10">
@@ -211,32 +211,32 @@ export default function Signup() {
           alt="StreamMall Logo"
           className="w-44 mb-6 drop-shadow-[0_0_30px_rgba(255,43,85,0.4)] rounded-[12px]"
         />
-        <h1 className="text-4xl font-semibold bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] bg-clip-text text-transparent">
+        <h1 className="text-4xl font-semibold bg-gradient-to-r from-pink-600 to-pink-500 bg-clip-text text-transparent">
           Welcome to StreamMall
         </h1>
-        <p className="text-gray-400 mt-3 text-lg max-w-sm">
+        <p className="text-gray-700 mt-3 text-lg max-w-sm">
           Stream, shop, and connect in the most futuristic live platform.
         </p>
       </div>
 
       {/* ===== Signup Card ===== */}
       <div className="flex-1 flex items-center justify-center px-6 py-10 relative z-10">
-        <div className="w-full max-w-md bg-[#16161A]/70 backdrop-blur-2xl rounded-3xl border border-[#2C2C33] p-10 shadow-[0_0_30px_rgba(155,27,255,0.2)]">
+        <div className="w-full max-w-md bg-white/70 backdrop-blur-2xl rounded-3xl border border-[#ff99b3] p-10 shadow-[0_0_30px_rgba(255,192,203,0.4)]">
           {/* Mobile Header */}
           <div className="md:hidden flex flex-col items-center mb-8">
             <img src={logo} alt="StreamMall Logo" className="w-20 mb-3 rounded-[12px]" />
-            <h1 className="text-2xl font-semibold text-white">Create Account</h1>
-            <p className="text-gray-400 text-sm">Join StreamMall today</p>
+            <h1 className="text-2xl font-semibold text-black">Create Account</h1>
+            <p className="text-gray-700 text-sm">Join StreamMall today</p>
           </div>
 
           {/* Desktop Header */}
           <div className="hidden md:block mb-8">
             <h2 className="text-3xl font-semibold text-center mb-2">Create Account</h2>
-            <p className="text-gray-400 text-center">Join StreamMall today</p>
+            <p className="text-gray-700 text-center">Join StreamMall today</p>
           </div>
 
           {error && (
-            <div className="bg-[#3B0B0F] border border-[#FF4655] rounded-lg p-3 mb-6 text-center text-[#FFBABA]">
+            <div className="bg-[#ffb3c6]/40 border border-[#ff99b3] rounded-lg p-3 mb-6 text-center text-pink-800">
               {error}
             </div>
           )}
@@ -249,29 +249,29 @@ export default function Signup() {
             ></div>
             {googleLoading && (
               <div className="flex items-center justify-center mt-3">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FF2B55]"></div>
-                <span className="text-gray-400 text-sm ml-2">Signing up with Google...</span>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-600"></div>
+                <span className="text-gray-700 text-sm ml-2">Signing up with Google...</span>
               </div>
             )}
           </div>
 
           {/* Divider */}
           <div className="my-6 relative flex items-center">
-            <div className="flex-grow border-t border-[#2C2C33]" />
-            <span className="mx-3 text-gray-500 text-sm">or</span>
-            <div className="flex-grow border-t border-[#2C2C33]" />
+            <div className="flex-grow border-t border-[#ff99b3]" />
+            <span className="mx-3 text-gray-700 text-sm">or</span>
+            <div className="flex-grow border-t border-[#ff99b3]" />
           </div>
 
           {/* Email Form */}
           <form className="space-y-5" onSubmit={handleSignup}>
             <div>
-              <label htmlFor="username" className="block text-sm text-gray-400 mb-1">
+              <label htmlFor="username" className="block text-sm text-gray-700 mb-1">
                 Username
               </label>
               <input
                 id="username"
                 type="text"
-                className="w-full bg-[#0D0D0F] border border-[#2C2C33] rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-[#7B2FF7] transition-all"
+                className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
                 placeholder="johndoe"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -281,13 +281,13 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
+              <label htmlFor="email" className="block text-sm text-gray-700 mb-1">
                 Email Address
               </label>
               <input
                 id="email"
                 type="email"
-                className="w-full bg-[#0D0D0F] border border-[#2C2C33] rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-[#7B2FF7] transition-all"
+                className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -297,13 +297,13 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm text-gray-400 mb-1">
+              <label htmlFor="password" className="block text-sm text-gray-700 mb-1">
                 Password
               </label>
               <input
                 id="password"
                 type="password"
-                className="w-full bg-[#0D0D0F] border border-[#2C2C33] rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-[#FF2B55] transition-all"
+                className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -313,13 +313,13 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm text-gray-400 mb-1">
+              <label htmlFor="confirmPassword" className="block text-sm text-gray-700 mb-1">
                 Confirm Password
               </label>
               <input
                 id="confirmPassword"
                 type="password"
-                className="w-full bg-[#0D0D0F] border border-[#2C2C33] rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-[#FF2B55] transition-all"
+                className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -330,7 +330,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] text-white font-semibold hover:opacity-90 transition-all shadow-[0_0_20px_rgba(123,47,247,0.4)]"
+              className="w-full py-3 rounded-lg bg-gradient-to-r from-pink-600 to-pink-500 text-white font-semibold hover:opacity-90 transition-all shadow-[0_0_20px_rgba(255,192,203,0.4)]"
               disabled={loading}
             >
               {loading ? "Creating Account..." : "Sign Up"}
@@ -338,23 +338,23 @@ export default function Signup() {
           </form>
 
           {/* Terms */}
-          <p className="text-xs text-gray-400 text-center mt-6">
+          <p className="text-xs text-gray-700 text-center mt-6">
             By creating an account, you agree to our{" "}
-            <Link to="/terms" className="text-[#7B2FF7] hover:text-[#FF2B55] transition">
+            <Link to="/terms" className="text-pink-700 hover:text-pink-600 transition">
               Terms
             </Link>{" "}
             and{" "}
-            <Link to="/privacy" className="text-[#7B2FF7] hover:text-[#FF2B55] transition">
+            <Link to="/privacy" className="text-pink-700 hover:text-pink-600 transition">
               Privacy Policy
             </Link>
           </p>
 
           {/* Login Link */}
-          <p className="text-gray-400 text-center mt-4">
+          <p className="text-gray-700 text-center mt-4">
             Already have an account?{" "}
             <Link
               to="/login"
-              className="text-[#7B2FF7] hover:text-[#FF2B55] font-medium transition"
+              className="text-pink-700 hover:text-pink-600 font-medium transition"
             >
               Log In
             </Link>
