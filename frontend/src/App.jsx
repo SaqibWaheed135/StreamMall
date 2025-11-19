@@ -45,52 +45,49 @@ document.head.appendChild(poppinsLink);
 // --------------------
 const BottomNavigation = ({ currentScreen, navigate }) => {
   const navItems = [
-    { id: "home", icon: Home, label: "Home", path: "/" },
-    { id: "live", icon: CircleDot, label: "LIVE", path: "/live-streams" },
-    { id: "search", icon: Search, label: "Discover", path: "/search" },
-    { id: "messages", icon: MessageSquare, label: "Messages", path: "/messaging" },
-    { id: "profile", icon: User, label: "Profile", path: "/profile" },
+    { id: 'home', icon: Home, label: 'Home', path: '/' },
+    { id: 'live', icon: CircleDot, label: 'LIVE', path: '/live-streams' },
+    { id: 'search', icon: Search, label: 'Discover', path: '/search' },
+    { id: 'messages', icon: MessageSquare, label: 'Messages', path: '/messaging' },
+    { id: 'profile', icon: User, label: 'Profile', path: '/profile' }
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0E]/95 backdrop-blur-md border-t border-[#2C2C33] z-50 font-[Poppins]">
-      <div className="flex">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentScreen === item.path;
-          const isUpload = item.id === "upload";
+    <div className="fixed bottom-0 left-0 right-0 z-50 font-[Poppins]">
+      <div className="mx-auto max-w-5xl px-4 pb-4">
+        <div className="bg-white/90 border border-white/70 rounded-3xl shadow-[0_12px_40px_rgba(255,153,179,0.35)] backdrop-blur-xl overflow-hidden">
+          <div className="flex">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentScreen === item.path;
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => navigate(item.path)}
-              className={`flex-1 py-2 px-1 flex flex-col items-center justify-center min-h-[60px] transition-all ${isUpload ? "relative" : ""
-                }`}
-            >
-              {isUpload ? (
-                <div className="w-9 h-9 bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] rounded-xl flex items-center justify-center mb-1 shadow-[0_0_10px_rgba(255,43,85,0.5)] hover:scale-105 transition">
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-              ) : (
-                <Icon
-                  className={`w-6 h-6 mb-1 transition-all ${isActive
-                    ? "text-[#FF2B55] scale-110"
-                    : "text-gray-400 hover:text-[#7B2FF7]"
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => navigate(item.path)}
+                  className="flex-1 py-3 px-1 flex flex-col items-center justify-center min-h-[64px] transition-all"
+                >
+                  <div
+                    className={`w-10 h-10 mb-1 flex items-center justify-center rounded-2xl transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-br from-pink-600 via-pink-500 to-rose-400 text-white shadow-lg shadow-pink-200 scale-105'
+                        : 'text-pink-500/60 hover:text-pink-600'
                     }`}
-                />
-
-              )}
-              <span
-                className={`text-xs transition-all ${isActive && !isUpload
-                  ? "text-[#FF2B55] font-medium"
-                  : "text-gray-400"
-                  }`}
-              >
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
+                  >
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <span
+                    className={`text-xs tracking-wide transition-all ${
+                      isActive ? 'text-pink-600 font-semibold' : 'text-gray-500'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

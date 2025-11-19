@@ -782,9 +782,8 @@ const HostLiveStream = ({ onBack }) => {
 
                 <button
                   onClick={() => setShowEarningsModal(true)}
-                  className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded-full transition-colors text-white"
+                  className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-300 hover:shadow-md px-3.5 py-1.5 rounded-full text-amber-900 font-semibold transition"
                 >
-                  <DollarSign className="w-4 h-4" />
                   <span className="text-sm font-semibold">{coinBalance} coins</span>
                 </button>
 
