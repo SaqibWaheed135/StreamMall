@@ -58,7 +58,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
       <div className="absolute w-[400px] h-[400px] bg-pink-400 rounded-full blur-[150px] opacity-30 bottom-[-100px] right-[-100px] pointer-events-none" />
       {/* Header Skeleton */}
       <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
-
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Skeleton className="w-10 h-10 rounded-full" />
@@ -80,7 +79,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
       <div className="p-4 relative z-10">
         {/* Balance Card Skeleton */}
         <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-6 mb-6 relative overflow-hidden">
-
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-2">
@@ -95,7 +93,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
         {/* Tabs Skeleton */}
         <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-1 mb-6">
-
           <div className="flex">
             <div className="flex-1 py-3 px-4">
               <Skeleton className="h-6 w-20 mx-auto" />
@@ -138,7 +135,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
           {/* Form Skeleton */}
           <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
-
             <div className="flex items-center mb-4">
               <Skeleton className="w-5 h-5 rounded mr-2" />
               <Skeleton className="h-6 w-32" />
@@ -168,7 +164,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
         {[1, 2, 3].map((i) => (
           <div key={i} className="rounded-xl border border-[#ff99b3] bg-white/70 p-4 relative overflow-hidden backdrop-blur-sm">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] animate-shimmer-slide"></div>
-
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <Skeleton className="w-5 h-5 rounded" />
@@ -672,7 +667,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
       {/* Header */}
       <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
-
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
@@ -718,7 +712,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             <p className="text-sm text-gray-700 mt-1">
               {pointsBalance.toLocaleString()} points
             </p>
-            {/* 👇 Conversion Rate Note */}
             <p className="text-xs text-gray-600 mt-2 italic">
               Conversion Rate: 10 points = $1
             </p>
@@ -776,7 +769,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   min="1"
                   max={pointsToUSD(pointsBalance)}
                   step="0.01"
-
                   value={withdrawalAmount}
                   onChange={(e) => {
                     setWithdrawalAmount(e.target.value);
@@ -808,7 +800,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   return (
                     <button
                       key={method.id}
-
                       onClick={() => {
                         if (!isDisabled) {
                           setSelectedWithdrawalMethod(method.id);
@@ -856,7 +847,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
               <div className="space-y-4">
                 <div>
-
                   <input
                     type="text"
                     placeholder="Full Name"
@@ -911,7 +901,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                 </h3>
 
                 <div>
-
                   <input
                     type="email"
                     placeholder="PayPal Email Address"
@@ -1068,7 +1057,6 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                 <div className="flex items-center justify-center space-x-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Submitting Request...</span>
-
                 </div>
               ) : (
                 <div className="flex items-center justify-center space-x-2">
@@ -1098,243 +1086,237 @@ const PointsWithdrawalScreen = ({ onBack }) => {
         {/* History Tab */}
         {activeTab === 'history' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Withdrawal History</h3>
-              <div className="text-sm text-gray-700">
-                {withdrawalHistory.length} total requests
-              </div>
-            </div>
-
-            {withdrawalHistory.length === 0 ? (
-              <div className="text-center py-12">
-                <History className="w-12 h-12 text-pink-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-black mb-2">No Withdrawals Yet</h3>
-                <p className="text-gray-600 mb-4">
-                  You haven't made any withdrawal requests yet.
-                </p>
-                <button
-                  onClick={() => setActiveTab('withdraw')}
-                  className="px-6 py-3 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
-                >
-                  Make Your First Withdrawal
-                </button>
-              </div>
-            ) : (
+            {loading || refreshing ? (
               <HistorySkeleton />
-            )}
-
-            {withdrawalHistory.length > 0 && (
-              <div className="space-y-4">
-                {withdrawalHistory.map((withdrawal) => (
-                  <div
-                    key={withdrawal._id}
-                    className={`rounded-2xl border p-4 bg-white/85 backdrop-blur-sm shadow-sm ${getStatusBg(withdrawal.status)}`}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-
-                        {getMethodIcon(withdrawal.method)}
-                        <div>
-                          <div className="font-semibold text-lg text-black">${withdrawal.amount}</div>
-                          <div className="text-sm text-gray-600">
-                            {withdrawal.method.charAt(0).toUpperCase() +
-                              withdrawal.method.slice(1)}
-                          </div>
-
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(withdrawal.status)}
-                        <span className={`font-medium capitalize ${getStatusColor(withdrawal.status)}`}>
-                          {withdrawal.status}
-                        </span>
-
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Request ID:</span>
-                        <span className="font-mono text-gray-800">{withdrawal.requestId}</span>
-                      </div>
-
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Points Deducted:</span>
-                        <span className="flex items-center space-x-1 text-gray-800">
-                          <Star className="w-3 h-3 text-pink-600" />
-                          <span>
-                            {withdrawal.pointsToDeduct?.toLocaleString() ||
-                              (withdrawal.amount * 10).toLocaleString()}
-                          </span>
-
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Requested:</span>
-                        <span className="text-gray-800">{formatDate(withdrawal.requestedAt)}</span>
-                      </div>
-
-                      {withdrawal.approvedAt && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Approved:</span>
-                          <span className="text-green-600">
-                            {formatDate(withdrawal.approvedAt)}
-                          </span>
-                        </div>
-                      )}
-
-                      {withdrawal.completedAt && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Completed:</span>
-                          <span className="text-green-600">
-                            {formatDate(withdrawal.completedAt)}
-                          </span>
-
-                        </div>
-                      )}
-
-                      {withdrawal.rejectedAt && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Rejected:</span>
-                          <span className="text-red-500">
-                            {formatDate(withdrawal.rejectedAt)}
-                          </span>
-                        </div>
-                      )}
-
-                      {withdrawal.rejectionReason && (
-                        <div className="mt-2 p-3 bg-red-100 border border-red-300 rounded-lg">
-                          <div className="text-sm text-red-700">
-                            <span className="font-medium">Rejection Reason: </span>
-                            {withdrawal.rejectionReason}
-                          </div>
-
-                        </div>
-                      )}
-
-                      {withdrawal.adminNotes && (
-                        <div className="mt-2 p-3 bg-blue-100 border border-blue-300 rounded-lg">
-                          <div className="text-sm text-blue-700">
-                            <span className="font-medium">Admin Notes: </span>
-                            {withdrawal.adminNotes}
-                          </div>
-
-                        </div>
-                      )}
-
-                      {/* Payment Details */}
-                      {withdrawal.details && (
-                        <div className="mt-3 pt-3 border-t border-gray-700">
-                          <div className="text-xs text-gray-500 mb-2">
-                            Payment Details:
-                          </div>
-
-                          <div className="space-y-1 text-sm">
-                            {withdrawal.details.fullName && (
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Name:</span>
-                                <span className="text-gray-800">{withdrawal.details.fullName}</span>
-                              </div>
-                            )}
-
-                            {withdrawal.method === 'paypal' &&
-                              withdrawal.details.paypalEmail && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">PayPal:</span>
-                                  <span className="text-gray-800">{withdrawal.details.paypalEmail}</span>
-                                </div>
-                              )}
-
-                            {withdrawal.method === 'bank' &&
-                              withdrawal.details.bankDetails && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Bank:</span>
-                                  <span className="text-gray-800">
-                                    {withdrawal.details.bankDetails.bankName ||
-                                      withdrawal.details.bankName}
-                                  </span>
-                                </div>
-                              )}
-
-                            {withdrawal.method === 'card' &&
-                              withdrawal.details.cardDetails && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Card:</span>
-                                  <span className="text-gray-800">
-                                    {withdrawal.details.cardDetails.cardholderName ||
-                                      withdrawal.details.cardholderName}
-                                  </span>
-                                </div>
-                              )}
-
-                            {withdrawal.method === 'usdt' &&
-                              withdrawal.details.usdtDetails && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">USDT Wallet:</span>
-                                  <span className="font-mono truncate w-40 text-gray-800">
-                                    {withdrawal.details.usdtDetails.walletAddress}
-                                  </span>
-                                </div>
-                              )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      {withdrawal.status === 'pending' && (
-                        <div className="mt-3 pt-3 border-t border-gray-700">
-                          <button
-                            onClick={() => cancelWithdrawal(withdrawal._id)}
-                            disabled={processing}
-                            className="w-full py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:opacity-90 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {processing ? (
-                              <div className="flex items-center justify-center space-x-2">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>Cancelling...</span>
-
-                              </div>
-                            ) : (
-                              'Cancel Request'
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Summary Stats */}
-            {withdrawalHistory.length > 0 && (
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="bg-white/80 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-pink-700">
-                      $
-                      {withdrawalHistory
-                        .filter((w) => w.status === 'completed')
-                        .reduce((sum, w) => sum + w.amount, 0)
-                        .toFixed(2)}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Withdrawn</div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Withdrawal History</h3>
+                  <div className="text-sm text-gray-700">
+                    {withdrawalHistory.length} total requests
                   </div>
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-pink-600">
-                      $
-                      {withdrawalHistory
-                        .filter((w) => w.status === 'pending')
-                        .reduce((sum, w) => sum + w.amount, 0)
-                        .toFixed(2)}
-                    </div>
-                    <div className="text-sm text-gray-600">Pending</div>
+
+                {withdrawalHistory.length === 0 ? (
+                  <div className="text-center py-12">
+                    <History className="w-12 h-12 text-pink-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-black mb-2">No Withdrawals Yet</h3>
+                    <p className="text-gray-600 mb-4">
+                      You haven't made any withdrawal requests yet.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('withdraw')}
+                      className="px-6 py-3 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
+                    >
+                      Make Your First Withdrawal
+                    </button>
                   </div>
-                </div>
-              </div>
+                ) : (
+                  <div className="space-y-4">
+                    {withdrawalHistory.map((withdrawal) => (
+                      <div
+                        key={withdrawal._id}
+                        className={`rounded-2xl border p-4 bg-white/85 backdrop-blur-sm shadow-sm ${getStatusBg(withdrawal.status)}`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            {getMethodIcon(withdrawal.method)}
+                            <div>
+                              <div className="font-semibold text-lg text-black">${withdrawal.amount}</div>
+                              <div className="text-sm text-gray-600">
+                                {withdrawal.method.charAt(0).toUpperCase() +
+                                  withdrawal.method.slice(1)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {getStatusIcon(withdrawal.status)}
+                            <span className={`font-medium capitalize ${getStatusColor(withdrawal.status)}`}>
+                              {withdrawal.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Request ID:</span>
+                            <span className="font-mono text-gray-800">{withdrawal.requestId}</span>
+                          </div>
+
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Points Deducted:</span>
+                            <span className="flex items-center space-x-1 text-gray-800">
+                              <Star className="w-3 h-3 text-pink-600" />
+                              <span>
+                                {withdrawal.pointsToDeduct?.toLocaleString() ||
+                                  (withdrawal.amount * 10).toLocaleString()}
+                              </span>
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Requested:</span>
+                            <span className="text-gray-800">{formatDate(withdrawal.requestedAt)}</span>
+                          </div>
+
+                          {withdrawal.approvedAt && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Approved:</span>
+                              <span className="text-green-600">
+                                {formatDate(withdrawal.approvedAt)}
+                              </span>
+                            </div>
+                          )}
+
+                          {withdrawal.completedAt && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Completed:</span>
+                              <span className="text-green-600">
+                                {formatDate(withdrawal.completedAt)}
+                              </span>
+                            </div>
+                          )}
+
+                          {withdrawal.rejectedAt && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Rejected:</span>
+                              <span className="text-red-500">
+                                {formatDate(withdrawal.rejectedAt)}
+                              </span>
+                            </div>
+                          )}
+
+                          {withdrawal.rejectionReason && (
+                            <div className="mt-2 p-3 bg-red-100 border border-red-300 rounded-lg">
+                              <div className="text-sm text-red-700">
+                                <span className="font-medium">Rejection Reason: </span>
+                                {withdrawal.rejectionReason}
+                              </div>
+                            </div>
+                          )}
+
+                          {withdrawal.adminNotes && (
+                            <div className="mt-2 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+                              <div className="text-sm text-blue-700">
+                                <span className="font-medium">Admin Notes: </span>
+                                {withdrawal.adminNotes}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Payment Details */}
+                          {withdrawal.details && (
+                            <div className="mt-3 pt-3 border-t border-gray-700">
+                              <div className="text-xs text-gray-500 mb-2">
+                                Payment Details:
+                              </div>
+
+                              <div className="space-y-1 text-sm">
+                                {withdrawal.details.fullName && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Name:</span>
+                                    <span className="text-gray-800">{withdrawal.details.fullName}</span>
+                                  </div>
+                                )}
+
+                                {withdrawal.method === 'paypal' &&
+                                  withdrawal.details.paypalEmail && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">PayPal:</span>
+                                      <span className="text-gray-800">{withdrawal.details.paypalEmail}</span>
+                                    </div>
+                                  )}
+
+                                {withdrawal.method === 'bank' &&
+                                  withdrawal.details.bankDetails && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Bank:</span>
+                                      <span className="text-gray-800">
+                                        {withdrawal.details.bankDetails.bankName ||
+                                          withdrawal.details.bankName}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                {withdrawal.method === 'card' &&
+                                  withdrawal.details.cardDetails && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Card:</span>
+                                      <span className="text-gray-800">
+                                        {withdrawal.details.cardDetails.cardholderName ||
+                                          withdrawal.details.cardholderName}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                {withdrawal.method === 'usdt' &&
+                                  withdrawal.details.usdtDetails && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">USDT Wallet:</span>
+                                      <span className="font-mono truncate w-40 text-gray-800">
+                                        {withdrawal.details.usdtDetails.walletAddress}
+                                      </span>
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          {withdrawal.status === 'pending' && (
+                            <div className="mt-3 pt-3 border-t border-gray-700">
+                              <button
+                                onClick={() => cancelWithdrawal(withdrawal._id)}
+                                disabled={processing}
+                                className="w-full py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:opacity-90 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {processing ? (
+                                  <div className="flex items-center justify-center space-x-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Cancelling...</span>
+                                  </div>
+                                ) : (
+                                  'Cancel Request'
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Summary Stats */}
+                {withdrawalHistory.length > 0 && (
+                  <div className="mt-8 grid grid-cols-2 gap-4">
+                    <div className="bg-white/80 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-pink-700">
+                          $
+                          {withdrawalHistory
+                            .filter((w) => w.status === 'completed')
+                            .reduce((sum, w) => sum + w.amount, 0)
+                            .toFixed(2)}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Withdrawn</div>
+                      </div>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-pink-600">
+                          $
+                          {withdrawalHistory
+                            .filter((w) => w.status === 'pending')
+                            .reduce((sum, w) => sum + w.amount, 0)
+                            .toFixed(2)}
+                        </div>
+                        <div className="text-sm text-gray-600">Pending</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
