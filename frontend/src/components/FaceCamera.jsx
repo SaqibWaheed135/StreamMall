@@ -275,7 +275,7 @@ const FaceDetection = () => {
         )}
 
         {/* Bottom Control Panel */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6 z-10">
+        <div className="absolute bottom-20 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6 z-10">
           <div className="flex gap-4 justify-center items-center">
             {!isCameraActive ? (
               <button
