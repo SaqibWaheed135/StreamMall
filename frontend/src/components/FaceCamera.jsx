@@ -1020,7 +1020,7 @@ const FaceDetection = () => {
         )}
 
         {/* Debug Info Box */}
-        <div className="absolute bottom-24 left-4 bg-black/80 text-white text-xs p-3 rounded-lg max-w-xs z-30">
+        <div className="absolute bottom-44 left-4 bg-black/80 text-white text-xs p-3 rounded-lg max-w-xs z-30">
           <div className="font-mono">{debugInfo}</div>
           <div className="mt-1">Canvas: {canvasRef.current?.width || 0}x{canvasRef.current?.height || 0}</div>
           <div className="mt-1 text-yellow-400">Selected Haircut ID: {selectedHaircut}</div>
