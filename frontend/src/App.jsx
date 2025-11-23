@@ -31,6 +31,7 @@ import HostLiveStream from "./components/HostLiveStream.jsx";
 import ViewerLiveStream from "./components/ViewerLiveStream.jsx";
 import LiveStreamsListing from './components/LiveStream.jsx';
 import LiveStreamRouter from "./pages/LiveStreamRouter.jsx";
+import FaceDetection from "./components/FaceCamera.jsx";
 
 
 // ✅ Load Poppins font dynamically
@@ -68,18 +69,16 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
                   className="flex-1 py-3 px-1 flex flex-col items-center justify-center min-h-[64px] transition-all"
                 >
                   <div
-                    className={`w-10 h-10 mb-1 flex items-center justify-center rounded-2xl transition-all ${
-                      isActive
+                    className={`w-10 h-10 mb-1 flex items-center justify-center rounded-2xl transition-all ${isActive
                         ? 'bg-gradient-to-br from-pink-600 via-pink-500 to-rose-400 text-white shadow-lg shadow-pink-200 scale-105'
                         : 'text-pink-500/60 hover:text-pink-600'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-6 h-6" />
                   </div>
                   <span
-                    className={`text-xs tracking-wide transition-all ${
-                      isActive ? 'text-pink-600 font-semibold' : 'text-gray-500'
-                    }`}
+                    className={`text-xs tracking-wide transition-all ${isActive ? 'text-pink-600 font-semibold' : 'text-gray-500'
+                      }`}
                   >
                     {item.label}
                   </span>
@@ -124,7 +123,7 @@ const ProtectedRoute = ({ children }) => {
 const ViewerLiveStreamWrapper = ({ onBack }) => {
   const { streamId } = useParams();
   const navigate = useNavigate();
-  
+
   const handleBack = () => {
     navigate('/live-streams');
   };
@@ -142,6 +141,7 @@ const App = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [showIosBanner, setShowIosBanner] = useState(false);
+
 
   useEffect(() => {
     setCurrentScreen(location.pathname);
@@ -221,9 +221,10 @@ const App = () => {
           <Route path="/messaging" element={<ProtectedRoute><MessagingScreen /></ProtectedRoute>} />
           <Route path="/messages/:conversationId" element={<ProtectedRoute><MessagingScreen /></ProtectedRoute>} />
           <Route path="/live-browse" element={<ProtectedRoute><LiveBrowse /></ProtectedRoute>} />
-          
+          <Route path="/face-detection" element={<ProtectedRoute><FaceDetection /></ProtectedRoute>} />
+
           {/* ✅ UPDATED: Live Stream Routes with LiveStreamRouter */}
-          
+
           {/* Main live streams listing page */}
           <Route path="/live-streams" element={
             <ProtectedRoute>
@@ -233,37 +234,37 @@ const App = () => {
               />
             </ProtectedRoute>
           } />
-          
+
           {/* Host live stream */}
-          <Route 
-            path="/host-live-stream" 
+          <Route
+            path="/host-live-stream"
             element={
               <ProtectedRoute>
                 <HostLiveStream onBack={() => navigate('/live-streams')} />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           {/* ✅ NEW: Shareable stream link - Handles auth internally */}
-          <Route 
-            path="/stream/:streamId" 
-            element={<LiveStreamRouter />} 
+          <Route
+            path="/stream/:streamId"
+            element={<LiveStreamRouter />}
           />
-          
+
           {/* Alternative routes (for backward compatibility) */}
-          <Route 
-            path="/watch/:streamId" 
-            element={<LiveStreamRouter />} 
+          <Route
+            path="/watch/:streamId"
+            element={<LiveStreamRouter />}
           />
-          
+
           {/* Old viewer route - kept for backward compatibility */}
-          <Route 
-            path="/viewer-live-stream/:streamId" 
+          <Route
+            path="/viewer-live-stream/:streamId"
             element={
               <ProtectedRoute>
                 <ViewerLiveStreamWrapper />
               </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
       </main>
