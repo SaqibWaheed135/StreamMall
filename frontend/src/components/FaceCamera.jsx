@@ -330,18 +330,19 @@ const FaceDetection = () => {
   const haircutImagesRef = useRef([]);
   const currentLandmarksRef = useRef(null);
 
-  // Haircut styles with image URLs
+  // Haircut styles - using canvas-drawn shapes for demo
   const haircuts = [
     {
       id: 0,
       name: 'None',
-      url: null,
+      type: 'none',
       description: 'Original look'
     },
     {
       id: 1,
       name: 'Classic Fade',
-      url: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAygMBIgACEQEDEQH/xAAcAAEAAQUBAQAAAAAAAAAAAAAAAwECBAYHBQj/xAA/EAABAwIDBQUFBgQFBQAAAAABAAIDBBEFEiEGMUFRYQcTInGBFDJCkcEVUmKhsdEzguHxI3KSsvAkQ1NUc//EABgBAQEBAQEAAAAAAAAAAAAAAAABAgME/8QAHhEBAQEAAgMAAwAAAAAAAAAAAAERAkESITEiMkL/2gAMAwEAAhEDEQA/AO4oiICIiAioV4+0O0uF7PQd5iVSGvcLxwt8Uj/IfXcg9hefiuOYZg8efE66CnuPC17xmd5DeVyHaTtOxTEQ6PDT9n05NgW2dI4efD0WiyyvqJnSzPkfI43c9xJcfVZ8h2PFu1rDKe7MOo56p/3njI391qWJdqO0VTf2f2aiYdwYzM75n9lpIYALnXoVC5pLy0eI9NLKar2K3avHKt16vF6145MmLB8m2C8maeSV/eyEvP3pXEn81GWu3NNkDQPeN1AM19+Z3ldWd4z/AMR+SnaHfCzTror8jiPeA9UGM0wF3ukHqVMMrbOa25G46aK8NLQbvNvNYkznXNpAUHqUO1OM4XIDQYrXwhp/h96Xs/0uJH5LfNmu2Cdj2wbRUveM/wDYp26jzb+y5O57yQDa3kshl42EuI13ptV9V4diFLidHHV0M7JoJBdr2G91lLgnY/tFPh+0rcMkLjSVxy5b6Nk3hw89xXe1uXWRERUEREBERAREQFQoTpqubdqW3P2QDguEyj2+Rv8AjSD/ALDTuH+Y/kFLcEu3naNFhBkw7BSyoxBukkh1ZCeXV3RcdqKuprJ5KqsqHTVMpu+R5uT/AM5LHjBsS9xL73Nyhu7cSAudutYrYvNy4WUrHMjAym5UMTGAkOIv5pJIGDwkIiV0lzdW5w4aBY7Hu33Clu4byLeSC7cL2+equaxp1B15JG64018lcS62kgb6aoKOa3TM8HoX3/JWki2jBpxsonXLjnncfI2VAxnxBx65lqCRsw1DhFZUDaVwLjlvyDVQwR20v5aKF8cLRc5QehSi4T00Zu0Ob1y2UD5RI/wTX9EcWfCB5kq4suPAzxc1hUsFXV4e5tRRVRjnicHRyNAJa4cdVtGGdqW11LIzvayGqj4ieEXPq2y0p8bhL4wLqVsYAzDRyqO6bNdrOF4i9tPjDPs+YkAS5rxE9T8PquixvbI0PY4OY4XDgbgr5GjtmAeLG+7muhdnG3suA1DMPxSUuwt5sC43NP1/y81qcuqjvSKyNwe0OaQWnUEG4I6K9bBERARFQ7kHhbZ7QRbN4BUV7rOlAyQMPxvO4L5sqamatqpamoe6SeZ5e97jqXHet87ZccOIbQfZkbv8CgGVwB0MjgCT6AgfNc+iOnRced9tRKSRZo9SjdbgE9VG919BxUkb8rd27RZipGuawWFr+Sjf1vfkArg8X1sqPuR4vCOnFbjKxha7wsLg7qFLmvuJVkZANwNfNSWJNtNdNFRae8JyhrdeOZVDZL2zOb1AurxGDcNcCeXFXiNtvHK5vmEEHcm/ile7l4VXwx/xXadFe8RkWaWkc3u0UYpo97nNPI30CqInOa9xyBo6vdf8goXAA5c2Z3QLJm9ljGUOLz+HQBQiWwtFG1g+8dVKqzIGnxaFTsNmeW5RWLvE4ggceClZEZDZurd9wsKhiBJu8akrIEeizGsjDbPsTz5Kj4xa1tFqI86eI3uNLcVVuZ7A4aEaFZrWNeMp3FQxw5ZzF94aeatg7N2N7Qur8Idg9W/NLRAd0T8UX9F0gL5x2HxQ4Jj9LVk2ia7LL+JjtD8t/ovo4LURVERaBRVc7KWlmqJPciY57vIC6lWv7e1Bp9jsWfexNOWj10+qUfN+JVr6+tnqpDeSoldK93MuJKjjsGkb9FGWBgN93BVjNoSTx0Xm7bigGa5vYDlvV73iONuYWJ9wKxmu/d04qukkpdJuYNPNbiVYyTxhrblxWQ4xt95xc7kFCXnwiNtjwVzWvjtnFgd4WkXZi7dGAqhslwc2XyVxI+G/yVhkdbcglJcRqbnnuKjcCdCL+qtBcRcKhLh1QSRRXJLg29tL6q8xXFjIbngOChY5xcLNv/MpC2W/wDzctRFfZ3AeBpJ5qjoQ33nXPIK5rb6PkLvwjRZlJQyTObdtmDeSs1YjoMMkrneEANGgbuv0XqjC5aVlxGSy+XfxW7bJbMvfHG1zLZzfVbZjey8U9IIWsbnaPA/g49eRTxXXCp23cRbK4fCTvUbZnMdlf4mcxwXsbQYRPh87o5WPYb+EObY35Lw85cTweNHDokRJI3Lex37uikeQ6Js8f8SPiomb8u9p8J6FATGXMI0IstImY4Zyxw3tI9LL6L2OrziezGG1Tzd7oQHnm4aH9F80MkPfHxa2su69jlV3+yPdE3MM7h6Gx/dSX2re0QbkW0FqfaibbEYifwt/3BbYte2/pDWbH4pEBc9yXD01+il+D5rdfurHi5Q6gWU5LXeHW4GgUMryz3d9lwbUYczw21vopDe1uF/mkJEsbiAA/kFEbE+K6qYyC0syllgeNt6ueBIM1zm4gqyEOdo1rrHcVlx0NU82YzxW0BcAU1WJky6892u9Bb4j8wss4fUl2WSLK77pCr7DNf3HZh6hVMY9mEeB2vJRZsxyuKzW4dKXXyvafwsWZT7N1M5u0aHi4WVTHkiNhtYqWnpn1MloWPceF1s9Fsm0SN9oljP4Wm69ykwPupBHSMaGjeGXufNWK1/DMBtaSrLRb4Qb3W87N7Oe1yNnkjDKdp8AI949F6eDbLPfIJZmC3AFbtSUrKZgAsSBbctSJqPD6MUzNWgOI4cFluY1wIcAQd4PFXItI0nb/AmVeHOkDb5ePELh2LU5pKrX3uB5+a+oKyFs9PJG8XBBXCO0TD2w1Wdotaw89f7LHKNRqRcLusNCL6dEqT4Y3g79HJkyPDeQsoXuHs7Qd4CkTtC7SUkei7L2EzZsNxKEn3ZWm38q41JwI5LrXYObOxYf/P6qcf2W/HXRuREXVkUNbCKmjngO6WNzPmLKZEHyVUgwVr2kG7SWn5qCUXfbmva22pRRbY4xTgWbHVuIHR3iH5OC8aSxAc0arhW4jgdaVzg6xCyomtqJBldqVHFRSyvcQHD+Xetg2fwcuqIwG94525jTe/mpJR6GAYY4OA7tz+eUX8guhUGyTpaYOfAMztRYDQfqCvd2S2dbQUjJalg703OU8LraQNF2nH0za51PsrMGZRFJ1uGvuP1WANkHZ/FDJbk5g18l1SyplHIfJXDXNG7IAi3sz/8ASV6tPs7KGCOOEsFt5aFu+UckAA4JiNWpNlGtIM77njb+wXuUuF0tMBkYLjis5EwUaABYAWVURUEREFHagjouNdprbkdJLfr/AEXY3mzSeQXFe0uWznNPwXPqSs8/jUc+jk7yeV3K1li1EgJs3ggkIORu925Whoc4P3clx1cSAZngcwut9hTfHi3Tux+q5C51pBbguz9hkVqHFJSPelYPyWuP1K6kiIuzIqHcVVEHz72xUPs221TMG2bVRRS35kNyH/YFq+A4e+urIoQ0kPIC6T270f8A1GE1YGjmvicfKxH1Xn9kmEmqqxO/3IjcX5rln5NdNhwrs2Mjb1UjWssLC9ytywHZbD8FaDTxgv8AvEL3GDK23JXLp4xNUCqiKoIiICIiAiIgIiICIiCKdrXMObkua7UbIVGJd73crXF7r9V05wzCxVvdM+6PkpZq64FU9nVfTtc6Njw8C4JF1qVdhdTh8uWpDr9Rqvql8THts5gIWj7f7IxYnROqILNnjaXbvessXiuuCNbeS+/ou7disGTZWae2stS75AALiFdSy0NYY5RZw3iy+hey+nEGw+GkC3etdIfVx+llOE9lbXwREXVkQoiDnvbVS99spHOBcwVLXX5A6fVY3Y6xrcNkAGuf9ltW3uGyYrsliNJAzPKY8zG8yNVqHY5I7uZ43C1tbLH9L06giItoIiICIiAiIgIiICIiAiIgIiICjnYHxlpFwQpFQ6oPnTtRhbS404s8IbFmPy/ou9bN0wotn8NpgLd1Sxtt1yhcT7Rqc1+1JhLXEPcIyGNuSDpoOJ13LvkX8NumXTdyWOP2rVyIi2giIgody1DAcK+y9rsSbC0Nglb3jQBoLm9vmStwKhMLfae++LJk/NQTBERUEREBERAREQEREBERAREQEREBUPBVVCg0LBsG9o29r62Zgcyj0YXDe4jet9G5QU1OyKSd7WgGV13EcVkKQERFQREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQf//Z',
+      type: 'shape',
+      color: '#2C1810',
       description: 'Modern fade cut',
       offsetY: -0.35,
       scale: 1.4
@@ -349,15 +350,17 @@ const FaceDetection = () => {
     {
       id: 2,
       name: 'Pompadour',
-      url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400',
+      type: 'shape',
+      color: '#1A0F08',
       description: 'Classic styled hair',
-      offsetY: -0.4,
+      offsetY: -0.45,
       scale: 1.5
     },
     {
       id: 3,
       name: 'Undercut',
-      url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=400',
+      type: 'shape',
+      color: '#3D2817',
       description: 'Trendy undercut style',
       offsetY: -0.38,
       scale: 1.45
@@ -365,24 +368,25 @@ const FaceDetection = () => {
     {
       id: 4,
       name: 'Buzz Cut',
-      url: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=400',
+      type: 'shape',
+      color: '#4A3428',
       description: 'Short military style',
-      offsetY: -0.3,
-      scale: 1.3
+      offsetY: -0.28,
+      scale: 1.25
     },
     {
       id: 5,
       name: 'Long Wavy',
-      url: 'https://images.unsplash.com/photo-1560264280-88b68371db39?w=400',
+      type: 'shape',
+      color: '#231612',
       description: 'Long flowing hair',
-      offsetY: -0.5,
-      scale: 1.6
+      offsetY: -0.55,
+      scale: 1.7
     }
   ];
 
   useEffect(() => {
     loadFaceMesh();
-    preloadHaircutImages();
     return () => {
       stopCamera();
       if (animationRef.current) {
@@ -390,17 +394,6 @@ const FaceDetection = () => {
       }
     };
   }, []);
-
-  const preloadHaircutImages = () => {
-    haircuts.forEach((haircut, index) => {
-      if (haircut.url) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = haircut.url;
-        haircutImagesRef.current[index] = img;
-      }
-    });
-  };
 
   const loadFaceMesh = async () => {
     try {
@@ -476,15 +469,16 @@ const FaceDetection = () => {
 
   const drawHaircut = (ctx, landmarks, width, height) => {
     const haircut = haircuts[selectedHaircut];
-    const img = haircutImagesRef.current[selectedHaircut];
     
-    if (!img || !img.complete) return;
+    if (haircut.type === 'none') return;
 
     // Get key facial points for positioning
     const forehead = landmarks[10];
     const leftTemple = landmarks[356];
     const rightTemple = landmarks[127];
     const chin = landmarks[152];
+    const leftEye = landmarks[33];
+    const rightEye = landmarks[263];
 
     // Calculate face dimensions
     const faceWidth = Math.abs(
@@ -496,7 +490,7 @@ const FaceDetection = () => {
 
     // Calculate haircut position and size
     const haircutWidth = faceWidth * (haircut.scale || 1.4);
-    const haircutHeight = haircutWidth * (img.height / img.width);
+    const haircutHeight = haircutWidth * 1.2; // Aspect ratio for hair
     
     const centerX = ((leftTemple.x + rightTemple.x) / 2) * width;
     const topY = forehead.y * height;
@@ -504,26 +498,66 @@ const FaceDetection = () => {
     const x = centerX - haircutWidth / 2;
     const y = topY + (faceHeight * (haircut.offsetY || -0.35));
 
-    // Apply smooth rendering
-    ctx.save();
-    ctx.globalAlpha = 0.95;
-    
-    // Optional: Add rotation based on head tilt
+    // Calculate rotation based on head tilt
     const angle = Math.atan2(
-      rightTemple.y - leftTemple.y,
-      rightTemple.x - leftTemple.x
+      rightEye.y - leftEye.y,
+      rightEye.x - leftEye.x
     );
-    
+
+    ctx.save();
     ctx.translate(centerX, y + haircutHeight / 2);
     ctx.rotate(angle);
-    ctx.drawImage(
-      img,
-      -haircutWidth / 2,
-      -haircutHeight / 2,
-      haircutWidth,
-      haircutHeight
-    );
-    
+
+    // Draw different haircut shapes
+    if (haircut.type === 'shape') {
+      ctx.fillStyle = haircut.color;
+      ctx.globalAlpha = 0.85;
+
+      // Create hair shape based on haircut ID
+      ctx.beginPath();
+      
+      if (haircut.id === 1) {
+        // Classic Fade - rounded top
+        ctx.ellipse(0, -haircutHeight * 0.2, haircutWidth * 0.45, haircutHeight * 0.4, 0, 0, Math.PI * 2);
+      } else if (haircut.id === 2) {
+        // Pompadour - tall and voluminous
+        ctx.ellipse(0, -haircutHeight * 0.25, haircutWidth * 0.42, haircutHeight * 0.45, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, -haircutHeight * 0.35, haircutWidth * 0.35, haircutHeight * 0.25, 0, 0, Math.PI);
+      } else if (haircut.id === 3) {
+        // Undercut - shorter on sides
+        ctx.ellipse(0, -haircutHeight * 0.22, haircutWidth * 0.43, haircutHeight * 0.42, 0, 0, Math.PI * 2);
+      } else if (haircut.id === 4) {
+        // Buzz Cut - very short
+        ctx.ellipse(0, -haircutHeight * 0.15, haircutWidth * 0.48, haircutHeight * 0.35, 0, 0, Math.PI * 2);
+      } else if (haircut.id === 5) {
+        // Long Wavy - extended sides and back
+        ctx.ellipse(0, -haircutHeight * 0.2, haircutWidth * 0.5, haircutHeight * 0.5, 0, 0, Math.PI * 2);
+        // Add flowing sides
+        ctx.ellipse(-haircutWidth * 0.35, haircutHeight * 0.1, haircutWidth * 0.2, haircutHeight * 0.3, 0.3, 0, Math.PI * 2);
+        ctx.ellipse(haircutWidth * 0.35, haircutHeight * 0.1, haircutWidth * 0.2, haircutHeight * 0.3, -0.3, 0, Math.PI * 2);
+      }
+      
+      ctx.fill();
+
+      // Add some texture/shading
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.ellipse(0, -haircutHeight * 0.15, haircutWidth * 0.3, haircutHeight * 0.25, 0, 0, Math.PI);
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Add a subtle glow/highlight
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#ffffff';
+    ctx.translate(centerX, y + haircutHeight / 2);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.ellipse(0, -haircutHeight * 0.3, haircutWidth * 0.2, haircutHeight * 0.15, 0, 0, Math.PI);
+    ctx.fill();
     ctx.restore();
   };
 
@@ -739,7 +773,7 @@ const FaceDetection = () => {
         )}
 
         {/* Bottom Control Panel */}
-        <div className="absolute bottom-20 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6 z-10">
+        <div className="absolute bottom-20 left-10 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6 z-10">
           <div className="flex gap-4 justify-center items-center">
             {!isCameraActive ? (
               <button
