@@ -212,116 +212,97 @@ const FaceDetection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col items-center justify-center p-4">
-      <div className="max-w-4xl w-full bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
-          <h1 className="text-3xl font-bold text-white text-center">Virtual Haircut Studio</h1>
-          <p className="text-white text-center mt-2 opacity-90">Face Detection System</p>
-        </div>
+    <div className="fixed inset-0 bg-black">
+      {/* Video/Canvas Container - Full Screen */}
+      <div className="relative w-full h-full">
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-contain"
+          playsInline
+          style={{ display: isCameraActive ? 'block' : 'none' }}
+        />
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full"
+          style={{ display: isCameraActive ? 'block' : 'none' }}
+        />
+        
+        {/* Placeholder */}
+        {!isCameraActive && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+            <div className="text-center">
+              <Camera className="w-24 h-24 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-300 text-xl mb-2">Virtual Haircut Studio</p>
+              <p className="text-gray-500 text-sm">Click "Start Camera" to begin</p>
+            </div>
+          </div>
+        )}
 
-        {/* Main Content */}
-        <div className="p-6">
-          {/* Status Bar */}
-          <div className="mb-4 flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-            <div className="flex items-center space-x-2">
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500 mx-auto mb-4"></div>
+              <p className="text-white text-lg">Loading Face Detection...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Top Status Bar */}
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black via-black/80 to-transparent p-4 z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
               <div className={`w-3 h-3 rounded-full ${faceDetected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              <span className="text-white font-medium">
+              <span className="text-white font-medium text-sm">
                 {faceDetected ? 'Face Detected' : 'No Face Detected'}
               </span>
             </div>
-            <div className="text-gray-300 text-sm">
-              Camera: {facingMode === 'user' ? 'Front' : 'Rear'}
+            <div className="text-gray-300 text-sm bg-black/50 px-3 py-1 rounded-full">
+              {facingMode === 'user' ? 'Front Camera' : 'Rear Camera'}
             </div>
           </div>
+        </div>
 
-          {/* Video/Canvas Container */}
-          <div className="relative bg-black rounded-xl overflow-hidden shadow-lg mb-4" style={{ aspectRatio: '16/9' }}>
-            <video
-              ref={videoRef}
-              className="absolute inset-0 w-full h-full object-cover"
-              playsInline
-              style={{ display: isCameraActive ? 'block' : 'none' }}
-            />
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full"
-              style={{ display: isCameraActive ? 'block' : 'none' }}
-            />
-            
-            {/* Placeholder */}
-            {!isCameraActive && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <Camera className="w-24 h-24 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">Camera is off</p>
-                  <p className="text-gray-500 text-sm mt-2">Click "Start Camera" to begin</p>
-                </div>
-              </div>
-            )}
-
-            {/* Loading Overlay */}
-            {isLoading && (
-              <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500 mx-auto mb-4"></div>
-                  <p className="text-white">Loading Face Detection...</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 flex items-start space-x-3">
-              <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-red-200 font-medium">Error</p>
-                <p className="text-red-300 text-sm mt-1">{error}</p>
-              </div>
+        {/* Error Message */}
+        {error && (
+          <div className="absolute top-20 left-4 right-4 bg-red-900/90 border border-red-500 rounded-lg p-4 flex items-start space-x-3 z-20 backdrop-blur-sm">
+            <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-red-200 font-medium">Error</p>
+              <p className="text-red-300 text-sm mt-1">{error}</p>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Control Buttons */}
-          <div className="flex flex-wrap gap-3 justify-center">
+        {/* Bottom Control Panel */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6 z-10">
+          <div className="flex gap-4 justify-center items-center">
             {!isCameraActive ? (
               <button
                 onClick={startCamera}
                 disabled={isLoading}
-                className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-medium hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg text-lg"
               >
-                <Camera className="w-5 h-5" />
+                <Camera className="w-6 h-6" />
                 <span>Start Camera</span>
               </button>
             ) : (
               <>
                 <button
-                  onClick={stopCamera}
-                  className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-all shadow-lg"
+                  onClick={switchCamera}
+                  className="flex items-center justify-center bg-gray-700/90 text-white p-4 rounded-full hover:bg-gray-600 transition-all shadow-lg backdrop-blur-sm"
+                  title="Switch Camera"
                 >
-                  <Camera className="w-5 h-5" />
-                  <span>Stop Camera</span>
+                  <RefreshCw className="w-6 h-6" />
                 </button>
                 <button
-                  onClick={switchCamera}
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-all shadow-lg"
+                  onClick={stopCamera}
+                  className="flex items-center justify-center bg-red-600/90 text-white px-8 py-4 rounded-full hover:bg-red-700 transition-all shadow-lg backdrop-blur-sm"
                 >
-                  <RefreshCw className="w-5 h-5" />
-                  <span>Switch Camera</span>
+                  <span className="font-medium text-lg">Stop Camera</span>
                 </button>
               </>
             )}
-          </div>
-
-          {/* Info Box */}
-          <div className="mt-6 bg-gray-700 rounded-lg p-4">
-            <h3 className="text-white font-semibold mb-2">How it works:</h3>
-            <ul className="text-gray-300 text-sm space-y-1">
-              <li>• Green outline shows detected face mesh</li>
-              <li>• Green dots mark key facial landmarks</li>
-              <li>• Pink line indicates hairline area for haircut placement</li>
-              <li>• Switch between front/rear camera as needed</li>
-            </ul>
           </div>
         </div>
       </div>
