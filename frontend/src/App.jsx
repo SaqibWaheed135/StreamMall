@@ -141,22 +141,36 @@ const App = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [showIosBanner, setShowIosBanner] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
 
   useEffect(() => {
     setCurrentScreen(location.pathname);
   }, [location]);
 
+  // Check if app is already installed (running in standalone mode)
+  useEffect(() => {
+    const checkStandalone = 
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+    setIsStandalone(checkStandalone);
+  }, []);
+
   // PWA & iOS install handling
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstallButton(true);
+      
+      // Check if user hasn't dismissed install prompt permanently
+      const installDismissed = localStorage.getItem("pwaInstallDismissed");
+      if (!installDismissed && !isStandalone) {
+        setShowInstallButton(true);
+      }
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  }, [isStandalone]);
 
   useEffect(() => {
     const isIos = /iphone|ipad|ipod/.test(
@@ -168,9 +182,12 @@ const App = () => {
 
     if (isIos && !isInStandalone) {
       const dismissedUntil = localStorage.getItem("iosBannerDismissedUntil");
+      const permanentlyDismissed = localStorage.getItem("iosBannerPermanentlyDismissed");
       const now = Date.now();
-      if (!dismissedUntil || now > Number(dismissedUntil)) {
-        setShowIosBanner(true);
+      
+      if (!permanentlyDismissed && (!dismissedUntil || now > Number(dismissedUntil))) {
+        // Show banner after a short delay for better UX
+        setTimeout(() => setShowIosBanner(true), 2000);
       }
     }
   }, []);
@@ -178,17 +195,30 @@ const App = () => {
   const handleInstallClick = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => {
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('PWA installed');
+        }
         setDeferredPrompt(null);
         setShowInstallButton(false);
       });
     }
   };
 
-  const handleDismissIosBanner = () => {
+  const handleDismissInstall = () => {
+    setShowInstallButton(false);
+    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+    localStorage.setItem("pwaInstallDismissed", expiresAt.toString());
+  };
+
+  const handleDismissIosBanner = (permanent = false) => {
     setShowIosBanner(false);
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-    localStorage.setItem("iosBannerDismissedUntil", expiresAt.toString());
+    if (permanent) {
+      localStorage.setItem("iosBannerPermanentlyDismissed", "true");
+    } else {
+      const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+      localStorage.setItem("iosBannerDismissedUntil", expiresAt.toString());
+    }
   };
 
   return (
@@ -270,31 +300,86 @@ const App = () => {
       </main>
 
       {/* Android Install Button */}
-      {showInstallButton && (
-        <div className="fixed bottom-20 left-0 right-0 flex justify-center z-50">
-          <button
-            onClick={handleInstallClick}
-            className="bg-gradient-to-r from-[#FF2B55] to-[#7B2FF7] text-white px-5 py-2 rounded-lg shadow-lg hover:opacity-90 transition"
-          >
-            Install StreamMall
-          </button>
+      {showInstallButton && !isStandalone && (
+        <div className="fixed bottom-24 left-4 right-4 z-50 animate-slideUp">
+          <div className="bg-gradient-to-br from-white to-pink-50 border-2 border-pink-200 rounded-2xl shadow-2xl p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl p-2 flex-shrink-0">
+                <img src={logo} alt="StreamMall" className="w-10 h-10 rounded-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 text-base mb-1">
+                  Install StreamMall
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Get quick access from your home screen
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleInstallClick}
+                    className="flex-1 bg-gradient-to-r from-pink-600 to-rose-500 text-white px-4 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
+                  >
+                    Install
+                  </button>
+                  <button
+                    onClick={handleDismissInstall}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Later
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* iOS Add to Home Banner */}
-      {showIosBanner && (
-        <div className="fixed bottom-20 left-4 right-4 bg-[#1E1E24] text-white px-4 py-3 rounded-lg border border-[#7B2FF7]/50 shadow-lg text-center z-50">
-          <p className="font-semibold text-[#FF2B55]">📲 Install StreamMall</p>
-          <p className="text-sm text-gray-300 mb-2">
-            Tap <span className="font-bold">Share</span> →{" "}
-            <span className="font-bold">Add to Home Screen</span>
-          </p>
-          <button
-            onClick={handleDismissIosBanner}
-            className="mt-2 bg-[#7B2FF7] text-white px-3 py-1 rounded-lg text-sm hover:bg-[#FF2B55] transition"
-          >
-            Dismiss
-          </button>
+      {showIosBanner && !isStandalone && (
+        <div className="fixed bottom-24 left-4 right-4 z-50 animate-slideUp">
+          <div className="bg-gradient-to-br from-white to-pink-50 border-2 border-pink-200 rounded-2xl shadow-2xl p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl p-2 flex-shrink-0">
+                <img src={logo} alt="StreamMall" className="w-10 h-10 rounded-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-1">
+                  📱 Install StreamMall
+                </h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  Add to your home screen for the best experience:
+                </p>
+                <ol className="text-sm text-gray-700 mb-3 space-y-1 bg-pink-50 rounded-lg p-2">
+                  <li className="flex items-center gap-2">
+                    <span className="font-bold text-pink-600">1.</span>
+                    Tap the <span className="inline-flex items-center px-2 py-0.5 bg-white rounded border border-pink-200 text-xs font-semibold">Share</span> button below
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="font-bold text-pink-600">2.</span>
+                    Select <span className="font-semibold">"Add to Home Screen"</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="font-bold text-pink-600">3.</span>
+                    Tap <span className="font-semibold">"Add"</span>
+                  </li>
+                </ol>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleDismissIosBanner(true)}
+                    className="flex-1 bg-gradient-to-r from-pink-600 to-rose-500 text-white px-4 py-2 rounded-xl font-semibold shadow-lg text-sm"
+                  >
+                    Got it!
+                  </button>
+                  <button
+                    onClick={() => handleDismissIosBanner(false)}
+                    className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors text-sm"
+                  >
+                    Later
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
