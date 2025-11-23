@@ -250,51 +250,100 @@ const PointsRechargeScreen = ({ onBack }) => {
       'unknown';
   };
 
-  const getTransactionIcon = (category) => {
-    switch (category) {
-      case 'recharge_approved':
-      case 'usdt_recharge_approved':
-      case 'recharge':
-      case 'credit':
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
-      case 'recharge_request':
-        return <Clock className="w-5 h-5 text-yellow-400" />;
-      case 'recharge_rejected':
-      case 'debit':
-        return <XCircle className="w-5 h-5 text-red-400" />;
-      case 'recharge_cancelled':
-      case 'pending':
-        return <Clock className="w-5 h-5 text-gray-400" />;
-      case 'gift':
-      case 'award':
-      case 'bonus':
-        return <Gift className="w-5 h-5 text-yellow-400" />;
-      default:
-        return <Clock className="w-5 h-5 text-gray-400" />;
-    }
-  };
+  // const getTransactionIcon = (category) => {
+  //   switch (category) {
+  //     case 'recharge_approved':
+  //     case 'usdt_recharge_approved':
+  //     case 'recharge':
+  //     case 'credit':
+  //       return <CheckCircle className="w-5 h-5 text-green-400" />;
+  //     case 'recharge_request':
+  //       return <Clock className="w-5 h-5 text-yellow-400" />;
+  //     case 'recharge_rejected':
+  //     case 'debit':
+  //       return <XCircle className="w-5 h-5 text-red-400" />;
+  //     case 'recharge_cancelled':
+  //     case 'pending':
+  //       return <Clock className="w-5 h-5 text-gray-400" />;
+  //     case 'gift':
+  //     case 'award':
+  //     case 'bonus':
+  //       return <Gift className="w-5 h-5 text-yellow-400" />;
+  //     default:
+  //       return <Clock className="w-5 h-5 text-gray-400" />;
+  //   }
+  // };
+
+
+  // Update the history section to show expired orders with different styling:
+const getTransactionIcon = (category) => {
+  switch (category) {
+    case 'recharge_approved':
+    case 'usdt_recharge_approved':
+    case 'recharge':
+    case 'credit':
+      return <CheckCircle className="w-5 h-5 text-green-400" />;
+    case 'recharge_request':
+      return <Clock className="w-5 h-5 text-yellow-400" />;
+    case 'recharge_rejected':
+    case 'debit':
+      return <XCircle className="w-5 h-5 text-red-400" />;
+    case 'recharge_expired':
+      return <AlertCircle className="w-5 h-5 text-orange-400" />;
+    case 'recharge_cancelled':
+    case 'pending':
+      return <Clock className="w-5 h-5 text-gray-400" />;
+    case 'gift':
+    case 'award':
+    case 'bonus':
+      return <Gift className="w-5 h-5 text-yellow-400" />;
+    default:
+      return <Clock className="w-5 h-5 text-gray-400" />;
+  }
+};
+  // const getTransactionColor = (category) => {
+  //   switch (category) {
+  //     case 'recharge_approved':
+  //     case 'usdt_recharge_approved':
+  //     case 'recharge':
+  //     case 'award':
+  //     case 'bonus':
+  //     case 'credit':
+  //       return 'text-green-400';
+  //     case 'recharge_rejected':
+  //     case 'debit':
+  //       return 'text-red-400';
+  //     case 'recharge_request':
+  //     case 'recharge_cancelled':
+  //     case 'pending':
+  //       return 'text-gray-400';
+  //     default:
+  //       return 'text-gray-400';
+  //   }
+  // };
 
   const getTransactionColor = (category) => {
-    switch (category) {
-      case 'recharge_approved':
-      case 'usdt_recharge_approved':
-      case 'recharge':
-      case 'award':
-      case 'bonus':
-      case 'credit':
-        return 'text-green-400';
-      case 'recharge_rejected':
-      case 'debit':
-        return 'text-red-400';
-      case 'recharge_request':
-      case 'recharge_cancelled':
-      case 'pending':
-        return 'text-gray-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
-
+  switch (category) {
+    case 'recharge_approved':
+    case 'usdt_recharge_approved':
+    case 'recharge':
+    case 'award':
+    case 'bonus':
+    case 'credit':
+      return 'text-green-400';
+    case 'recharge_rejected':
+    case 'debit':
+      return 'text-red-400';
+    case 'recharge_expired':
+      return 'text-orange-400';
+    case 'recharge_request':
+    case 'recharge_cancelled':
+    case 'pending':
+      return 'text-gray-400';
+    default:
+      return 'text-gray-400';
+  }
+};
   const formatDate = (dateString) => {
     if (!dateString) return 'Invalid date';
     const date = new Date(dateString);
@@ -506,6 +555,55 @@ const PointsRechargeScreen = ({ onBack }) => {
     });
   };
 
+  // const createUsdtOrder = async (amount) => {
+  //   try {
+  //     setRecharging(true);
+  //     const response = await fetch(`${API_BASE_URL}/recharges/usdt/create-order`, {
+  //       method: 'POST',
+  //       headers: getAuthHeaders(),
+  //       body: JSON.stringify({ amount })
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (response.ok) {
+  //       setUsdtPaymentData(data.data);
+  //       setShowUsdtPayment(true);
+  //       setPaymentStatus('pending');
+  //       hasAlertedRef.current = false;
+
+  //       const exp = new Date(data.data.expiresAt).getTime();
+  //       const now = Date.now();
+  //       const diff = Math.max(0, Math.floor((exp - now) / 1000));
+  //       setCountdown(diff);
+
+  //       if (timerInterval) clearInterval(timerInterval);
+  //       const iv = setInterval(() => {
+  //         setCountdown((prev) => {
+  //           if (prev <= 1) {
+  //             clearInterval(iv);
+  //             setPaymentStatus('expired');
+  //             return 0;
+  //           }
+  //           return prev - 1;
+  //         });
+  //       }, 1000);
+  //       setTimerInterval(iv);
+
+  //       startPaymentStatusCheck(data.data.orderId);
+  //     } else {
+  //       alert(data.errors?.[0]?.msg || data.msg || 'Failed to create USDT order');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating USDT order:', error);
+  //     alert('Failed to create USDT payment order');
+  //   } finally {
+  //     setRecharging(false);
+  //   }
+  // };
+
+
+  // Update the createUsdtOrder function:
   const createUsdtOrder = async (amount) => {
     try {
       setRecharging(true);
@@ -543,7 +641,18 @@ const PointsRechargeScreen = ({ onBack }) => {
 
         startPaymentStatusCheck(data.data.orderId);
       } else {
-        alert(data.errors?.[0]?.msg || data.msg || 'Failed to create USDT order');
+        // Handle error - if there's a pending order, show option to continue
+        if (data.orderId) {
+          const continueExisting = window.confirm(
+            `${data.msg}\n\nDo you want to continue with the existing order?`
+          );
+          if (continueExisting) {
+            // Redirect to check existing order status
+            alert('Please check your previous order status first.');
+          }
+        } else {
+          alert(data.errors?.[0]?.msg || data.msg || 'Failed to create USDT order');
+        }
       }
     } catch (error) {
       console.error('Error creating USDT order:', error);
@@ -553,6 +662,52 @@ const PointsRechargeScreen = ({ onBack }) => {
     }
   };
 
+  // const checkUsdtPayment = async (orderId) => {
+  //   try {
+  //     setCheckingPayment(true);
+  //     const response = await fetch(`${API_BASE_URL}/recharges/usdt/check-payment`, {
+  //       method: 'POST',
+  //       headers: getAuthHeaders(),
+  //       body: JSON.stringify({ orderId })
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (data.success && data.status === 'approved') {
+  //       setPaymentStatus('approved');
+  //       if (!hasAlertedRef.current) {
+  //         alert('Payment confirmed! Points have been added to your account.');
+  //         hasAlertedRef.current = true;
+  //       }
+  //       if (pollingIntervalRef.current) {
+  //         clearInterval(pollingIntervalRef.current);
+  //         pollingIntervalRef.current = null;
+  //       }
+  //       await fetchPointsBalance();
+  //       await fetchPointsHistory();
+  //       resetForm();
+  //       setActiveTab('history');
+  //     } else if (data.status === 'expired') {
+  //       setPaymentStatus('expired');
+  //       if (pollingIntervalRef.current) {
+  //         clearInterval(pollingIntervalRef.current);
+  //         pollingIntervalRef.current = null;
+  //       }
+  //       if (!hasAlertedRef.current) {
+  //         alert('Order expired');
+  //         hasAlertedRef.current = true;
+  //       }
+  //     } else {
+  //       setPaymentStatus(data.status || 'pending');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error checking payment:', error);
+  //   } finally {
+  //     setCheckingPayment(false);
+  //   }
+  // };
+
+  // Update the checkUsdtPayment function to handle expired status:
   const checkUsdtPayment = async (orderId) => {
     try {
       setCheckingPayment(true);
@@ -567,25 +722,37 @@ const PointsRechargeScreen = ({ onBack }) => {
       if (data.success && data.status === 'approved') {
         setPaymentStatus('approved');
         if (!hasAlertedRef.current) {
-          alert('Payment confirmed! Points have been added to your account.');
+          alert('✅ Payment confirmed! Points have been added to your account.');
           hasAlertedRef.current = true;
         }
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          setTimerInterval(null);
+        }
         await fetchPointsBalance();
         await fetchPointsHistory();
-        resetForm();
-        setActiveTab('history');
+
+        // Auto-close after 3 seconds
+        setTimeout(() => {
+          resetForm();
+          setActiveTab('history');
+        }, 3000);
       } else if (data.status === 'expired') {
         setPaymentStatus('expired');
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          setTimerInterval(null);
+        }
         if (!hasAlertedRef.current) {
-          alert('Order expired');
+          alert('⏰ Payment window expired. You can create a new payment order.');
           hasAlertedRef.current = true;
         }
       } else {
@@ -681,7 +848,17 @@ const PointsRechargeScreen = ({ onBack }) => {
     setValidationErrors({});
     hasAlertedRef.current = false;
   };
-
+  // Add a function to handle creating new order after expiry:
+  const handleCreateNewOrder = () => {
+    if (window.confirm('Create a new payment order?')) {
+      const amount = selectedAmount || parseFloat(customAmount);
+      resetForm();
+      setTimeout(() => {
+        setSelectedAmount(amount);
+        proceedToCheckout();
+      }, 100);
+    }
+  };
   // Add this function to your PointsRechargeScreen component
   // Place it after the resetForm function and before the loading check
 
@@ -776,6 +953,184 @@ const PointsRechargeScreen = ({ onBack }) => {
     return <RechargeSkeleton />;
   }
 
+  // if (showUsdtPayment && usdtPaymentData) {
+  //   return (
+  //     <div className="min-h-screen bg-[#FFC0CB] text-black">
+  //       <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
+  //         <div className="flex items-center justify-between">
+  //           <div className="flex items-center space-x-4">
+  //             <button
+  //               onClick={() => {
+  //                 setShowUsdtPayment(false);
+  //                 setUsdtPaymentData(null);
+  //                 if (timerInterval) clearInterval(timerInterval);
+  //                 if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+  //               }}
+  //               className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
+  //             >
+  //               <ArrowLeft className="w-5 h-5" />
+  //             </button>
+  //             <h1 className="text-xl font-bold">USDT Payment</h1>
+  //           </div>
+  //           <div className="text-right">
+  //             <div className="text-lg font-bold text-pink-700">
+  //               {usdtPaymentData.amount} USDT
+  //             </div>
+  //             <p className="text-xs text-gray-700">
+  //               {usdtPaymentData.pointsToAdd.toLocaleString()} points
+  //             </p>
+  //           </div>
+  //         </div>
+  //       </div>
+
+  //       <div className="p-4 max-w-md mx-auto">
+  //         <div className={`rounded-xl p-4 mb-6 ${paymentStatus === 'approved' ? 'bg-green-100 border border-green-500' :
+  //           paymentStatus === 'expired' ? 'bg-red-100 border border-red-500' :
+  //             'bg-yellow-100 border border-yellow-500'
+  //           }`}>
+  //           <div className="text-center">
+  //             {paymentStatus === 'approved' ? (
+  //               <>
+  //                 <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2" />
+  //                 <h3 className="text-lg font-bold text-green-700">Payment Confirmed!</h3>
+  //                 <p className="text-green-700">Points have been added to your account</p>
+  //               </>
+  //             ) : paymentStatus === 'expired' ? (
+  //               <>
+  //                 <XCircle className="w-12 h-12 text-red-600 mx-auto mb-2" />
+  //                 <h3 className="text-lg font-bold text-red-700">Order Expired</h3>
+  //                 <p className="text-red-700">Please create a new order</p>
+  //               </>
+  //             ) : (
+  //               <>
+  //                 <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-2" />
+  //                 <h3 className="text-lg font-bold text-yellow-700">Waiting for Payment</h3>
+  //                 <p className="text-yellow-700">Send USDT to the address below</p>
+  //               </>
+  //             )}
+  //           </div>
+  //         </div>
+
+  //         {paymentStatus === 'pending' && (
+  //           <>
+  //             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6 text-center">
+  //               <h3 className="text-lg font-semibold mb-4">Scan QR Code</h3>
+  //               <div className="bg-white p-4 rounded-lg inline-block">
+  //                 <QRCodeCanvas
+  //                   value={`tron:${usdtPaymentData.walletAddress}?amount=${usdtPaymentData.amount}`}
+  //                   size={180}
+  //                   includeMargin={true}
+  //                 />
+  //               </div>
+  //               <p className="text-gray-700 text-sm mt-2">Scan with your USDT wallet</p>
+  //             </div>
+
+  //             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
+  //               <h3 className="text-lg font-semibold mb-4">Wallet Address (TRC20)</h3>
+  //               <div className="flex items-center gap-2">
+  //                 <p className="text-sm font-mono break-all text-gray-800 flex-1">
+  //                   {usdtPaymentData.walletAddress}
+  //                 </p>
+  //                 <button
+  //                   onClick={() => copyToClipboard(usdtPaymentData.walletAddress)}
+  //                   className="bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white px-2 py-1 rounded text-sm flex items-center"
+  //                 >
+  //                   <Copy className="w-4 h-4 mr-1" />
+  //                   Copy
+  //                 </button>
+  //               </div>
+  //               {copyMsg && <p className="text-green-700 text-sm mt-1">{copyMsg}</p>}
+  //             </div>
+
+  //             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
+  //               <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
+  //               <div className="space-y-3">
+  //                 <div className="flex justify-between">
+  //                   <span className="text-gray-700">Requested Amount:</span>
+  //                   <span className="font-bold">{usdtPaymentData.originalAmount} USDT</span>
+  //                 </div>
+  //                 <div className="flex justify-between">
+  //                   <span className="text-gray-700">Payable Amount:</span>
+  //                   <span className="font-bold text-red-600">{usdtPaymentData.amount} USDT</span>
+  //                 </div>
+  //                 <div className="flex justify-between">
+  //                   <span className="text-gray-700">Network:</span>
+  //                   <span className="font-bold">TRC20 (Tron)</span>
+  //                 </div>
+  //                 <div className="flex justify-between">
+  //                   <span className="text-gray-700">Points:</span>
+  //                   <span className="font-bold text-pink-700">{usdtPaymentData.pointsToAdd.toLocaleString()}</span>
+  //                 </div>
+  //                 <div className="flex justify-between">
+  //                   <span className="text-gray-700">Order ID:</span>
+  //                   <span className="font-mono text-sm">{usdtPaymentData.orderId}</span>
+  //                 </div>
+  //                 <div className="flex justify-between">
+  //                   <span className="text-gray-700">Expires in:</span>
+  //                   <span className="font-bold">{formatTime(countdown)}</span>
+  //                 </div>
+  //               </div>
+  //             </div>
+
+  //             <div className="bg-red-100 border border-red-500 rounded-lg p-4 mb-6">
+  //               <p className="text-red-700 text-sm text-center">
+  //                 ⚠️ Send exactly {usdtPaymentData.amount} USDT (otherwise payment won't be detected)
+  //               </p>
+  //             </div>
+
+  //             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
+  //               <h3 className="text-lg font-semibold mb-4">Instructions</h3>
+  //               <div className="space-y-2 text-sm text-gray-800">
+  //                 <p>1. Send exactly <strong>{usdtPaymentData.amount} USDT</strong> to the wallet address above</p>
+  //                 <p>2. Make sure to use the <strong>TRC20 network</strong></p>
+  //                 <p>3. Payment will be confirmed automatically within 1-5 minutes</p>
+  //                 <p>4. Points will be added to your account once confirmed</p>
+  //               </div>
+  //             </div>
+
+  //             <button
+  //               onClick={() => checkUsdtPayment(usdtPaymentData.orderId)}
+  //               disabled={checkingPayment}
+  //               className="w-full py-3 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed mb-6 flex items-center justify-center space-x-2 text-white"
+  //             >
+  //               {checkingPayment ? (
+  //                 <>
+  //                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  //                   <span>Checking...</span>
+  //                 </>
+  //               ) : (
+  //                 <>
+  //                   <RefreshCw className="w-5 h-5" />
+  //                   <span>Check Payment Status</span>
+  //                 </>
+  //               )}
+  //             </button>
+
+  //             {usdtPaymentData.paymentUrl && (
+  //               <a
+  //                 href={usdtPaymentData.paymentUrl}
+  //                 target="_blank"
+  //                 rel="noopener noreferrer"
+  //                 className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold mb-6 flex items-center justify-center space-x-2"
+  //               >
+  //                 <ExternalLink className="w-5 h-5" />
+  //                 <span>Open in Wallet</span>
+  //               </a>
+  //             )}
+
+  //             <div className="bg-red-100 border border-red-500 rounded-lg p-4">
+  //               <p className="text-red-700 text-sm text-center">
+  //                 ⚠️ Only send USDT on TRC20 network. Sending other tokens or using wrong network will result in loss of funds.
+  //               </p>
+  //             </div>
+  //           </>
+  //         )}
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+
   if (showUsdtPayment && usdtPaymentData) {
     return (
       <div className="min-h-screen bg-[#FFC0CB] text-black">
@@ -807,9 +1162,12 @@ const PointsRechargeScreen = ({ onBack }) => {
         </div>
 
         <div className="p-4 max-w-md mx-auto">
-          <div className={`rounded-xl p-4 mb-6 ${paymentStatus === 'approved' ? 'bg-green-100 border border-green-500' :
-            paymentStatus === 'expired' ? 'bg-red-100 border border-red-500' :
-              'bg-yellow-100 border border-yellow-500'
+          {/* Status Banner */}
+          <div className={`rounded-xl p-4 mb-6 ${paymentStatus === 'approved'
+              ? 'bg-green-100 border border-green-500'
+              : paymentStatus === 'expired'
+                ? 'bg-orange-100 border border-orange-500'
+                : 'bg-yellow-100 border border-yellow-500'
             }`}>
             <div className="text-center">
               {paymentStatus === 'approved' ? (
@@ -817,25 +1175,116 @@ const PointsRechargeScreen = ({ onBack }) => {
                   <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2" />
                   <h3 className="text-lg font-bold text-green-700">Payment Confirmed!</h3>
                   <p className="text-green-700">Points have been added to your account</p>
+                  <p className="text-sm text-green-600 mt-2">Redirecting to history...</p>
                 </>
               ) : paymentStatus === 'expired' ? (
                 <>
-                  <XCircle className="w-12 h-12 text-red-600 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-red-700">Order Expired</h3>
-                  <p className="text-red-700">Please create a new order</p>
+                  <AlertCircle className="w-12 h-12 text-orange-600 mx-auto mb-2" />
+                  <h3 className="text-lg font-bold text-orange-700">Payment Expired</h3>
+                  <p className="text-orange-700">Payment window has closed</p>
                 </>
               ) : (
                 <>
                   <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-2" />
                   <h3 className="text-lg font-bold text-yellow-700">Waiting for Payment</h3>
                   <p className="text-yellow-700">Send USDT to the address below</p>
+                  <div className="mt-2 text-2xl font-bold text-yellow-800">
+                    {formatTime(countdown)}
+                  </div>
                 </>
               )}
             </div>
           </div>
 
+          {/* Approved State */}
+          {paymentStatus === 'approved' && (
+            <div className="space-y-4">
+              <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-3">Transaction Details</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Amount:</span>
+                    <span className="font-bold">{usdtPaymentData.amount} USDT</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Points Added:</span>
+                    <span className="font-bold text-green-600">+{usdtPaymentData.pointsToAdd.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Status:</span>
+                    <span className="font-bold text-green-600">Completed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Expired State */}
+          {/* {paymentStatus === 'expired' && (
+          <div className="space-y-4">
+            <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
+              <h3 className="text-lg font-semibold mb-3">What Happened?</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li>• Payment window was {USDT_CONFIG.orderExpiryMinutes} minutes</li>
+                <li>• No transaction was detected on the blockchain</li>
+                <li>• Your order has been automatically cancelled</li>
+                <li>• You can create a new payment order anytime</li>
+              </ul>
+            </div>
+
+            <button
+              onClick={handleCreateNewOrder}
+              className="w-full py-3 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-lg font-semibold text-white flex items-center justify-center space-x-2"
+            >
+              <RefreshCw className="w-5 h-5" />
+              <span>Create New Payment Order</span>
+            </button>
+
+            <button
+              onClick={() => {
+                resetForm();
+                setActiveTab('recharge');
+              }}
+              className="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold"
+            >
+              Back to Recharge
+            </button>
+          </div>
+        )} */}
+
+
+          {paymentStatus === 'expired' && (
+            <div className="space-y-4">
+              <div className="bg-orange-100 border border-orange-500 rounded-lg p-4">
+                <p className="text-orange-700 text-sm text-center">
+                  ⏰ This payment order has expired. No payment was detected within the time limit.
+                </p>
+              </div>
+
+              <button
+                onClick={handleCreateNewOrder}
+                className="w-full py-3 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-lg font-semibold text-white flex items-center justify-center space-x-2"
+              >
+                <RefreshCw className="w-5 h-5" />
+                <span>Create New Payment Order</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  resetForm();
+                  setActiveTab('recharge');
+                }}
+                className="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold"
+              >
+                Back to Recharge
+              </button>
+            </div>
+          )}
+
+          {/* Pending State - Show QR and instructions */}
           {paymentStatus === 'pending' && (
             <>
+              {/* QR Code */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6 text-center">
                 <h3 className="text-lg font-semibold mb-4">Scan QR Code</h3>
                 <div className="bg-white p-4 rounded-lg inline-block">
@@ -848,6 +1297,7 @@ const PointsRechargeScreen = ({ onBack }) => {
                 <p className="text-gray-700 text-sm mt-2">Scan with your USDT wallet</p>
               </div>
 
+              {/* Wallet Address */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
                 <h3 className="text-lg font-semibold mb-4">Wallet Address (TRC20)</h3>
                 <div className="flex items-center gap-2">
@@ -865,6 +1315,7 @@ const PointsRechargeScreen = ({ onBack }) => {
                 {copyMsg && <p className="text-green-700 text-sm mt-1">{copyMsg}</p>}
               </div>
 
+              {/* Payment Details */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
                 <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
                 <div className="space-y-3">
@@ -890,17 +1341,21 @@ const PointsRechargeScreen = ({ onBack }) => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-700">Expires in:</span>
-                    <span className="font-bold">{formatTime(countdown)}</span>
+                    <span className={`font-bold ${countdown < 300 ? 'text-red-600' : ''}`}>
+                      {formatTime(countdown)}
+                    </span>
                   </div>
                 </div>
               </div>
 
+              {/* Warning */}
               <div className="bg-red-100 border border-red-500 rounded-lg p-4 mb-6">
                 <p className="text-red-700 text-sm text-center">
                   ⚠️ Send exactly {usdtPaymentData.amount} USDT (otherwise payment won't be detected)
                 </p>
               </div>
 
+              {/* Instructions */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
                 <h3 className="text-lg font-semibold mb-4">Instructions</h3>
                 <div className="space-y-2 text-sm text-gray-800">
@@ -908,9 +1363,11 @@ const PointsRechargeScreen = ({ onBack }) => {
                   <p>2. Make sure to use the <strong>TRC20 network</strong></p>
                   <p>3. Payment will be confirmed automatically within 1-5 minutes</p>
                   <p>4. Points will be added to your account once confirmed</p>
+                  <p>5. Complete payment within <strong>{formatTime(countdown)}</strong></p>
                 </div>
               </div>
 
+              {/* Check Payment Button */}
               <button
                 onClick={() => checkUsdtPayment(usdtPaymentData.orderId)}
                 disabled={checkingPayment}
@@ -929,18 +1386,7 @@ const PointsRechargeScreen = ({ onBack }) => {
                 )}
               </button>
 
-              {usdtPaymentData.paymentUrl && (
-                <a
-                  href={usdtPaymentData.paymentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold mb-6 flex items-center justify-center space-x-2"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  <span>Open in Wallet</span>
-                </a>
-              )}
-
+              {/* Safety Warning */}
               <div className="bg-red-100 border border-red-500 rounded-lg p-4">
                 <p className="text-red-700 text-sm text-center">
                   ⚠️ Only send USDT on TRC20 network. Sending other tokens or using wrong network will result in loss of funds.
@@ -952,6 +1398,7 @@ const PointsRechargeScreen = ({ onBack }) => {
       </div>
     );
   }
+
 
   if (showCheckout) {
     return (
@@ -1528,7 +1975,7 @@ const PointsRechargeScreen = ({ onBack }) => {
           </div>
         )}
 
-       {activeTab === 'history' && (
+        {activeTab === 'history' && (
           <div>
             {(!history || history.length === 0) ? (
               <div className="text-center py-12">
