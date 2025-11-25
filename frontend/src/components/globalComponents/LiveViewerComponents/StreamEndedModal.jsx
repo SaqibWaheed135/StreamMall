@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { AlertCircle, Clock, Eye, HeartIcon } from 'lucide-react';
 
 const StreamEndedModal = ({ streamData, onNavigate }) => {
