@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { API_BASE_URL } from "../../../config/api";
-import {  X } from 'lucide-react';
-
+import { X } from 'lucide-react';
 
 const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }) => {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -119,133 +118,133 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
   };
 
   return (
-    <div className="fixed inset-0 bg-white/90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 sticky top-0 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
-          <h3 className="text-xl font-semibold">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white/90 border border-[#ffb3c6] rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-xl">
+        <div className="p-6 sticky top-0 bg-white/85 border-b border-[#ffb3c6]/60 flex justify-between items-center rounded-t-3xl">
+          <h3 className="text-2xl font-bold text-pink-700">
             {step === 'delivery' ? 'Delivery Information' : 'Confirm Purchase'}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="text-pink-500 hover:text-pink-700 transition"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 text-gray-700">
           {step === 'delivery' ? (
-            <form className="space-y-4">
-              <div className="bg-gray-700 rounded-lg p-4 mb-4">
-                <h4 className="font-semibold text-lg">{product.name}</h4>
-                <p className="text-gray-300 text-sm mt-1">{product.description}</p>
-                <p className="font-bold text-yellow-400 mt-2">${product.price} ({coinCost} coins)</p>
+            <div className="space-y-4">
+              <div className="bg-white border border-[#ffb3c6] rounded-2xl p-5 mb-4 shadow-sm">
+                <h4 className="font-semibold text-lg text-pink-700">{product.name}</h4>
+                <p className="text-gray-600 text-sm mt-1">{product.description}</p>
+                <p className="font-bold text-pink-600 mt-2">${product.price} ({coinCost} coins)</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">First Name *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600">First Name *</label>
                   <input
                     type="text"
                     value={deliveryInfo.firstName}
                     onChange={(e) => handleDeliveryChange('firstName', e.target.value)}
                     placeholder="First name"
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Last Name *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600">Last Name *</label>
                   <input
                     type="text"
                     value={deliveryInfo.lastName}
                     onChange={(e) => handleDeliveryChange('lastName', e.target.value)}
                     placeholder="Last name"
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Email *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-600">Email *</label>
                 <input
                   type="email"
                   value={deliveryInfo.email}
                   onChange={(e) => handleDeliveryChange('email', e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Phone Number *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-600">Phone Number *</label>
                 <input
                   type="tel"
                   value={deliveryInfo.phone}
                   onChange={(e) => handleDeliveryChange('phone', e.target.value)}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Street Address *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-600">Street Address *</label>
                 <input
                   type="text"
                   value={deliveryInfo.address}
                   onChange={(e) => handleDeliveryChange('address', e.target.value)}
                   placeholder="123 Main Street"
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">City *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600">City *</label>
                   <input
                     type="text"
                     value={deliveryInfo.city}
                     onChange={(e) => handleDeliveryChange('city', e.target.value)}
                     placeholder="City"
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">State/Province *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600">State/Province *</label>
                   <input
                     type="text"
                     value={deliveryInfo.state}
                     onChange={(e) => handleDeliveryChange('state', e.target.value)}
                     placeholder="State"
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">ZIP/Postal Code *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600">ZIP/Postal Code *</label>
                   <input
                     type="text"
                     value={deliveryInfo.zipCode}
                     onChange={(e) => handleDeliveryChange('zipCode', e.target.value)}
                     placeholder="12345"
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Country *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600">Country *</label>
                   <input
                     type="text"
                     value={deliveryInfo.country}
                     onChange={(e) => handleDeliveryChange('country', e.target.value)}
                     placeholder="Country"
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-[#ffb3c6]/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 text-gray-700"
                   />
                 </div>
               </div>
 
               {purchaseError && (
-                <div className="bg-red-500/20 border border-red-500 text-red-400 p-3 rounded text-sm">
+                <div className="bg-red-50 border border-red-300 text-red-600 p-3 rounded-xl text-sm">
                   {purchaseError}
                 </div>
               )}
@@ -254,71 +253,71 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleContinue}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold"
+                  className="flex-1 bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-lg hover:shadow-pink-200 text-white py-2 rounded-xl font-semibold transition"
                 >
                   Continue
                 </button>
               </div>
-            </form>
+            </div>
           ) : (
-            <form onSubmit={handlePurchase} className="space-y-4">
-              <div className="bg-gray-700 rounded-lg p-4 space-y-3">
-                <h4 className="font-semibold text-lg">{product.name}</h4>
-                <p className="text-gray-300 text-sm">{product.description}</p>
+            <div className="space-y-4">
+              <div className="bg-white border border-[#ffb3c6] rounded-2xl p-5 shadow-sm space-y-3">
+                <h4 className="font-semibold text-lg text-pink-700">{product.name}</h4>
+                <p className="text-gray-600 text-sm">{product.description}</p>
 
-                <div className="border-t border-gray-600 pt-3 mt-3">
-                  <div className="flex justify-between text-sm mb-2">
+                <div className="border-t border-[#ffb3c6]/30 pt-3 mt-3">
+                  <div className="flex justify-between text-sm mb-2 text-gray-700">
                     <span>Product Price:</span>
-                    <span>${product.price}</span>
+                    <span className="font-semibold">${product.price}</span>
                   </div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span>Coin Cost:</span>
-                    <span className="text-yellow-400 font-semibold">{coinCost} coins</span>
+                    <span className="text-gray-700">Coin Cost:</span>
+                    <span className="text-amber-500 font-semibold">{coinCost} coins</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Your Balance:</span>
-                    <span className={userCoinBalance >= coinCost ? 'text-green-400' : 'text-red-400'}>
+                    <span className="text-gray-700">Your Balance:</span>
+                    <span className={userCoinBalance >= coinCost ? 'text-emerald-500 font-semibold' : 'text-rose-500 font-semibold'}>
                       {userCoinBalance} coins
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-4">
-                <h5 className="font-semibold text-sm mb-2">Delivery To:</h5>
-                <div className="text-sm text-gray-300 space-y-1">
-                  <p>{deliveryInfo.firstName} {deliveryInfo.lastName}</p>
+              <div className="bg-white border border-[#b3d7ff] rounded-2xl p-5 shadow-sm">
+                <h5 className="font-semibold text-sm mb-2 text-blue-500">Delivery To:</h5>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p className="font-semibold">{deliveryInfo.firstName} {deliveryInfo.lastName}</p>
                   <p>{deliveryInfo.address}</p>
                   <p>{deliveryInfo.city}, {deliveryInfo.state} {deliveryInfo.zipCode}</p>
                   <p>{deliveryInfo.country}</p>
-                  <p className="pt-2 text-gray-400">Email: {deliveryInfo.email}</p>
-                  <p className="text-gray-400">Phone: {deliveryInfo.phone}</p>
+                  <p className="pt-2 text-gray-500">Email: {deliveryInfo.email}</p>
+                  <p className="text-gray-500">Phone: {deliveryInfo.phone}</p>
                 </div>
               </div>
 
-              <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-4">
-                <h5 className="font-semibold text-sm mb-2">Payment Method:</h5>
-                <div className="text-sm text-yellow-300">
-                  <p>Coins: {coinCost}</p>
-                  <p className="text-xs text-yellow-400 mt-1">Deducted from your account balance</p>
+              <div className="bg-white border border-[#ffe0a3] rounded-2xl p-5 shadow-sm">
+                <h5 className="font-semibold text-sm mb-2 text-amber-500">Payment Method:</h5>
+                <div className="text-sm text-gray-700">
+                  <p className="font-semibold">Coins: {coinCost}</p>
+                  <p className="text-xs text-gray-500 mt-1">Deducted from your account balance</p>
                 </div>
               </div>
 
               {purchaseError && (
-                <div className="bg-red-500/20 border border-red-500 text-red-400 p-3 rounded text-sm">
+                <div className="bg-red-50 border border-red-300 text-red-600 p-3 rounded-xl text-sm">
                   {purchaseError}
                 </div>
               )}
 
               {userCoinBalance < coinCost && (
-                <div className="bg-red-500/20 border border-red-500 text-red-400 p-3 rounded text-sm">
+                <div className="bg-red-50 border border-red-300 text-red-600 p-3 rounded-xl text-sm">
                   Insufficient coins. You need {coinCost - userCoinBalance} more coins.
                 </div>
               )}
@@ -327,19 +326,20 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
                 <button
                   type="button"
                   onClick={() => setStep('delivery')}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
                 >
                   Back
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handlePurchase}
                   disabled={purchaseLoading || userCoinBalance < coinCost}
-                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-2 rounded-lg font-semibold"
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded-xl font-semibold transition"
                 >
                   {purchaseLoading ? 'Processing...' : 'Confirm Purchase'}
                 </button>
               </div>
-            </form>
+            </div>
           )}
         </div>
       </div>
@@ -347,4 +347,4 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
   );
 };
 
-export default CheckoutModal
+export default CheckoutModal;
