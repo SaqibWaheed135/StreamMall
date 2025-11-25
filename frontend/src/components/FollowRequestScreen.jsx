@@ -273,7 +273,7 @@ const FollowRequestsScreen = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white/90 text-black backdrop-blur-md">
       {/* Header */}
       <div className="sticky top-0 bg-black/95 backdrop-blur-lg border-b border-gray-800 z-10">
         <div className="p-4">
