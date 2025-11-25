@@ -1015,7 +1015,7 @@ const HostLiveStream = ({ onBack }) => {
                     <p className="text-gray-400 text-sm">No items added yet</p>
                   ) : (
                     products.map((p, i) => (
-                      <div key={i} className="bg-gray-700 rounded-lg p-2 mb-2 flex items-center gap-3">
+                      <div key={i} className="bg-white/80 rounded-lg p-2 mb-2 flex items-center gap-3">
                         {p.imageUrl && (
                           <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
                         )}
