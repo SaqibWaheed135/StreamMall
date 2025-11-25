@@ -6,7 +6,7 @@ import React, { useState } from "react";
 
 const ConfirmEndModal = ({ onConfirm, onCancel }) => {
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-white/90 flex items-center justify-center z-50 p-4">
       <div className="bg-white/90 border border-[#ffb3c6] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl backdrop-blur-xl">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-12 h-12 bg-gradient-to-br from-amber-300 to-amber-400 rounded-full flex items-center justify-center shadow">

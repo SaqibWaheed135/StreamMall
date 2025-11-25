@@ -150,7 +150,7 @@ const HostLiveStream = ({ onBack }) => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+      <div className="fixed inset-0 bg-white/90 bg-opacity-60 flex justify-center items-center z-50">
         <div className="bg-white p-6 rounded-2xl shadow-lg w-80 animate-fadeIn relative">
           <button className="absolute top-3 right-3 text-gray-600 hover:text-black" onClick={onClose}>
             <FaTimes size={18} />

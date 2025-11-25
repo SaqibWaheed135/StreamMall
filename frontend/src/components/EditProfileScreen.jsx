@@ -313,7 +313,7 @@ const EditProfileScreen = ({ onBack }) => {
               />
               <label
                 htmlFor="avatar-upload"
-                className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                className="absolute inset-0 bg-white/90 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
               >
                 <Camera className="w-5 h-5 text-white" />
               </label>

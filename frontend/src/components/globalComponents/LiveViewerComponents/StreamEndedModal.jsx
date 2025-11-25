@@ -14,7 +14,7 @@ const StreamEndedModal = ({ streamData, onNavigate }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+    <div className="fixed inset-0 bg-white/90 flex items-center justify-center z-[100] p-4">
       <div className="bg-gray-800 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl border border-gray-700">
         <div className="mx-auto w-20 h-20 bg-red-600/20 rounded-full flex items-center justify-center mb-5">
           <AlertCircle className="w-12 h-12 text-red-500" />
