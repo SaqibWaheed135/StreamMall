@@ -15,7 +15,9 @@ import {
   AlertTriangle,
   DollarSign,
   Gift,
-  TrendingUp
+  TrendingUp,
+  Reply,
+  Send
 } from 'lucide-react';
 
 import {
