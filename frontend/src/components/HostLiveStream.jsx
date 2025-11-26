@@ -112,6 +112,8 @@ const HostLiveStream = ({ onBack }) => {
   const videoRef = useRef(null);
   const localVideoRef = useRef(null);
   const commentsEndRef = useRef(null);
+  const replyInputRef = useRef(null);  // Add this line
+
 
   const getGiftIcon = (type) => {
     const icons = {
@@ -1206,8 +1208,8 @@ const HostLiveStream = ({ onBack }) => {
                             <div
                               key={reply._id || reply.id}
                               className={`text-sm rounded-xl px-3 py-2 shadow-sm ${reply.isHost
-                                  ? 'bg-pink-50 border-2 border-pink-400'
-                                  : 'bg-white/90 border border-[#ffb3c6]/50'
+                                ? 'bg-pink-50 border-2 border-pink-400'
+                                : 'bg-white/90 border border-[#ffb3c6]/50'
                                 }`}
                             >
                               <div className="flex items-start gap-1">
@@ -1234,11 +1236,52 @@ const HostLiveStream = ({ onBack }) => {
                   <div ref={commentsEndRef} />
                 </div>
                 <div className="p-4 border-t border-[#ffb3c6]/70 bg-white/70 rounded-b-3xl">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                  {replyingTo && (
+                    <div className="mb-2 flex items-center justify-between bg-pink-50 border border-pink-300 rounded-lg px-3 py-2">
+                      <span className="text-sm text-pink-700">
+                        Replying to <span className="font-semibold">@{replyingTo.username}</span>
+                      </span>
+                      <button
+                        onClick={() => {
+                          setReplyingTo(null);
+                          setReplyText('');
+                        }}
+                        className="text-pink-600 hover:text-pink-800"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
 
-                    <Heart className="w-4 h-4 text-pink-500" />
-                    <span>Viewers can send hearts and comments</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={replyInputRef}
+                      type="text"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && replyingTo) {
+                          handleSendReply();
+                        }
+                      }}
+                      placeholder={replyingTo ? "Type your reply..." : "Click reply button on a comment"}
+                      disabled={!replyingTo}
+                      className="flex-1 bg-white border border-[#ffb3c6] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    />
+                    <button
+                      onClick={handleSendReply}
+                      disabled={!replyText.trim() || !replyingTo}
+                      className="bg-gradient-to-r from-pink-600 to-pink-500 text-white p-2 rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
                   </div>
+
+                  {!replyingTo && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      <Heart className="w-3 h-3 inline text-pink-500" /> Click the reply icon on any comment to respond
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
