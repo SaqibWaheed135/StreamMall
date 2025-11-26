@@ -762,9 +762,29 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
           id: Date.now() + Math.random(),
           username: data.username || 'Viewer',
           text: data.text,
-          timestamp: new Date()
+          timestamp: new Date(),
+          replies: [] // Add replies array
+
         }
       ]);
+    });
+
+    // Add NEW listener for replies
+    newSocket.on('new-reply', (data) => {
+      setComments(prev => prev.map(comment =>
+        comment._id === data.commentId || comment.id === data.commentId
+          ? {
+            ...comment,
+            replies: [...(comment.replies || []), {
+              _id: data.reply._id,
+              username: data.reply.username,
+              text: data.reply.text,
+              timestamp: new Date(data.reply.timestamp),
+              isHost: data.reply.isHost
+            }]
+          }
+          : comment
+      ));
     });
 
     newSocket.on('heart-sent', () => {
@@ -1230,9 +1250,8 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                   key={gift.type}
                   onClick={() => handleSendGift(gift)}
                   disabled={userCoinBalance < gift.cost}
-                  className={`bg-white/85 border border-[#ffb3c6] rounded-2xl p-4 text-left transition-all transform hover:scale-[1.02] ${
-                    userCoinBalance < gift.cost ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'
-                  }`}
+                  className={`bg-white/85 border border-[#ffb3c6] rounded-2xl p-4 text-left transition-all transform hover:scale-[1.02] ${userCoinBalance < gift.cost ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'
+                    }`}
                 >
                   <div className="text-4xl mb-2">{gift.icon}</div>
                   <p className="text-sm font-semibold text-gray-800">{gift.label}</p>
@@ -1411,11 +1430,54 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                 </h3>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/60">
+              {/* <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/60">
                 {comments.map((c) => (
                   <div key={c.id} className="text-sm bg-white/90 border border-[#ffb3c6]/60 rounded-2xl px-4 py-2 shadow-sm">
                     <span className="font-semibold text-pink-600">{c.username}: </span>
                     <span className="text-gray-700">{c.text}</span>
+                  </div>
+                ))}
+                {comments.length === 0 && (
+                  <div className="text-center text-gray-500 mt-20">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-3 text-pink-300" />
+                    <p className="text-sm">Be the first to comment!</p>
+                  </div>
+                )}
+                <div ref={commentsEndRef} />
+              </div> */}
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/60">
+                {comments.map((c) => (
+                  <div key={c.id} className="space-y-2">
+                    {/* Main Comment */}
+                    <div className="text-sm bg-white/90 border border-[#ffb3c6]/60 rounded-2xl px-4 py-2 shadow-sm">
+                      <span className="font-semibold text-pink-600">{c.username}: </span>
+                      <span className="text-gray-700">{c.text}</span>
+                    </div>
+
+                    {/* Replies Section */}
+                    {c.replies && c.replies.length > 0 && (
+                      <div className="ml-6 space-y-2">
+                        {c.replies.map((reply) => (
+                          <div
+                            key={reply._id || reply.id}
+                            className={`text-sm rounded-xl px-3 py-2 shadow-sm ${reply.isHost
+                                ? 'bg-pink-50 border-2 border-pink-400'
+                                : 'bg-white/90 border border-[#ffb3c6]/50'
+                              }`}
+                          >
+                            <div className="flex items-start gap-1">
+                              {reply.isHost && <span className="text-pink-600">👑</span>}
+                              <span className={`font-semibold ${reply.isHost ? 'text-pink-700' : 'text-pink-600'
+                                }`}>
+                                {reply.username}:
+                              </span>
+                              <span className="text-gray-700">{reply.text}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {comments.length === 0 && (
