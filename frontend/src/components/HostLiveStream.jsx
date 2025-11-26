@@ -323,28 +323,35 @@ const HostLiveStream = ({ onBack }) => {
         id: Date.now() + Math.random(),
         username: data.username || 'Viewer',
         text: data.text,
-        timestamp: new Date()
+        timestamp: new Date(),
+        replies: []
+
       }]);
     });
 
 
     // NEW: Listen for replies
-    socket.on('new-reply', (data) => {
-      setComments(prev => prev.map(comment =>
-        comment._id === data.commentId || comment.id === data.commentId
-          ? {
-            ...comment,
-            replies: [...(comment.replies || []), {
-              _id: data.reply._id,
-              username: data.reply.username,
-              text: data.reply.text,
-              timestamp: new Date(data.reply.timestamp),
-              isHost: data.reply.isHost
-            }]
-          }
-          : comment
-      ));
-    });
+    // NEW: Listen for replies - THIS WAS MISSING OR BROKEN
+  socket.on('new-reply', (data) => {
+    console.log('Reply received:', data); // Debug log
+    setComments(prev => prev.map(comment => {
+      // Match by both _id and id for compatibility
+      if (comment._id === data.commentId || comment.id === data.commentId) {
+        return {
+          ...comment,
+          replies: [...(comment.replies || []), {
+            _id: data.reply._id,
+            username: data.reply.username,
+            text: data.reply.text,
+            timestamp: new Date(data.reply.timestamp),
+            isHost: data.reply.isHost
+          }]
+        };
+      }
+      return comment;
+    }));
+  });
+
 
     socket.on('heart-sent', (data) => {
       const heartId = Date.now() + Math.random();
