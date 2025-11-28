@@ -1057,7 +1057,7 @@ const HostLiveStream = ({ onBack }) => {
                       setError("Failed to add product");
                     }
                   }}
-                  className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 text-white py-3 rounded-xl font-semibold transition"
+                  className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 text-white py-3 rounded-xl font-semibold transition mt-5"
                 >
                   Add Item
                 </button>
