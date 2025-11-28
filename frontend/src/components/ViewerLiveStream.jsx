@@ -800,7 +800,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
 
     newSocket.on('product-added', (data) => {
         console.log('🎁 Product received:', data); // ADD THIS LINE
-
+      
       if (data.streamId === streamId) {
         setProducts((prev) => [
           ...prev,
