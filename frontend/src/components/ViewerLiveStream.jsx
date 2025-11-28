@@ -818,62 +818,63 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
 
 
     // Add NEW reply listener to ViewerLiveStream.jsx
-    newSocket.on('new-reply', (data) => {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('💬 Reply received on VIEWER');
-      console.log('Comment ID to match:', data.commentId);
-      console.log('Reply data:', data.reply);
+   // In ViewerLiveStream.jsx - Replace the new-reply listener in initializeSocket()
 
-      setComments(prev => {
-        console.log('Current viewer comments:', prev.length);
-        console.log('Looking for comment with ID:', data.commentId);
+newSocket.on('new-reply', (data) => {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('💬 Reply received on VIEWER');
+  console.log('Comment ID to match:', data.commentId);
+  console.log('Reply data:', data.reply);
 
-        // Log all comment IDs for debugging
-        prev.forEach((comment, index) => {
-          console.log(`Comment ${index}: _id=${comment._id}, id=${comment.id}`);
-        });
+  setComments(prev => {
+    console.log('Current viewer comments:', prev.length);
+    console.log('Looking for comment with ID:', data.commentId);
 
-        let foundMatch = false;
-
-        const updated = prev.map(comment => {
-          // ✅ Match by BOTH _id and id
-          const isMatch =
-            comment._id === data.commentId ||
-            comment.id === data.commentId ||
-            String(comment._id) === String(data.commentId) ||
-            String(comment.id) === String(data.commentId);
-
-          if (isMatch) {
-            foundMatch = true;
-            console.log('✅ MATCH FOUND! Adding reply to comment');
-            console.log('Existing replies:', comment.replies?.length || 0);
-
-            return {
-              ...comment,
-              replies: [...(comment.replies || []), {
-                _id: data.reply._id,
-                username: data.reply.username,
-                text: data.reply.text,
-                timestamp: new Date(data.reply.timestamp),
-                isHost: data.reply.isHost
-              }]
-            };
-          }
-          return comment;
-        });
-
-        if (!foundMatch) {
-          console.error('❌ NO MATCH FOUND for commentId:', data.commentId);
-          console.error('Available comment IDs:', prev.map(c => ({ _id: c._id, id: c.id })));
-        } else {
-          console.log('✅ Reply successfully added');
-        }
-
-        console.log('Updated comments count:', updated.length);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        return updated;
-      });
+    // Log all comment IDs for debugging
+    prev.forEach((comment, index) => {
+      console.log(`Comment ${index}: _id=${comment._id}, id=${comment.id}`);
     });
+
+    let foundMatch = false;
+
+    const updated = prev.map(comment => {
+      // ✅ CRITICAL FIX: Match using string comparison for both _id and id
+      const commentIdStr = String(comment._id || comment.id);
+      const targetIdStr = String(data.commentId);
+      
+      const isMatch = commentIdStr === targetIdStr;
+
+      if (isMatch) {
+        foundMatch = true;
+        console.log('✅ MATCH FOUND! Adding reply to comment');
+        console.log('Existing replies:', comment.replies?.length || 0);
+
+        return {
+          ...comment,
+          replies: [...(comment.replies || []), {
+            _id: data.reply._id,
+            username: data.reply.username,
+            text: data.reply.text,
+            timestamp: new Date(data.reply.timestamp),
+            isHost: data.reply.isHost
+          }]
+        };
+      }
+      return comment;
+    });
+
+    if (!foundMatch) {
+      console.error('❌ NO MATCH FOUND for commentId:', data.commentId);
+      console.error('Available comment IDs:', prev.map(c => ({ _id: c._id, id: c.id })));
+    } else {
+      console.log('✅ Reply successfully added on viewer side');
+    }
+
+    console.log('Updated comments count:', updated.length);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    return updated;
+  });
+});
 
     newSocket.on('heart-sent', () => {
       const heartId = Date.now() + Math.random();
@@ -886,16 +887,37 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       }, 3000);
     });
 
-    newSocket.on('product-added', (data) => {
-      console.log('🎁 Product received:', data); // ADD THIS LINE
+   // In ViewerLiveStream.jsx - Replace the product-added listener in initializeSocket()
 
-      if (data.streamId === streamId) {
-        setProducts((prev) => [
-          ...prev,
-          { ...data.product, index: data.productIndex }
-        ]);
+newSocket.on('product-added', (data) => {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🎁 Product received on VIEWER');
+  console.log('Stream ID match:', data.streamId === streamId);
+  console.log('Product data:', data.product);
+  console.log('Product has imageUrl:', !!data.product.imageUrl);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  if (data.streamId === streamId) {
+    setProducts((prev) => {
+      // Check if product already exists to avoid duplicates
+      const exists = prev.some(p => p.index === data.productIndex);
+      if (exists) {
+        console.log('⚠️ Product already exists, skipping');
+        return prev;
       }
+
+      console.log('✅ Adding new product to viewer products list');
+      return [
+        ...prev,
+        { 
+          ...data.product, 
+          index: data.productIndex,
+          imageUrl: data.product.imageUrl // ✅ Ensure imageUrl is included
+        }
+      ];
     });
+  }
+});
 
     newSocket.on('stream-ended', (data) => {
       if (data.stream?._id === streamId) {
