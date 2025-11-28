@@ -119,8 +119,8 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 pb-24 md:pb-4">
-      <div className="bg-white/90 border border-[#ffb3c6] rounded-3xl max-w-md w-full max-h-[85vh] md:max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-xl">
-        <div className="p-6 sticky top-0 bg-white/85 border-b border-[#ffb3c6]/60 flex justify-between items-center rounded-t-3xl">
+      <div className="bg-white/90 border border-[#ffb3c6] rounded-3xl max-w-md w-full max-h-[85vh] md:max-h-[90vh] shadow-2xl backdrop-blur-xl flex flex-col">
+        <div className="p-6 bg-white/85 border-b border-[#ffb3c6]/60 flex justify-between items-center rounded-t-3xl flex-shrink-0">
           <h3 className="text-2xl font-bold text-pink-700">
             {step === 'delivery' ? 'Delivery Information' : 'Confirm Purchase'}
           </h3>
@@ -132,7 +132,7 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
           </button>
         </div>
 
-        <div className="p-6 text-gray-700">
+        <div className="p-6 text-gray-700 overflow-y-auto flex-1">
           {step === 'delivery' ? (
             <div className="space-y-4">
               <div className="bg-white border border-[#ffb3c6] rounded-2xl p-5 mb-4 shadow-sm">
@@ -248,23 +248,6 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
                   {purchaseError}
                 </div>
               )}
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleContinue}
-                  className="flex-1 bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-lg hover:shadow-pink-200 text-white py-2 rounded-xl font-semibold transition"
-                >
-                  Continue
-                </button>
-              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -321,24 +304,45 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
                   Insufficient coins. You need {coinCost - userCoinBalance} more coins.
                 </div>
               )}
+            </div>
+          )}
+        </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStep('delivery')}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePurchase}
-                  disabled={purchaseLoading || userCoinBalance < coinCost}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded-xl font-semibold transition"
-                >
-                  {purchaseLoading ? 'Processing...' : 'Confirm Purchase'}
-                </button>
-              </div>
+        <div className="p-6 pt-4 border-t border-[#ffb3c6]/30 bg-white/85 flex-shrink-0 rounded-b-3xl">
+          {step === 'delivery' ? (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleContinue}
+                className="flex-1 bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-lg hover:shadow-pink-200 text-white py-2 rounded-xl font-semibold transition"
+              >
+                Continue
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setStep('delivery')}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handlePurchase}
+                disabled={purchaseLoading || userCoinBalance < coinCost}
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded-xl font-semibold transition"
+              >
+                {purchaseLoading ? 'Processing...' : 'Confirm Purchase'}
+              </button>
             </div>
           )}
         </div>
