@@ -772,18 +772,31 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     // Add NEW listener for replies
 
     newSocket.on('new-comment', (data) => {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('📨 New comment received on VIEWER:', data);
-      setComments(prev => [
-        ...prev,
-        {
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          username: data.username || 'Viewer',
-          text: data.text,
-          timestamp: new Date(),
-          replies: []
-        }
-      ]);
+      console.log('Comment _id:', data._id);
+      console.log('Comment id:', data.id);
+
+      const newComment = {
+        _id: data._id || data.id, // ✅ PRIMARY: Use MongoDB _id
+        id: data.id || data._id,   // ✅ FALLBACK: Include legacy id
+        username: data.username || 'Viewer',
+        text: data.text,
+        timestamp: new Date(data.timestamp || Date.now()),
+        replies: [] // ✅ Initialize empty replies array
+      };
+
+      console.log('Storing comment with IDs:', {
+        _id: newComment._id,
+        id: newComment.id
+      });
+
+      setComments(prev => {
+        console.log('Current comments before add:', prev.length);
+        return [...prev, newComment];
+      });
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     });
 
     // newSocket.on('new-reply', (data) => {
@@ -809,12 +822,32 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('💬 Reply received on VIEWER');
       console.log('Comment ID to match:', data.commentId);
-      console.log('Reply:', data.reply);
+      console.log('Reply data:', data.reply);
 
       setComments(prev => {
+        console.log('Current viewer comments:', prev.length);
+        console.log('Looking for comment with ID:', data.commentId);
+
+        // Log all comment IDs for debugging
+        prev.forEach((comment, index) => {
+          console.log(`Comment ${index}: _id=${comment._id}, id=${comment.id}`);
+        });
+
+        let foundMatch = false;
+
         const updated = prev.map(comment => {
-          if (comment._id === data.commentId || comment.id === data.commentId) {
-            console.log('✅ Match found, adding reply');
+          // ✅ Match by BOTH _id and id
+          const isMatch =
+            comment._id === data.commentId ||
+            comment.id === data.commentId ||
+            String(comment._id) === String(data.commentId) ||
+            String(comment.id) === String(data.commentId);
+
+          if (isMatch) {
+            foundMatch = true;
+            console.log('✅ MATCH FOUND! Adding reply to comment');
+            console.log('Existing replies:', comment.replies?.length || 0);
+
             return {
               ...comment,
               replies: [...(comment.replies || []), {
@@ -829,11 +862,19 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
           return comment;
         });
 
-        console.log('Updated viewer comments:', updated);
+        if (!foundMatch) {
+          console.error('❌ NO MATCH FOUND for commentId:', data.commentId);
+          console.error('Available comment IDs:', prev.map(c => ({ _id: c._id, id: c.id })));
+        } else {
+          console.log('✅ Reply successfully added');
+        }
+
+        console.log('Updated comments count:', updated.length);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         return updated;
       });
     });
+
     newSocket.on('heart-sent', () => {
       const heartId = Date.now() + Math.random();
       setHearts((prev) => [
@@ -1142,6 +1183,8 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     if (!comment.trim()) return;
 
     if (socket && socketConnected) {
+      console.log('📤 Sending comment from viewer:', comment.trim());
+
       socket.emit('send-comment', {
         streamId,
         text: comment.trim()
