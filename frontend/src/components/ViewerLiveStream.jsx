@@ -1292,8 +1292,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                 <span className="text-sm font-semibold">{viewerCount} watching</span>
               </div>
               <div className="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full border border-[#ffb3c6] text-pink-700">
-                <DollarSign className="w-4 h-4" />
-                <span className="text-sm font-semibold">{userCoinBalance}</span>
+                <span className="text-sm font-semibold">Your Balance: {userCoinBalance}</span>
               </div>
             </div>
             <button
