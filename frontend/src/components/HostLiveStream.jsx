@@ -1538,7 +1538,16 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Radio, Users, X, Mic, MicOff, Video, VideoOff, MessageCircle, Heart, ChevronDown, Share2, AlertTriangle, FaWhatsapp, FaTelegramPlane, FaFacebookF, FaTwitter, FaFacebookMessenger, FaCopy, FaTimes } from 'lucide-react';
+import { Camera, Radio, Users, X, Mic, MicOff, Video, VideoOff, MessageCircle, Heart, ChevronDown, Share2, AlertTriangle} from 'lucide-react';
+import {
+  FaWhatsapp,
+  FaTelegramPlane,
+  FaFacebookF,
+  FaTwitter,
+  FaFacebookMessenger,
+  FaCopy,
+  FaTimes
+} from 'react-icons/fa';
 import io from 'socket.io-client';
 import loadLiveKit from './globalComponents/liveKitLoad';
 import OrderDetailsModal from './globalComponents/hostStreamComponents/OrderDetailsModal';
