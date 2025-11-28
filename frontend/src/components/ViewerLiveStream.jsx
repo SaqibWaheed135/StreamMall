@@ -755,38 +755,85 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
       setHasAccess(true);
     });
 
+    // newSocket.on('new-comment', (data) => {
+    //   setComments((prev) => [
+    //     ...prev,
+    //     {
+    //       id: Date.now() + Math.random(),
+    //       username: data.username || 'Viewer',
+    //       text: data.text,
+    //       timestamp: new Date(),
+    //       replies: [] // Add replies array
+
+    //     }
+    //   ]);
+    // });
+
+    // Add NEW listener for replies
+
     newSocket.on('new-comment', (data) => {
-      setComments((prev) => [
+      console.log('📨 New comment received on VIEWER:', data);
+      setComments(prev => [
         ...prev,
         {
-          id: Date.now() + Math.random(),
+          _id: data._id || data.id,
+          id: data.id || data._id,
           username: data.username || 'Viewer',
           text: data.text,
           timestamp: new Date(),
-          replies: [] // Add replies array
-
+          replies: []
         }
       ]);
     });
 
-    // Add NEW listener for replies
-    newSocket.on('new-reply', (data) => {
-      setComments(prev => prev.map(comment =>
-        comment._id === data.commentId || comment.id === data.commentId
-          ? {
-            ...comment,
-            replies: [...(comment.replies || []), {
-              _id: data.reply._id,
-              username: data.reply.username,
-              text: data.reply.text,
-              timestamp: new Date(data.reply.timestamp),
-              isHost: data.reply.isHost
-            }]
-          }
-          : comment
-      ));
-    });
+    // newSocket.on('new-reply', (data) => {
+    //   setComments(prev => prev.map(comment =>
+    //     comment._id === data.commentId || comment.id === data.commentId
+    //       ? {
+    //         ...comment,
+    //         replies: [...(comment.replies || []), {
+    //           _id: data.reply._id,
+    //           username: data.reply.username,
+    //           text: data.reply.text,
+    //           timestamp: new Date(data.reply.timestamp),
+    //           isHost: data.reply.isHost
+    //         }]
+    //       }
+    //       : comment
+    //   ));
+    // });
 
+
+    // Add NEW reply listener to ViewerLiveStream.jsx
+    newSocket.on('new-reply', (data) => {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('💬 Reply received on VIEWER');
+      console.log('Comment ID to match:', data.commentId);
+      console.log('Reply:', data.reply);
+
+      setComments(prev => {
+        const updated = prev.map(comment => {
+          if (comment._id === data.commentId || comment.id === data.commentId) {
+            console.log('✅ Match found, adding reply');
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), {
+                _id: data.reply._id,
+                username: data.reply.username,
+                text: data.reply.text,
+                timestamp: new Date(data.reply.timestamp),
+                isHost: data.reply.isHost
+              }]
+            };
+          }
+          return comment;
+        });
+
+        console.log('Updated viewer comments:', updated);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        return updated;
+      });
+    });
     newSocket.on('heart-sent', () => {
       const heartId = Date.now() + Math.random();
       setHearts((prev) => [
@@ -799,8 +846,8 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     });
 
     newSocket.on('product-added', (data) => {
-        console.log('🎁 Product received:', data); // ADD THIS LINE
-      
+      console.log('🎁 Product received:', data); // ADD THIS LINE
+
       if (data.streamId === streamId) {
         setProducts((prev) => [
           ...prev,
@@ -1463,8 +1510,8 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
                           <div
                             key={reply._id || reply.id}
                             className={`text-sm rounded-xl px-3 py-2 shadow-sm ${reply.isHost
-                                ? 'bg-pink-50 border-2 border-pink-400'
-                                : 'bg-white/90 border border-[#ffb3c6]/50'
+                              ? 'bg-pink-50 border-2 border-pink-400'
+                              : 'bg-white/90 border border-[#ffb3c6]/50'
                               }`}
                           >
                             <div className="flex items-start gap-1">

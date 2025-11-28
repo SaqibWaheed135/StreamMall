@@ -318,40 +318,56 @@ const HostLiveStream = ({ onBack }) => {
   };
 
   const setupSocketListeners = (socket) => {
+    // In the socket listener setup
     socket.on('new-comment', (data) => {
+      console.log('📨 New comment received:', data);
       setComments(prev => [...prev, {
-        id: Date.now() + Math.random(),
+        _id: data._id || data.id, // ✅ Use _id or fall back to id
+        id: data.id || data._id,   // ✅ Include both for compatibility
         username: data.username || 'Viewer',
         text: data.text,
         timestamp: new Date(),
-        replies: []
-
+        replies: [] // ✅ Initialize replies array
       }]);
     });
 
+    // ✅ ENHANCED reply listener with debugging
+    socket.on('new-reply', (data) => {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('💬 Reply received on HOST');
+      console.log('Comment ID to match:', data.commentId);
+      console.log('Reply data:', data.reply);
+      console.log('Current comments:', comments);
 
-    // NEW: Listen for replies
-    // NEW: Listen for replies - THIS WAS MISSING OR BROKEN
-  socket.on('new-reply', (data) => {
-    console.log('Reply received:', data); // Debug log
-    setComments(prev => prev.map(comment => {
-      // Match by both _id and id for compatibility
-      if (comment._id === data.commentId || comment.id === data.commentId) {
-        return {
-          ...comment,
-          replies: [...(comment.replies || []), {
-            _id: data.reply._id,
-            username: data.reply.username,
-            text: data.reply.text,
-            timestamp: new Date(data.reply.timestamp),
-            isHost: data.reply.isHost
-          }]
-        };
-      }
-      return comment;
-    }));
-  });
+      setComments(prev => {
+        console.log('Looking through comments to find match...');
 
+        const updated = prev.map(comment => {
+          console.log(`Checking comment: _id=${comment._id}, id=${comment.id}`);
+
+          // Match by either _id or id
+          if (comment._id === data.commentId || comment.id === data.commentId) {
+            console.log('✅ MATCH FOUND! Adding reply to this comment');
+
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), {
+                _id: data.reply._id,
+                username: data.reply.username,
+                text: data.reply.text,
+                timestamp: new Date(data.reply.timestamp),
+                isHost: data.reply.isHost
+              }]
+            };
+          }
+          return comment;
+        });
+
+        console.log('Updated comments:', updated);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        return updated;
+      });
+    });
 
     socket.on('heart-sent', (data) => {
       const heartId = Date.now() + Math.random();
@@ -454,19 +470,35 @@ const HostLiveStream = ({ onBack }) => {
   }, [isLive, streamData?.streamId]);
 
   // NEW: Handle reply submission
+  // const handleSendReply = () => {
+  //   if (!replyText.trim() || !replyingTo || !socket) return;
+
+  //   socket.emit('send-reply', {
+  //     streamId: streamData.streamId,
+  //     commentId: replyingTo._id || replyingTo.id,
+  //     text: replyText.trim()
+  //   });
+
+  //   setReplyText('');
+  //   setReplyingTo(null);
+  // };
+
   const handleSendReply = () => {
     if (!replyText.trim() || !replyingTo || !socket) return;
 
+    console.log('🔄 Sending reply...');
+    console.log('Comment ID:', replyingTo._id || replyingTo.id);
+    console.log('Reply text:', replyText.trim());
+
     socket.emit('send-reply', {
       streamId: streamData.streamId,
-      commentId: replyingTo._id || replyingTo.id,
+      commentId: replyingTo._id || replyingTo.id, // ✅ Use _id or id
       text: replyText.trim()
     });
 
     setReplyText('');
     setReplyingTo(null);
   };
-
   const fetchInitialOrders = async () => {
     try {
       const token = localStorage.getItem('token');
