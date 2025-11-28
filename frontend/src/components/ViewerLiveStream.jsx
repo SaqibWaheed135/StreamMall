@@ -898,24 +898,28 @@ newSocket.on('product-added', (data) => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   if (data.streamId === streamId) {
-    setProducts((prev) => {
-      // Check if product already exists to avoid duplicates
-      const exists = prev.some(p => p.index === data.productIndex);
-      if (exists) {
-        console.log('⚠️ Product already exists, skipping');
-        return prev;
-      }
+    // setProducts((prev) => {
+    //   // Check if product already exists to avoid duplicates
+    //   const exists = prev.some(p => p.index === data.productIndex);
+    //   if (exists) {
+    //     console.log('⚠️ Product already exists, skipping');
+    //     return prev;
+    //   }
 
-      console.log('✅ Adding new product to viewer products list');
-      return [
-        ...prev,
-        { 
-          ...data.product, 
-          index: data.productIndex,
-          imageUrl: data.product.imageUrl // ✅ Ensure imageUrl is included
-        }
-      ];
-    });
+    //   console.log('✅ Adding new product to viewer products list');
+    //   return [
+    //     ...prev,
+    //     { 
+    //       ...data.product, 
+    //       index: data.productIndex,
+    //       imageUrl: data.product.imageUrl // ✅ Ensure imageUrl is included
+    //     }
+    //   ];
+    // });
+  setProducts(prev => [
+          ...prev,
+          { ...data.product, index: data.productIndex }
+        ]);
   }
 });
 
