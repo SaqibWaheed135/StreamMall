@@ -32,6 +32,7 @@ import ViewerLiveStream from "./components/ViewerLiveStream.jsx";
 import LiveStreamsListing from './components/LiveStream.jsx';
 import LiveStreamRouter from "./pages/LiveStreamRouter.jsx";
 import FaceDetection from "./components/FaceCamera.jsx";
+import PolicyScreens from "./components/PolicyScreen.jsx";
 
 
 // ✅ Load Poppins font dynamically
@@ -70,8 +71,8 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
                 >
                   <div
                     className={`w-10 h-10 mb-1 flex items-center justify-center rounded-2xl transition-all ${isActive
-                        ? 'bg-gradient-to-br from-pink-600 via-pink-500 to-rose-400 text-white shadow-lg shadow-pink-200 scale-105'
-                        : 'text-pink-500/60 hover:text-pink-600'
+                      ? 'bg-gradient-to-br from-pink-600 via-pink-500 to-rose-400 text-white shadow-lg shadow-pink-200 scale-105'
+                      : 'text-pink-500/60 hover:text-pink-600'
                       }`}
                   >
                     <Icon className="w-6 h-6" />
@@ -150,7 +151,7 @@ const App = () => {
 
   // Check if app is already installed (running in standalone mode)
   useEffect(() => {
-    const checkStandalone = 
+    const checkStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true;
     setIsStandalone(checkStandalone);
@@ -161,7 +162,7 @@ const App = () => {
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      
+
       // Check if user hasn't dismissed install prompt permanently
       const installDismissed = localStorage.getItem("pwaInstallDismissed");
       if (!installDismissed && !isStandalone) {
@@ -184,7 +185,7 @@ const App = () => {
       const dismissedUntil = localStorage.getItem("iosBannerDismissedUntil");
       const permanentlyDismissed = localStorage.getItem("iosBannerPermanentlyDismissed");
       const now = Date.now();
-      
+
       if (!permanentlyDismissed && (!dismissedUntil || now > Number(dismissedUntil))) {
         // Show banner after a short delay for better UX
         setTimeout(() => setShowIosBanner(true), 2000);
@@ -252,6 +253,8 @@ const App = () => {
           <Route path="/messages/:conversationId" element={<ProtectedRoute><MessagingScreen /></ProtectedRoute>} />
           <Route path="/live-browse" element={<ProtectedRoute><LiveBrowse /></ProtectedRoute>} />
           <Route path="/face-detection" element={<ProtectedRoute><FaceDetection /></ProtectedRoute>} />
+          <Route path="/terms-policies" element={<PolicyScreens />} />
+
 
           {/* ✅ UPDATED: Live Stream Routes with LiveStreamRouter */}
 
