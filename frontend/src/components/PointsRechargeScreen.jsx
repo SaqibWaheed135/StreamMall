@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  ArrowLeft, CreditCard, DollarSign, Star, Gift, History, 
-  CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, 
-  Calendar, Lock, Upload, Copy, QrCode, ExternalLink, 
-  RefreshCw, AlertCircle 
-} from 'lucide-react';
+import { ArrowLeft, CreditCard, DollarSign, Star, Gift, History, CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, Calendar, Lock, Upload, Copy, QrCode, ExternalLink, RefreshCw } from 'lucide-react';
 import { QRCodeCanvas } from "qrcode.react";
 import { API_BASE_URL } from '../config/api';
 
@@ -42,119 +37,10 @@ const PointsRechargeScreen = ({ onBack }) => {
     transactionScreenshot: null,
     transactionId: '',
   });
-  // Add these state variables after your existing useState declarations:
-  const [showJazzCashForm, setShowJazzCashForm] = useState(false);
-  const [showEasypaisaForm, setShowEasypaisaForm] = useState(false);
-  const [jazzCashFormData, setJazzCashFormData] = useState(null);
-  const [easypaisaFormData, setEasypaisaFormData] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   const hasAlertedRef = useRef(false);
   const pollingIntervalRef = useRef(null);
 
-  // Add this useEffect to handle payment callbacks (add after your existing useEffects):
-useEffect(() => {
-  // Check if returning from payment gateway
-  const urlParams = new URLSearchParams(window.location.search);
-  const orderId = urlParams.get('orderId');
-  const status = urlParams.get('status');
-  
-  if (orderId && status) {
-    if (status === 'success') {
-      alert('✅ Payment successful! Points will be added shortly.');
-      fetchPointsBalance();
-      fetchPointsHistory();
-      setActiveTab('history');
-    } else if (status === 'failed') {
-      alert('❌ Payment failed. Please try again.');
-    }
-    
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-}, []);
-
-
-  const createJazzCashOrder = async (amount) => {
-    try {
-      setRecharging(true);
-      const response = await fetch(`${API_BASE_URL}/recharges/jazzcash/create-order`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ amount })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setJazzCashFormData(data.data);
-        setShowJazzCashForm(true);
-
-        // Auto-submit form after showing it
-        setTimeout(() => {
-          document.getElementById('jazzcash-payment-form')?.submit();
-        }, 1000);
-      } else {
-        if (data.orderId) {
-          const continueExisting = window.confirm(
-            `${data.msg}\n\nDo you want to continue with the existing order?`
-          );
-          if (!continueExisting) {
-            alert('Please complete or cancel your existing order first.');
-          }
-        } else {
-          alert(data.errors?.[0]?.msg || data.msg || 'Failed to create JazzCash order');
-        }
-      }
-    } catch (error) {
-      console.error('Error creating JazzCash order:', error);
-      alert('Failed to create JazzCash payment order');
-    } finally {
-      setRecharging(false);
-    }
-  };
-
-  // ============================================
-  // 4. ADD EASYPAISA ORDER CREATION FUNCTION
-  // ============================================
-
-  const createEasypaisaOrder = async (amount) => {
-    try {
-      setRecharging(true);
-      const response = await fetch(`${API_BASE_URL}/recharges/easypaisa/create-order`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ amount })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setEasypaisaFormData(data.data);
-        setShowEasypaisaForm(true);
-
-        // Auto-submit form after showing it
-        setTimeout(() => {
-          document.getElementById('easypaisa-payment-form')?.submit();
-        }, 1000);
-      } else {
-        if (data.orderId) {
-          const continueExisting = window.confirm(
-            `${data.msg}\n\nDo you want to continue with the existing order?`
-          );
-          if (!continueExisting) {
-            alert('Please complete or cancel your existing order first.');
-          }
-        } else {
-          alert(data.errors?.[0]?.msg || data.msg || 'Failed to create Easypaisa order');
-        }
-      }
-    } catch (error) {
-      console.error('Error creating Easypaisa order:', error);
-      alert('Failed to create Easypaisa payment order');
-    } finally {
-      setRecharging(false);
-    }
-  };
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -348,20 +234,6 @@ useEffect(() => {
   const paymentMethods = [
     { id: 'usdt', name: 'USDT (TRC20)', icon: DollarSign, description: 'Fast & secure crypto payment' },
     { id: 'bank', name: 'Bank Transfer', icon: Gift, description: 'Manual verification required' },
-    {
-      id: 'jazzcash',
-      name: 'JazzCash',
-      icon: DollarSign,
-      description: 'Pay via JazzCash mobile wallet',
-      available: true
-    },
-    {
-      id: 'easypaisa',
-      name: 'Easypaisa',
-      icon: DollarSign,
-      description: 'Pay via Easypaisa mobile wallet',
-      available: true
-    },
   ];
 
   const getCategoryForIcon = (transaction) => {
@@ -404,31 +276,31 @@ useEffect(() => {
 
 
   // Update the history section to show expired orders with different styling:
-  const getTransactionIcon = (category) => {
-    switch (category) {
-      case 'recharge_approved':
-      case 'usdt_recharge_approved':
-      case 'recharge':
-      case 'credit':
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
-      case 'recharge_request':
-        return <Clock className="w-5 h-5 text-yellow-400" />;
-      case 'recharge_rejected':
-      case 'debit':
-        return <XCircle className="w-5 h-5 text-red-400" />;
-      case 'recharge_expired':
-        return <AlertCircle className="w-5 h-5 text-orange-400" />;
-      case 'recharge_cancelled':
-      case 'pending':
-        return <Clock className="w-5 h-5 text-gray-400" />;
-      case 'gift':
-      case 'award':
-      case 'bonus':
-        return <Gift className="w-5 h-5 text-yellow-400" />;
-      default:
-        return <Clock className="w-5 h-5 text-gray-400" />;
-    }
-  };
+const getTransactionIcon = (category) => {
+  switch (category) {
+    case 'recharge_approved':
+    case 'usdt_recharge_approved':
+    case 'recharge':
+    case 'credit':
+      return <CheckCircle className="w-5 h-5 text-green-400" />;
+    case 'recharge_request':
+      return <Clock className="w-5 h-5 text-yellow-400" />;
+    case 'recharge_rejected':
+    case 'debit':
+      return <XCircle className="w-5 h-5 text-red-400" />;
+    case 'recharge_expired':
+      return <AlertCircle className="w-5 h-5 text-orange-400" />;
+    case 'recharge_cancelled':
+    case 'pending':
+      return <Clock className="w-5 h-5 text-gray-400" />;
+    case 'gift':
+    case 'award':
+    case 'bonus':
+      return <Gift className="w-5 h-5 text-yellow-400" />;
+    default:
+      return <Clock className="w-5 h-5 text-gray-400" />;
+  }
+};
   // const getTransactionColor = (category) => {
   //   switch (category) {
   //     case 'recharge_approved':
@@ -451,27 +323,27 @@ useEffect(() => {
   // };
 
   const getTransactionColor = (category) => {
-    switch (category) {
-      case 'recharge_approved':
-      case 'usdt_recharge_approved':
-      case 'recharge':
-      case 'award':
-      case 'bonus':
-      case 'credit':
-        return 'text-green-400';
-      case 'recharge_rejected':
-      case 'debit':
-        return 'text-red-400';
-      case 'recharge_expired':
-        return 'text-orange-400';
-      case 'recharge_request':
-      case 'recharge_cancelled':
-      case 'pending':
-        return 'text-gray-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
+  switch (category) {
+    case 'recharge_approved':
+    case 'usdt_recharge_approved':
+    case 'recharge':
+    case 'award':
+    case 'bonus':
+    case 'credit':
+      return 'text-green-400';
+    case 'recharge_rejected':
+    case 'debit':
+      return 'text-red-400';
+    case 'recharge_expired':
+      return 'text-orange-400';
+    case 'recharge_request':
+    case 'recharge_cancelled':
+    case 'pending':
+      return 'text-gray-400';
+    default:
+      return 'text-gray-400';
+  }
+};
   const formatDate = (dateString) => {
     if (!dateString) return 'Invalid date';
     const date = new Date(dateString);
@@ -936,15 +808,9 @@ useEffect(() => {
       alert('Maximum recharge amount is $500');
       return;
     }
-    // Handle different payment methods
     if (selectedPaymentMethod === 'usdt') {
       createUsdtOrder(amount);
-    } else if (selectedPaymentMethod === 'jazzcash') {
-      createJazzCashOrder(amount);
-    } else if (selectedPaymentMethod === 'easypaisa') {
-      createEasypaisaOrder(amount);
     } else {
-      // For bank transfer, show checkout form
       setShowCheckout(true);
     }
   };
@@ -1298,10 +1164,10 @@ useEffect(() => {
         <div className="p-4 max-w-md mx-auto">
           {/* Status Banner */}
           <div className={`rounded-xl p-4 mb-6 ${paymentStatus === 'approved'
-            ? 'bg-green-100 border border-green-500'
-            : paymentStatus === 'expired'
-              ? 'bg-orange-100 border border-orange-500'
-              : 'bg-yellow-100 border border-yellow-500'
+              ? 'bg-green-100 border border-green-500'
+              : paymentStatus === 'expired'
+                ? 'bg-orange-100 border border-orange-500'
+                : 'bg-yellow-100 border border-yellow-500'
             }`}>
             <div className="text-center">
               {paymentStatus === 'approved' ? (
@@ -1888,163 +1754,7 @@ useEffect(() => {
     );
   }
 
-  // Add this component before the main return statement:
-  const JazzCashPaymentForm = () => {
-    if (!showJazzCashForm || !jazzCashFormData) return null;
-
-    return (
-      <div className="min-h-screen bg-[#FFC0CB] text-black">
-        <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => {
-                  setShowJazzCashForm(false);
-                  setJazzCashFormData(null);
-                }}
-                className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-xl font-bold">JazzCash Payment</h1>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 max-w-md mx-auto">
-          <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-6 mb-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <DollarSign className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">Redirecting to JazzCash</h3>
-              <p className="text-gray-700 mb-4">Please wait while we redirect you to JazzCash payment gateway...</p>
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-orange-600 font-medium">Processing...</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
-            <h3 className="font-semibold mb-3">Payment Details</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-700">Amount:</span>
-                <span className="font-bold">PKR {jazzCashFormData.amount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Points:</span>
-                <span className="font-bold text-pink-700">{jazzCashFormData.pointsToAdd.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Order ID:</span>
-                <span className="font-mono text-xs">{jazzCashFormData.orderId}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Hidden form that auto-submits */}
-          <form
-            id="jazzcash-payment-form"
-            method="POST"
-            action={jazzCashFormData.paymentUrl}
-            className="hidden"
-          >
-            {Object.entries(jazzCashFormData.formData).map(([key, value]) => (
-              <input key={key} type="hidden" name={key} value={value} />
-            ))}
-          </form>
-        </div>
-      </div>
-    );
-  };
-
-
-
-  // ============================================
-  // 7. ADD EASYPAISA PAYMENT FORM COMPONENT
-  // ============================================
-
-  const EasypaisaPaymentForm = () => {
-    if (!showEasypaisaForm || !easypaisaFormData) return null;
-
-    return (
-      <div className="min-h-screen bg-[#FFC0CB] text-black">
-        <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => {
-                  setShowEasypaisaForm(false);
-                  setEasypaisaFormData(null);
-                }}
-                className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-xl font-bold">Easypaisa Payment</h1>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 max-w-md mx-auto">
-          <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-6 mb-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <DollarSign className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">Redirecting to Easypaisa</h3>
-              <p className="text-gray-700 mb-4">Please wait while we redirect you to Easypaisa payment gateway...</p>
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-green-600 font-medium">Processing...</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
-            <h3 className="font-semibold mb-3">Payment Details</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-700">Amount:</span>
-                <span className="font-bold">PKR {easypaisaFormData.amount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Points:</span>
-                <span className="font-bold text-pink-700">{easypaisaFormData.pointsToAdd.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Order ID:</span>
-                <span className="font-mono text-xs">{easypaisaFormData.orderId}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Hidden form that auto-submits */}
-          <form
-            id="easypaisa-payment-form"
-            method="POST"
-            action={easypaisaFormData.paymentUrl}
-            className="hidden"
-          >
-            {Object.entries(easypaisaFormData.formData).map(([key, value]) => (
-              <input key={key} type="hidden" name={key} value={value} />
-            ))}
-          </form>
-        </div>
-      </div>
-    );
-  };
-
-  if (showJazzCashForm) {
-    return <JazzCashPaymentForm />;
-  }
-  if (showEasypaisaForm) {
-    return <EasypaisaPaymentForm />;
-  }
   return (
-
     <div className="min-h-screen bg-[#FFC0CB] text-black">
       {/* Custom styles for shimmer effect */}
       <style jsx>{`
@@ -2208,28 +1918,20 @@ useEffect(() => {
                     <button
                       key={method.id}
                       onClick={() => setSelectedPaymentMethod(method.id)}
-                      disabled={!method.available}
                       className={`w-full p-4 rounded-lg border-2 transition-all ${selectedPaymentMethod === method.id
                         ? 'border-[#ff99b3] bg-[#ffb3c6]'
-                        : method.available
-                          ? 'border-[#ff99b3] bg-white/70 backdrop-blur-sm hover:bg-[#ffb3c6]'
-                          : 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-50'
+                        : 'border-[#ff99b3] bg-white/70 backdrop-blur-sm hover:bg-[#ffb3c6]'
                         }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <IconComponent className={`w-6 h-6 ${!method.available ? 'text-gray-400' : ''}`} />
+                          <IconComponent className="w-6 h-6" />
                           <div className="text-left">
                             <span className="text-sm font-medium block">{method.name}</span>
-                            <span className={`text-xs ${!method.available ? 'text-gray-500' : 'text-gray-700'}`}>
-                              {method.description}
-                            </span>
-                            {!method.available && (
-                              <span className="text-xs text-red-600 block mt-1">Coming Soon</span>
-                            )}
+                            <span className="text-xs text-gray-700">{method.description}</span>
                           </div>
                         </div>
-                        {selectedPaymentMethod === method.id && method.available && (
+                        {selectedPaymentMethod === method.id && (
                           <CheckCircle className="w-5 h-5 text-pink-700" />
                         )}
                       </div>
@@ -2239,8 +1941,6 @@ useEffect(() => {
               </div>
             </div>
 
-
-// Update the checkout button to show appropriate text:
             <button
               onClick={proceedToCheckout}
               disabled={!selectedAmount && !customAmount || recharging}
@@ -2256,14 +1956,7 @@ useEffect(() => {
                   <>
                     <CreditCard className="w-5 h-5" />
                     <span>
-                      {selectedPaymentMethod === 'usdt'
-                        ? 'Pay with USDT'
-                        : selectedPaymentMethod === 'jazzcash'
-                          ? 'Pay with JazzCash'
-                          : selectedPaymentMethod === 'easypaisa'
-                            ? 'Pay with Easypaisa'
-                            : 'Proceed to Checkout'
-                      } - ${selectedAmount || customAmount || '0'}
+                      {selectedPaymentMethod === 'usdt' ? 'Pay with USDT' : 'Proceed to Checkout'} - ${selectedAmount || customAmount || '0'}
                     </span>
                   </>
                 )}
