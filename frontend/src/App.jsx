@@ -7,7 +7,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { Home, Search, User, CircleDot, Bell, MessageSquare } from "lucide-react";
+import { Home, Search, User, CircleDot, Bell, MessageSquare, FileText } from "lucide-react";
 import axios from "axios";
 
 import logo from "./assets/logo.png";
@@ -51,13 +51,14 @@ const BottomNavigation = ({ currentScreen, navigate }) => {
     { id: 'live', icon: CircleDot, label: 'LIVE', path: '/live-streams' },
     { id: 'search', icon: Search, label: 'Discover', path: '/search' },
     { id: 'messages', icon: MessageSquare, label: 'Messages', path: '/messaging' },
-    { id: 'profile', icon: User, label: 'Profile', path: '/profile' }
+    { id: 'profile', icon: User, label: 'Profile', path: '/profile' },
+    { id: 'Policies', icon: FileText, label: 'Policies', path: '/terms-policies' }
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 font-[Poppins]">
-      <div className="mx-auto max-w-5xl px-4 pb-4">
-        <div className="bg-white/90 border border-white/70 rounded-3xl shadow-[0_12px_40px_rgba(255,153,179,0.35)] backdrop-blur-xl overflow-hidden">
+      <div className="mx-auto max-w-5xl px-2 pb-4">
+        <div className="bg-white/90 border border-white/70 rounded-3xl shadow-[0_12px_40px_rgba(255,153,179,0.35)] backdrop-blur-xl overflow-hidden px-2">
           <div className="flex">
             {navItems.map((item) => {
               const Icon = item.icon;
