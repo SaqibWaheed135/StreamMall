@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Heart, Settings, Share, UserCheck, UserPlus, Mail, Calendar,
   Shield, Play, MessageCircle, Clock, CheckCircle, X, Copy,
-  Coins, ShoppingBag
+  Coins, ShoppingBag, FileText
 } from "lucide-react";
 import { API_BASE_URL } from "../config/api";
 
@@ -544,6 +544,8 @@ const ProfileScreen = ({ userId: propUserId }) => {
       <div className="absolute w-[400px] h-[400px] bg-pink-400 rounded-full blur-[150px] opacity-30 bottom-[-100px] right-[-100px] pointer-events-none" />
 
       {/* Header */}
+
+      {/* Header */}
       <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -553,6 +555,15 @@ const ProfileScreen = ({ userId: propUserId }) => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Legal & Policies Button - Always visible */}
+            <button
+              onClick={() => window.location.href = '/terms-policies'}
+              className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
+              title="Legal & Policies"
+            >
+              <FileText className="w-5 h-5" />
+            </button>
+
             {isOwnProfile && followRequests.length > 0 && (
               <button onClick={() => setShowFollowRequests(true)} className="relative p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                 <UserPlus className="w-5 h-5" />
@@ -719,6 +730,8 @@ const ProfileScreen = ({ userId: propUserId }) => {
         </div>
 
         {/* Additional Info */}
+
+        {/* Additional Info + Legal & Policies */}
         <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-gray-700 text-sm">Profile Status</span>
@@ -726,6 +739,16 @@ const ProfileScreen = ({ userId: propUserId }) => {
               {user.isPrivate ? 'Private' : 'Public'}
             </span>
           </div>
+
+          {/* Legal & Policies Button - Second Placement */}
+          <button
+            onClick={() => window.location.href = '/terms-policies'}
+            className="w-full flex items-center justify-center space-x-2 py-3 bg-[#ffb3c6] hover:bg-pink-300/50 rounded-xl transition-colors text-sm font-medium"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Legal & Policies</span>
+          </button>
+
           {user.website && (
             <div className="flex items-center justify-between">
               <span className="text-gray-700 text-sm">Website</span>
