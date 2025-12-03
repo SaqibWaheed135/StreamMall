@@ -601,14 +601,14 @@ const PolicyScreens = () => {
         <Mail className="w-5 h-5 text-pink-700" />
         <div>
           <p className="text-sm text-gray-700">Email</p>
-          <p className="font-semibold">support@clipstream.com</p>
+          <p className="font-semibold">bensongomezsu@theclipstream.com</p>
         </div>
       </div>
       <div className="flex items-center space-x-3">
         <Phone className="w-5 h-5 text-pink-700" />
         <div>
           <p className="text-sm text-gray-700">Phone</p>
-          <p className="font-semibold">+1 (555) 123-4567</p>
+          <p className="font-semibold">+66937423012</p>
         </div>
       </div>
       <p className="text-sm text-gray-700">
