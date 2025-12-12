@@ -706,12 +706,11 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     newSocket.on('connect', () => {
       setSocketConnected(true);
 
-      if (hasAccess) {
-        newSocket.emit('join-stream', {
-          streamId,
-          isStreamer: false
-        });
-      }
+      // Always try to join the stream - backend will handle access checks
+      newSocket.emit('join-stream', {
+        streamId,
+        isStreamer: false
+      });
     });
 
     newSocket.on('access-denied', () => {
@@ -949,6 +948,11 @@ newSocket.on('product-added', (data) => {
 
     newSocket.on('reconnect', () => {
       setSocketConnected(true);
+      // Rejoin stream on reconnect
+      newSocket.emit('join-stream', {
+        streamId,
+        isStreamer: false
+      });
     });
 
     setSocket(newSocket);
@@ -1208,18 +1212,21 @@ newSocket.on('product-added', (data) => {
     e.preventDefault();
     if (!comment.trim()) return;
 
-    if (socket && socketConnected) {
-      console.log('📤 Sending comment from viewer:', comment.trim());
-
-      socket.emit('send-comment', {
-        streamId,
-        text: comment.trim()
-      });
-    } else {
+    if (!socket || !socketConnected) {
       setError('Chat not connected. Please wait...');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
+    if (!hasAccess) {
+      setError('Please join the stream to send comments');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    console.log('📤 Sending comment from viewer:', comment.trim());
+
+    // Optimistically add comment to UI
     const newComment = {
       id: Date.now(),
       username: 'You',
@@ -1229,6 +1236,12 @@ newSocket.on('product-added', (data) => {
 
     setComments((prev) => [...prev, newComment]);
     setComment('');
+
+    // Emit comment to server
+    socket.emit('send-comment', {
+      streamId,
+      text: comment.trim()
+    });
   };
 
   if (loading) {
@@ -1612,14 +1625,14 @@ newSocket.on('product-added', (data) => {
                     type="text"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder={socketConnected ? 'Say something...' : 'Connecting...'}
+                    placeholder={!socketConnected ? 'Connecting...' : !hasAccess ? 'Join stream to comment...' : 'Say something...'}
                     maxLength={200}
-                    disabled={!socketConnected}
+                    disabled={!socketConnected || !hasAccess}
                     className="flex-1 bg-white/90 border border-[#ffb3c6] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 disabled:opacity-60"
                   />
                   <button
                     type="submit"
-                    disabled={!socketConnected}
+                    disabled={!socketConnected || !hasAccess}
                     className="bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 p-2.5 rounded-xl text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   >
                     <Send className="w-4 h-4" />
