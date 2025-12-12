@@ -966,6 +966,57 @@ const HostLiveStream = ({ onBack }) => {
                     ❤️
                   </div>
                 ))}
+                
+                {/* Live Comments Overlay */}
+                {comments.length > 0 && (
+                  <div 
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.2) 70%, transparent 100%)',
+                      padding: '16px 12px 60px 12px',
+                      zIndex: 15,
+                      maxHeight: '45%',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div 
+                      className="space-y-2 overflow-y-auto pr-1"
+                      style={{
+                        maxHeight: '100%',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                      }}
+                    >
+                      {comments.slice(-8).map((c, index) => {
+                        // Partially obscure username like in the image (show first char + 2-3 asterisks)
+                        const obscuredUsername = c.username.length > 1 
+                          ? c.username.charAt(0) + '*'.repeat(Math.min(c.username.length - 1, 3))
+                          : c.username;
+                        
+                        return (
+                          <div
+                            key={c._id || c.id}
+                            className="text-white text-sm bg-black/40 backdrop-blur-md rounded-lg px-3 py-2 shadow-lg border border-white/10"
+                            style={{
+                              animation: `slideIn 0.3s ease-out ${index * 0.05}s both`
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-white text-base">{obscuredUsername}:</span>
+                              <span className="text-white/95 flex-1 text-sm leading-relaxed">{c.text}</span>
+                              {(c.likes || c.engagement) && (
+                                <div className="flex items-center gap-1 text-white/80 text-xs bg-white/10 px-2 py-0.5 rounded-full">
+                                  <Heart className="w-3 h-3 fill-current" />
+                                  <span>{c.likes || c.engagement || 0}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-4 mb-4 flex items-center justify-center gap-4">
