@@ -269,14 +269,23 @@ const HostLiveStream = ({ onBack }) => {
     loadLiveKit().then(setLiveKitReady);
 
     return () => {
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-      if (liveKitRoom) {
-        liveKitRoom.disconnect();
-      }
-      if (socket) {
-        socket.disconnect();
+      // Cleanup function - ensure all resources are properly released
+      try {
+        if (localStream) {
+          localStream.getTracks().forEach(track => track.stop());
+        }
+        if (liveKitRoom) {
+          liveKitRoom.disconnect().catch(err => console.error('Error disconnecting LiveKit:', err));
+        }
+        if (socket) {
+          socket.disconnect();
+        }
+        if (trackCheckIntervalRef.current) {
+          clearInterval(trackCheckIntervalRef.current);
+          trackCheckIntervalRef.current = null;
+        }
+      } catch (error) {
+        console.error('Cleanup error:', error);
       }
     };
   }, []);
@@ -774,10 +783,18 @@ const HostLiveStream = ({ onBack }) => {
       }
 
       if (socket) {
+        // Emit leave-stream before disconnecting to notify viewers
         socket.emit('leave-stream', { streamId });
-        socket.disconnect();
+        // Small delay to ensure the event is sent before disconnecting
+        setTimeout(() => {
+          socket.disconnect();
+          setSocket(null);
+        }, 100);
+      } else {
+        setSocket(null);
       }
 
+      // Reset all state
       setIsLive(false);
       setStreamData(null);
       setTitle('');
@@ -790,8 +807,12 @@ const HostLiveStream = ({ onBack }) => {
       setCoinBalance(0);
       setTips([]);
       setPaidViewersCount(0);
+      setOverlayComments([]);
 
-      onBack();
+      // Navigate back after a small delay to ensure cleanup completes
+      setTimeout(() => {
+        onBack();
+      }, 200);
 
     } catch (err) {
       console.error('Error ending stream:', err);
