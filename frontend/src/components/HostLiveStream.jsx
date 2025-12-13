@@ -121,6 +121,7 @@ const HostLiveStream = ({ onBack }) => {
   const commentsEndRef = useRef(null);
   const replyInputRef = useRef(null);  // Add this line
   const trackCheckIntervalRef = useRef(null);
+  const isBlockingNavigationRef = useRef(false);
 
 
   const getGiftIcon = (type) => {
@@ -252,18 +253,6 @@ const HostLiveStream = ({ onBack }) => {
     }
   }, []);
 
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      if (isLive) {
-        event.preventDefault();
-        event.returnValue = 'You are currently live! Refreshing will end the stream. Are you sure?';
-        return event.returnValue;
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isLive]);
 
   useEffect(() => {
     loadLiveKit().then(setLiveKitReady);
@@ -703,23 +692,56 @@ const HostLiveStream = ({ onBack }) => {
   useEffect(() => {
     if (!isLive) return;
 
+    // Handle page refresh/close (works on desktop and mobile browsers)
     const handleBeforeUnload = (e) => {
+      // Modern browsers require preventDefault and returnValue
       e.preventDefault();
-      e.returnValue = '';
+      // Custom message (most browsers show their own generic message, but we set this for compatibility)
+      const message = 'You are currently live! Leaving this page will end your stream. Are you sure you want to leave?';
+      e.returnValue = message;
+      return message;
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
 
-    const blockBackNavigation = () => {
+    // Handle browser back button (works on mobile and desktop)
+    const blockBackNavigation = (e) => {
+      if (isBlockingNavigationRef.current) {
+        // Already showing modal, don't push another state
+        return;
+      }
+      isBlockingNavigationRef.current = true;
+      // Push a new state to prevent navigation
       window.history.pushState(null, '', window.location.href);
+      // Show confirmation modal
       setShowConfirmEnd(true);
+      // Reset blocking flag after a short delay to allow for future back button presses
+      setTimeout(() => {
+        isBlockingNavigationRef.current = false;
+      }, 100);
     };
 
+    // Add history state to track back button when going live
     window.history.pushState(null, '', window.location.href);
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', blockBackNavigation);
 
+    // For mobile browsers, also handle pagehide (iOS Safari)
+    const handlePageHide = (e) => {
+      if (isLive) {
+        // On iOS, we can't prevent navigation, but we can show a warning
+        // The beforeunload should handle most cases
+        console.warn('Page is being hidden - stream may end');
+      }
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+
+    // Cleanup
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', blockBackNavigation);
+      window.removeEventListener('pagehide', handlePageHide);
     };
   }, [isLive]);
 
@@ -1804,10 +1826,14 @@ const HostLiveStream = ({ onBack }) => {
         {showConfirmEnd && (
           <ConfirmEndModal
             onConfirm={() => {
+              isBlockingNavigationRef.current = false;
               setShowConfirmEnd(false);
               endStream();
             }}
-            onCancel={() => setShowConfirmEnd(false)}
+            onCancel={() => {
+              isBlockingNavigationRef.current = false;
+              setShowConfirmEnd(false);
+            }}
           />
         )}
 
@@ -1980,10 +2006,14 @@ const HostLiveStream = ({ onBack }) => {
       {showConfirmEnd && (
         <ConfirmEndModal
           onConfirm={() => {
+            isBlockingNavigationRef.current = false;
             setShowConfirmEnd(false);
             endStream();
           }}
-          onCancel={() => setShowConfirmEnd(false)}
+          onCancel={() => {
+            isBlockingNavigationRef.current = false;
+            setShowConfirmEnd(false);
+          }}
         />
       )}
     </div>
