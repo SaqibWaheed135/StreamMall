@@ -17,7 +17,9 @@ import {
   Gift,
   TrendingUp,
   Reply,
-  Send
+  Send,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 
 import {
@@ -108,6 +110,11 @@ const HostLiveStream = ({ onBack }) => {
   // NEW: Reply state
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
+
+  // Fullscreen and overlay comments state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [overlayComments, setOverlayComments] = useState([]);
+  const videoContainerRef = useRef(null);
 
   const videoRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -328,17 +335,24 @@ const HostLiveStream = ({ onBack }) => {
     console.log('📨 HOST: New comment received');
     console.log('Comment data:', JSON.stringify(data, null, 2));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      setComments(prev => [...prev, {
+      const newComment = {
         _id: data._id || data.id, // ✅ Use _id or fall back to id
         id: data.id || data._id,   // ✅ Include both for compatibility
         username: data.username || 'Viewer',
         text: data.text,
         timestamp: new Date(),
         replies: [] // ✅ Initialize replies array
-      }
+      };
 
-    ]);
+      // Add to sidebar comments
+      setComments(prev => [...prev, newComment]);
 
+      // Add to overlay comments (for video screen display)
+      setOverlayComments(prev => {
+        const updated = [...prev, { ...newComment, overlayId: Date.now() + Math.random() }];
+        // Keep only last 10 comments in overlay to avoid clutter
+        return updated.slice(-10);
+      });
     });
 
     // ✅ ENHANCED reply listener with debugging
@@ -785,6 +799,76 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
+  const toggleFullscreen = () => {
+    if (!videoContainerRef.current) return;
+
+    if (!isFullscreen) {
+      // Enter fullscreen
+      if (videoContainerRef.current.requestFullscreen) {
+        videoContainerRef.current.requestFullscreen();
+      } else if (videoContainerRef.current.webkitRequestFullscreen) {
+        videoContainerRef.current.webkitRequestFullscreen();
+      } else if (videoContainerRef.current.mozRequestFullScreen) {
+        videoContainerRef.current.mozRequestFullScreen();
+      } else if (videoContainerRef.current.msRequestFullscreen) {
+        videoContainerRef.current.msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Auto-remove overlay comments after 5 seconds
+  useEffect(() => {
+    if (overlayComments.length === 0) return;
+
+    const timeouts = overlayComments.map((comment) => {
+      return setTimeout(() => {
+        setOverlayComments(prev => prev.filter(c => c.overlayId !== comment.overlayId));
+      }, 5000); // Remove after 5 seconds
+    });
+
+    return () => {
+      timeouts.forEach(timeout => clearTimeout(timeout));
+    };
+  }, [overlayComments.length]);
+
   if (isLive) {
     return (
       <div className="min-h-screen bg-[#FFC0CB] text-black p-4">
@@ -796,6 +880,25 @@ const HostLiveStream = ({ onBack }) => {
           @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideInRight {
+            from { 
+              transform: translateX(-100%); 
+              opacity: 0; 
+            }
+            to { 
+              transform: translateX(0); 
+              opacity: 1; 
+            }
+          }
+          @keyframes fadeOut {
+            from { 
+              opacity: 1; 
+            }
+            to { 
+              opacity: 0; 
+              transform: translateY(-10px);
+            }
           }
         `}</style>
 
@@ -915,6 +1018,7 @@ const HostLiveStream = ({ onBack }) => {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3">
               <div
+                ref={videoContainerRef}
                 className="bg-black rounded-lg mb-4 relative overflow-hidden"
                 style={{
                   aspectRatio: '16/9',
@@ -966,6 +1070,36 @@ const HostLiveStream = ({ onBack }) => {
                     ❤️
                   </div>
                 ))}
+
+                {/* Fullscreen Button */}
+                <button
+                  onClick={toggleFullscreen}
+                  className="absolute top-4 right-4 z-30 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all backdrop-blur-sm"
+                  title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                >
+                  {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                </button>
+
+                {/* Comments Overlay - Instagram style */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none z-20" style={{ maxHeight: '60%', overflow: 'hidden' }}>
+                  <div className="flex flex-col gap-2 items-start">
+                    {overlayComments.map((comment, index) => (
+                      <div
+                        key={comment.overlayId || comment.id}
+                        className="bg-gradient-to-r from-black/80 to-black/60 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-lg pointer-events-auto border border-white/10"
+                        style={{
+                          animation: 'slideInRight 0.4s ease-out, fadeOut 0.5s ease-in 4.5s',
+                          maxWidth: '85%',
+                          transform: `translateY(${index * 0}px)`,
+                          transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                        }}
+                      >
+                        <span className="font-semibold text-pink-300 mr-2">@{comment.username}</span>
+                        <span className="text-white/90">{comment.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-4 mb-4 flex items-center justify-center gap-4">
