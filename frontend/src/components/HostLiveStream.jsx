@@ -799,37 +799,43 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = async () => {
     if (!videoContainerRef.current) return;
 
-    if (!isFullscreen) {
-      // Enter fullscreen
-      if (videoContainerRef.current.requestFullscreen) {
-        videoContainerRef.current.requestFullscreen();
-      } else if (videoContainerRef.current.webkitRequestFullscreen) {
-        videoContainerRef.current.webkitRequestFullscreen();
-      } else if (videoContainerRef.current.mozRequestFullScreen) {
-        videoContainerRef.current.mozRequestFullScreen();
-      } else if (videoContainerRef.current.msRequestFullscreen) {
-        videoContainerRef.current.msRequestFullscreen();
+    try {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        if (videoContainerRef.current.requestFullscreen) {
+          await videoContainerRef.current.requestFullscreen();
+        } else if (videoContainerRef.current.webkitRequestFullscreen) {
+          await videoContainerRef.current.webkitRequestFullscreen();
+        } else if (videoContainerRef.current.mozRequestFullScreen) {
+          await videoContainerRef.current.mozRequestFullScreen();
+        } else if (videoContainerRef.current.msRequestFullscreen) {
+          await videoContainerRef.current.msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+        setIsFullscreen(false);
       }
-      setIsFullscreen(true);
-    } else {
-      // Exit fullscreen
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
-      setIsFullscreen(false);
+    } catch (error) {
+      console.error('Fullscreen error:', error);
+      // Fallback: try to update state anyway
+      setIsFullscreen(!isFullscreen);
     }
   };
 
-  // Listen for fullscreen changes
+  // Listen for fullscreen changes and ESC key
   useEffect(() => {
     const handleFullscreenChange = () => {
       const isCurrentlyFullscreen = !!(
@@ -841,16 +847,41 @@ const HostLiveStream = ({ onBack }) => {
       setIsFullscreen(isCurrentlyFullscreen);
     };
 
+    const handleKeyDown = (e) => {
+      // Exit fullscreen on ESC key
+      if (e.key === 'Escape') {
+        const isCurrentlyFullscreen = !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        );
+        if (isCurrentlyFullscreen) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        }
+      }
+    };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -899,6 +930,80 @@ const HostLiveStream = ({ onBack }) => {
               opacity: 0; 
               transform: translateY(-10px);
             }
+          }
+          
+          /* Fullscreen styles */
+          :fullscreen {
+            background: #000;
+          }
+          :-webkit-full-screen {
+            background: #000;
+          }
+          :-moz-full-screen {
+            background: #000;
+          }
+          :-ms-fullscreen {
+            background: #000;
+          }
+          
+          /* Ensure video container fills fullscreen */
+          .fullscreen-video-container:fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+          }
+          .fullscreen-video-container:-webkit-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+          }
+          .fullscreen-video-container:-moz-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+          }
+          .fullscreen-video-container:-ms-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+          }
+          
+          /* Ensure video fills fullscreen container */
+          .fullscreen-video-container:fullscreen video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+          }
+          .fullscreen-video-container:-webkit-full-screen video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+          }
+          .fullscreen-video-container:-moz-full-screen video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+          }
+          .fullscreen-video-container:-ms-fullscreen video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
           }
         `}</style>
 
@@ -1019,7 +1124,7 @@ const HostLiveStream = ({ onBack }) => {
             <div className="lg:col-span-3">
               <div
                 ref={videoContainerRef}
-                className="bg-black rounded-lg mb-4 relative overflow-hidden"
+                className="bg-black rounded-lg mb-4 relative overflow-hidden fullscreen-video-container"
                 style={{
                   aspectRatio: '16/9',
                   width: '100%'
@@ -1071,31 +1176,47 @@ const HostLiveStream = ({ onBack }) => {
                   </div>
                 ))}
 
-                {/* Fullscreen Button */}
+                {/* Fullscreen Button - Top Right */}
                 <button
                   onClick={toggleFullscreen}
-                  className="absolute top-4 right-4 z-30 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all backdrop-blur-sm"
-                  title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                  className="absolute top-4 right-4 z-30 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                  title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
                 >
                   {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                 </button>
 
+                {/* Live Chat Indicator */}
+                {overlayComments.length > 0 && (
+                  <div className="absolute top-4 left-4 z-25 bg-gradient-to-r from-pink-600 to-pink-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Live Chat</span>
+                  </div>
+                )}
+
                 {/* Comments Overlay - Instagram style */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none z-20" style={{ maxHeight: '60%', overflow: 'hidden' }}>
-                  <div className="flex flex-col gap-2 items-start">
+                <div 
+                  className="absolute bottom-0 left-0 right-0 pointer-events-none z-20"
+                  style={{ 
+                    maxHeight: isFullscreen ? '70%' : '60%',
+                    padding: isFullscreen ? '2rem' : '1rem',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div className="flex flex-col gap-3 items-start">
                     {overlayComments.map((comment, index) => (
                       <div
                         key={comment.overlayId || comment.id}
-                        className="bg-gradient-to-r from-black/80 to-black/60 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-lg pointer-events-auto border border-white/10"
+                        className="bg-gradient-to-r from-black/85 to-black/70 backdrop-blur-lg text-white px-5 py-3 rounded-full shadow-2xl pointer-events-auto border border-white/20 hover:border-pink-400/50 transition-all"
                         style={{
                           animation: 'slideInRight 0.4s ease-out, fadeOut 0.5s ease-in 4.5s',
-                          maxWidth: '85%',
+                          maxWidth: isFullscreen ? '90%' : '85%',
+                          fontSize: isFullscreen ? '1.1rem' : '0.95rem',
                           transform: `translateY(${index * 0}px)`,
-                          transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                          transition: 'opacity 0.3s ease-out, transform 0.3s ease-out, border-color 0.2s ease'
                         }}
                       >
-                        <span className="font-semibold text-pink-300 mr-2">@{comment.username}</span>
-                        <span className="text-white/90">{comment.text}</span>
+                        <span className="font-bold text-pink-300 mr-2">@{comment.username}</span>
+                        <span className="text-white">{comment.text}</span>
                       </div>
                     ))}
                   </div>
@@ -1106,14 +1227,23 @@ const HostLiveStream = ({ onBack }) => {
                 <button
                   onClick={toggleCamera}
                   className={`p-4 rounded-full transition-colors ${isCameraOn ? 'bg-white border border-[#ff99b3] hover:bg-[#ffb3c6]' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                  title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
                 >
                   {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
                 </button>
                 <button
                   onClick={toggleMic}
                   className={`p-4 rounded-full transition-colors ${isMicOn ? 'bg-white border border-[#ff99b3] hover:bg-[#ffb3c6]' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                  title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
                 >
                   {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+                </button>
+                <button
+                  onClick={toggleFullscreen}
+                  className="p-4 rounded-full transition-colors bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white shadow-lg"
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
                 </button>
               </div>
 
