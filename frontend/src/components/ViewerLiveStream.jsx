@@ -923,13 +923,29 @@ newSocket.on('product-added', (data) => {
 });
 
     newSocket.on('stream-ended', (data) => {
-      if (data.stream?._id === streamId) {
+      console.log('📺 Stream ended event received:', data);
+      // Check if this is the current stream
+      if (data.stream?._id === streamId || data.stream?._id?.toString() === streamId?.toString()) {
+        console.log('✅ Stream ended - showing modal');
         setEndedStreamData({
           duration: data.duration,
           totalViews: data.stream.totalViews,
-          heartsReceived: data.stream.heartsReceived
+          heartsReceived: data.stream.heartsReceived || data.stream.heartsReceived || 0,
+          formattedDuration: data.stream.formattedDuration,
+          title: data.stream.title
         });
         setShowStreamEnded(true);
+        
+        // Disconnect from LiveKit room
+        if (liveKitRoom) {
+          liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
+          setLiveKitRoom(null);
+        }
+        
+        // Disconnect socket
+        if (newSocket) {
+          newSocket.disconnect();
+        }
       }
     });
 
