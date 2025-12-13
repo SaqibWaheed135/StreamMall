@@ -118,21 +118,21 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 pb-24 md:pb-4">
-      <div className="bg-white/90 border border-[#ffb3c6] rounded-3xl max-w-md w-full max-h-[85vh] md:max-h-[90vh] shadow-2xl backdrop-blur-xl flex flex-col">
-        <div className="p-6 bg-white/85 border-b border-[#ffb3c6]/60 flex justify-between items-center rounded-t-3xl flex-shrink-0">
-          <h3 className="text-2xl font-bold text-pink-700">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-white/90 border border-[#ffb3c6] rounded-2xl sm:rounded-3xl max-w-md w-full max-h-[95vh] sm:max-h-[90vh] shadow-2xl backdrop-blur-xl flex flex-col my-auto">
+        <div className="p-4 sm:p-6 bg-white/85 border-b border-[#ffb3c6]/60 flex justify-between items-center rounded-t-2xl sm:rounded-t-3xl flex-shrink-0">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-pink-700 pr-2 break-words">
             {step === 'delivery' ? 'Delivery Information' : 'Confirm Purchase'}
           </h3>
           <button
             onClick={onClose}
-            className="text-pink-500 hover:text-pink-700 transition"
+            className="text-pink-500 hover:text-pink-700 transition flex-shrink-0" aria-label="Close"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <div className="p-6 text-gray-700 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 text-gray-700 overflow-y-auto flex-1">
           {step === 'delivery' ? (
             <div className="space-y-4">
               <div className="bg-white border border-[#ffb3c6] rounded-2xl p-5 mb-4 shadow-sm">
@@ -308,30 +308,30 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
           )}
         </div>
 
-        <div className="p-6 pt-4 border-t border-[#ffb3c6]/30 bg-white/85 flex-shrink-0 rounded-b-3xl">
+        <div className="p-4 sm:p-6 pt-3 sm:pt-4 border-t border-[#ffb3c6]/30 bg-white/85 flex-shrink-0 rounded-b-2xl sm:rounded-b-3xl">
           {step === 'delivery' ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 sm:py-2 rounded-xl font-semibold transition text-sm sm:text-base min-h-[44px]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleContinue}
-                className="flex-1 bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-lg hover:shadow-pink-200 text-white py-2 rounded-xl font-semibold transition"
+                className="flex-1 bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-lg hover:shadow-pink-200 text-white py-2.5 sm:py-2 rounded-xl font-semibold transition text-sm sm:text-base min-h-[44px]"
               >
                 Continue
               </button>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
                 onClick={() => setStep('delivery')}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold transition"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 sm:py-2 rounded-xl font-semibold transition text-sm sm:text-base min-h-[44px]"
               >
                 Back
               </button>
@@ -339,7 +339,7 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
                 type="button"
                 onClick={handlePurchase}
                 disabled={purchaseLoading || userCoinBalance < coinCost}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded-xl font-semibold transition"
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2.5 sm:py-2 rounded-xl font-semibold transition text-sm sm:text-base min-h-[44px]"
               >
                 {purchaseLoading ? 'Processing...' : 'Confirm Purchase'}
               </button>

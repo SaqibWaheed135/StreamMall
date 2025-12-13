@@ -1414,23 +1414,23 @@ newSocket.on('product-added', (data) => {
 
   if (!hasAccess && showPaymentModal && stream) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FFC0CB] via-[#ffb3c6] to-[#ff99b3] text-gray-900 flex items-center justify-center p-4">
-        <div className="bg-white/85 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/70 p-8 sm:p-10 max-w-lg w-full">
-          <div className="text-center mb-8">
-            <div className="w-24 h-24 bg-gradient-to-br from-pink-500 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <Lock className="w-12 h-12 text-white" />
+      <div className="min-h-screen bg-gradient-to-br from-[#FFC0CB] via-[#ffb3c6] to-[#ff99b3] text-gray-900 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-white/85 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-2xl border border-white/70 p-6 sm:p-8 md:p-10 max-w-lg w-full my-auto">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-pink-500 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+              <Lock className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-pink-700 mb-2">{stream?.title}</h2>
-            <p className="text-gray-600 mb-6">by @{stream?.streamer?.username}</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-pink-700 mb-2 break-words px-2">{stream?.title}</h2>
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 break-words">by @{stream?.streamer?.username}</p>
 
-            <div className="bg-white/80 border border-[#ffb3c6] rounded-2xl p-5 mb-5 shadow-inner">
-              <p className="text-sm text-gray-600 mb-2 uppercase tracking-wide">Entry Fee</p>
-              <p className="text-4xl font-extrabold text-pink-600">{stream?.entryFee} coins</p>
+            <div className="bg-white/80 border border-[#ffb3c6] rounded-xl sm:rounded-2xl p-4 sm:p-5 mb-4 sm:mb-5 shadow-inner">
+              <p className="text-xs sm:text-sm text-gray-600 mb-2 uppercase tracking-wide">Entry Fee</p>
+              <p className="text-3xl sm:text-4xl font-extrabold text-pink-600 break-words">{stream?.entryFee} coins</p>
             </div>
 
-            <div className="bg-white/70 border border-[#ffb3c6] rounded-2xl p-4 mb-6">
-              <p className="text-sm text-gray-600">Your Balance</p>
-              <p className="text-2xl font-semibold text-pink-600">{userCoinBalance} coins</p>
+            <div className="bg-white/70 border border-[#ffb3c6] rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
+              <p className="text-xs sm:text-sm text-gray-600">Your Balance</p>
+              <p className="text-xl sm:text-2xl font-semibold text-pink-600 break-words">{userCoinBalance} coins</p>
             </div>
           </div>
 
@@ -1439,32 +1439,32 @@ newSocket.on('product-added', (data) => {
               <button
                 onClick={handlePayEntry}
                 disabled={paymentProcessing}
-                className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 disabled:opacity-70 disabled:cursor-not-allowed py-3.5 rounded-xl font-semibold text-white transition-all mb-3"
+                className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 disabled:opacity-70 disabled:cursor-not-allowed py-3 sm:py-3.5 rounded-xl font-semibold text-white transition-all mb-2 sm:mb-3 text-sm sm:text-base min-h-[44px]"
               >
                 {paymentProcessing ? 'Processing...' : 'Pay & Enter Stream'}
               </button>
               <button
                 onClick={onBack}
                 disabled={paymentProcessing}
-                className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3.5 rounded-xl font-semibold transition-all"
+                className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
                 Cancel
               </button>
             </>
           ) : (
             <>
-              <div className="bg-[#ffe4e6] border border-[#fb7185] text-[#be123c] rounded-xl p-4 mb-4 text-sm">
+              <div className="bg-[#ffe4e6] border border-[#fb7185] text-[#be123c] rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 text-xs sm:text-sm break-words">
                 ⚠️ Insufficient coins. You need {stream?.entryFee - userCoinBalance} more coins.
               </div>
               <button
                 onClick={() => alert('Redirecting to purchase coins...')}
-                className="w-full bg-gradient-to-r from-amber-400 to-amber-300 hover:shadow-lg hover:shadow-amber-200 py-3.5 rounded-xl font-semibold text-amber-900 mb-3 transition-all"
+                className="w-full bg-gradient-to-r from-amber-400 to-amber-300 hover:shadow-lg hover:shadow-amber-200 py-3 sm:py-3.5 rounded-xl font-semibold text-amber-900 mb-2 sm:mb-3 transition-all text-sm sm:text-base min-h-[44px]"
               >
                 Purchase Coins
               </button>
               <button
                 onClick={onBack}
-                className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3.5 rounded-xl font-semibold transition-all"
+                className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
                 Go Back
               </button>
@@ -1564,34 +1564,34 @@ newSocket.on('product-added', (data) => {
       )}
 
       {showTipModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/90 backdrop-blur-2xl rounded-3xl border border-[#ffb3c6] shadow-2xl p-6 sm:p-8 max-w-lg w-full">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-pink-700">Send a Gift 🎁</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-[#ffb3c6] shadow-2xl p-4 sm:p-6 md:p-8 max-w-lg w-full my-auto">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-xl sm:text-2xl font-bold text-pink-700 pr-2 break-words">Send a Gift 🎁</h3>
               <button
                 onClick={() => setShowTipModal(false)}
-                className="text-pink-400 hover:text-pink-600 transition-colors"
+                className="text-pink-400 hover:text-pink-600 transition-colors flex-shrink-0" aria-label="Close"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <div className="bg-white/80 border border-[#ffb3c6] rounded-2xl p-4 mb-5">
-              <p className="text-sm text-gray-600">Your Balance</p>
-              <p className="text-2xl font-semibold text-pink-600">{userCoinBalance} coins</p>
+            <div className="bg-white/80 border border-[#ffb3c6] rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-5">
+              <p className="text-xs sm:text-sm text-gray-600">Your Balance</p>
+              <p className="text-xl sm:text-2xl font-semibold text-pink-600 break-words">{userCoinBalance} coins</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {gifts.map((gift) => (
                 <button
                   key={gift.type}
                   onClick={() => handleSendGift(gift)}
                   disabled={userCoinBalance < gift.cost}
-                  className={`bg-white/85 border border-[#ffb3c6] rounded-2xl p-4 text-left transition-all transform hover:scale-[1.02] ${userCoinBalance < gift.cost ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'
+                  className={`bg-white/85 border border-[#ffb3c6] rounded-xl sm:rounded-2xl p-3 sm:p-4 text-left transition-all transform hover:scale-[1.02] ${userCoinBalance < gift.cost ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'
                     }`}
                 >
-                  <div className="text-4xl mb-2">{gift.icon}</div>
-                  <p className="text-sm font-semibold text-gray-800">{gift.label}</p>
+                  <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">{gift.icon}</div>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-800 break-words">{gift.label}</p>
                   <p className="text-xs text-pink-600">{gift.cost} coins</p>
                 </button>
               ))}

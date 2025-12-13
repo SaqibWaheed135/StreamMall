@@ -302,15 +302,15 @@ const ProfileScreen = ({ userId: propUserId }) => {
   };
 
   const FollowRequestsModal = () => (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-3xl w-full max-w-md max-h-96 border border-[#ff99b3]">
-        <div className="flex items-center justify-between p-4 border-b border-[#ff99b3]">
-          <h3 className="text-lg font-bold text-black">Follow Requests</h3>
-          <button onClick={() => setShowFollowRequests(false)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[90vh] sm:max-h-96 border border-[#ff99b3] my-auto">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[#ff99b3]">
+          <h3 className="text-base sm:text-lg font-bold text-black pr-2 break-words">Follow Requests</h3>
+          <button onClick={() => setShowFollowRequests(false)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors flex-shrink-0" aria-label="Close">
             <X className="w-5 h-5 text-black" />
           </button>
         </div>
-        <div className="p-4 max-h-80 overflow-y-auto">
+        <div className="p-3 sm:p-4 max-h-[calc(90vh-80px)] sm:max-h-80 overflow-y-auto">
           {followRequests.length === 0 ? (
             <div className="text-center py-8 text-gray-700">
               <UserPlus className="w-12 h-12 mx-auto mb-2" />
@@ -347,15 +347,15 @@ const ProfileScreen = ({ userId: propUserId }) => {
   );
 
   const OrdersModal = () => (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-3xl w-full max-w-md max-h-[80vh] border border-[#ff99b3] overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-[#ff99b3]">
-          <h3 className="text-lg font-bold text-black">My Orders</h3>
-          <button onClick={() => setShowOrders(false)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[90vh] sm:max-h-[80vh] border border-[#ff99b3] overflow-hidden my-auto">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[#ff99b3]">
+          <h3 className="text-base sm:text-lg font-bold text-black pr-2 break-words">My Orders</h3>
+          <button onClick={() => setShowOrders(false)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors flex-shrink-0" aria-label="Close">
             <X className="w-5 h-5 text-black" />
           </button>
         </div>
-        <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+        <div className="p-3 sm:p-4 overflow-y-auto max-h-[calc(90vh-80px)] sm:max-h-[calc(80vh-80px)]">
           {orders.length === 0 ? (
             <div className="text-center py-8 text-gray-700">
               <ShoppingBag className="w-12 h-12 mx-auto mb-2" />
@@ -391,15 +391,15 @@ const ProfileScreen = ({ userId: propUserId }) => {
     const deliveryInfo = order.deliveryInfo || {};
 
     return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div className="bg-[#FFC0CB] rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#ff99b3]">
-          <div className="p-6 sticky top-0 bg-[#FFC0CB] border-b border-[#ff99b3] flex justify-between items-center">
-            <h3 className="text-xl font-semibold text-black">Order Details</h3>
-            <button onClick={onClose} className="text-gray-800 hover:text-black">
-              <X className="w-6 h-6" />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+        <div className="bg-[#FFC0CB] rounded-lg sm:rounded-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-[#ff99b3] my-auto">
+          <div className="p-4 sm:p-6 sticky top-0 bg-[#FFC0CB] border-b border-[#ff99b3] flex justify-between items-center z-10">
+            <h3 className="text-lg sm:text-xl font-semibold text-black pr-2 break-words">Order Details</h3>
+            <button onClick={onClose} className="text-gray-800 hover:text-black transition flex-shrink-0" aria-label="Close">
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
-          <div className="p-6 space-y-6 text-black">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 text-black">
             {/* ... (content unchanged, only colors adjusted) */}
             {/* You can keep the existing inner content – only wrapper colors changed */}
           </div>
@@ -434,19 +434,19 @@ const ProfileScreen = ({ userId: propUserId }) => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl w-full max-w-md shadow-2xl border border-[#ff99b3]">
-          <div className="flex items-center justify-between p-6 border-b border-[#ff99b3]">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-pink-600 rounded-lg">
-                <UserPlus className="w-6 h-6" />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl w-full max-w-md shadow-2xl border border-[#ff99b3] my-auto">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#ff99b3]">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-pink-600 rounded-lg flex-shrink-0">
+                <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-black">Invite Friends</h3>
-                <p className="text-sm text-gray-700">Earn coins for each referral</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg sm:text-xl font-bold text-black break-words">Invite Friends</h3>
+                <p className="text-xs sm:text-sm text-gray-700 break-words">Earn coins for each referral</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
+            <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors flex-shrink-0 ml-2" aria-label="Close">
               <X className="w-5 h-5 text-black" />
             </button>
           </div>

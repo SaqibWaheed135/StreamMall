@@ -182,7 +182,7 @@ const handleGoogleResponse = async (response) => {
           className="w-44 mb-6 drop-shadow-[0_0_30px_rgba(255,43,85,0.4)] rounded-[12px]"
         />
         <h1 className="text-4xl font-semibold bg-gradient-to-r from-pink-600 to-pink-500 bg-clip-text text-transparent">
-          Welcome to StreamMall
+          Welcome to TheClipStream
         </h1>
         <p className="text-gray-700 mt-3 text-lg max-w-sm">
           Stream, shop, and connect in the most futuristic live platform.

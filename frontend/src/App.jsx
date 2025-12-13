@@ -309,11 +309,11 @@ const App = () => {
           <div className="bg-gradient-to-br from-white to-pink-50 border-2 border-pink-200 rounded-2xl shadow-2xl p-4 backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl p-2 flex-shrink-0">
-                <img src={logo} alt="StreamMall" className="w-10 h-10 rounded-lg" />
+                <img src={logo} alt="TheClipStream" className="w-10 h-10 rounded-lg" />
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 text-base mb-1">
-                  Install StreamMall
+                  Install TheClipStream
                 </h3>
                 <p className="text-sm text-gray-600 mb-3">
                   Get quick access from your home screen
@@ -344,11 +344,11 @@ const App = () => {
           <div className="bg-gradient-to-br from-white to-pink-50 border-2 border-pink-200 rounded-2xl shadow-2xl p-4 backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl p-2 flex-shrink-0">
-                <img src={logo} alt="StreamMall" className="w-10 h-10 rounded-lg" />
+                <img src={logo} alt="TheClipStream" className="w-10 h-10 rounded-lg" />
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-1">
-                  📱 Install StreamMall
+                  📱 Install TheClipStream
                 </h3>
                 <p className="text-sm text-gray-600 mb-2">
                   Add to your home screen for the best experience:
