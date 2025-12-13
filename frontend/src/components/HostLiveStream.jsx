@@ -120,6 +120,7 @@ const HostLiveStream = ({ onBack }) => {
   const localVideoRef = useRef(null);
   const commentsEndRef = useRef(null);
   const replyInputRef = useRef(null);  // Add this line
+  const trackCheckIntervalRef = useRef(null);
 
 
   const getGiftIcon = (type) => {
@@ -664,7 +665,37 @@ const HostLiveStream = ({ onBack }) => {
         }
       }, 1000);
 
+      // Store room reference for camera toggle
       setLiveKitRoom(room);
+      
+      // Set up listener for track updates when camera is toggled
+      const updateVideoOnTrackChange = () => {
+        const camPublication = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack && videoRef.current) {
+          const isEnabled = !camPublication.isMuted && camPublication.track.mediaStreamTrack.enabled;
+          if (isEnabled) {
+            const mediaStream = new MediaStream([camPublication.track.mediaStreamTrack]);
+            const currentSrc = videoRef.current.srcObject;
+            // Check if we need to update the stream
+            if (!currentSrc || currentSrc.getTracks().length === 0 || 
+                currentSrc.getTracks()[0].id !== mediaStream.getTracks()[0].id) {
+              videoRef.current.srcObject = mediaStream;
+              videoRef.current.play().catch(err => console.error('Video play error on track change:', err));
+            }
+          }
+        }
+      };
+
+      // Poll for track changes when camera is toggled (LiveKit doesn't always fire events reliably)
+      trackCheckIntervalRef.current = setInterval(updateVideoOnTrackChange, 500);
+      
+      // Cleanup interval on disconnect
+      room.on(RoomEvent.Disconnected, () => {
+        if (trackCheckIntervalRef.current) {
+          clearInterval(trackCheckIntervalRef.current);
+          trackCheckIntervalRef.current = null;
+        }
+      });
       setViewerCount(0);
       setIsLive(true);
     } catch (err) {
@@ -723,6 +754,11 @@ const HostLiveStream = ({ onBack }) => {
       }
 
       if (liveKitRoom) {
+        // Cleanup track check interval
+        if (trackCheckIntervalRef.current) {
+          clearInterval(trackCheckIntervalRef.current);
+          trackCheckIntervalRef.current = null;
+        }
         await liveKitRoom.disconnect();
         setLiveKitRoom(null);
       }
@@ -773,14 +809,78 @@ const HostLiveStream = ({ onBack }) => {
 
   const toggleCamera = async () => {
     if (liveKitRoom && isLive) {
-      const isEnabled = liveKitRoom.localParticipant.isCameraEnabled;
-      await liveKitRoom.localParticipant.setCameraEnabled(!isEnabled);
-      setIsCameraOn(!isEnabled);
+      try {
+        const isEnabled = liveKitRoom.localParticipant.isCameraEnabled;
+        const newState = !isEnabled;
+        
+        await liveKitRoom.localParticipant.setCameraEnabled(newState);
+        setIsCameraOn(newState);
+
+        // If camera is being enabled, reattach the video stream
+        if (newState) {
+          // Wait for the track to be published
+          setTimeout(async () => {
+            try {
+              const camPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+              if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack) {
+                const mediaStream = new MediaStream([camPublication.track.mediaStreamTrack]);
+                
+                if (videoRef.current) {
+                  // Clear previous stream
+                  if (videoRef.current.srcObject) {
+                    const oldStream = videoRef.current.srcObject;
+                    oldStream.getTracks().forEach(track => track.stop());
+                  }
+                  
+                  // Set new stream
+                  videoRef.current.srcObject = mediaStream;
+                  videoRef.current.muted = true;
+                  videoRef.current.style.objectFit = 'cover';
+                  videoRef.current.style.objectPosition = 'center';
+                  
+                  await videoRef.current.play();
+                  console.log('✅ Camera re-enabled, video stream reattached');
+                  
+                  if (localVideoRef.current) {
+                    localVideoRef.current.style.display = 'none';
+                  }
+                }
+              } else {
+                console.warn('Camera publication not found, retrying...');
+                // Retry after a longer delay
+                setTimeout(() => {
+                  const retryPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+                  if (retryPublication && retryPublication.track && retryPublication.track.mediaStreamTrack && videoRef.current) {
+                    const mediaStream = new MediaStream([retryPublication.track.mediaStreamTrack]);
+                    videoRef.current.srcObject = mediaStream;
+                    videoRef.current.muted = true;
+                    videoRef.current.play().catch(err => console.error('Retry video play error:', err));
+                  }
+                }, 500);
+              }
+            } catch (error) {
+              console.error('Error reattaching video stream:', error);
+            }
+          }, 200);
+        } else {
+          // Camera is being disabled - keep the video element but show it's off
+          console.log('📹 Camera disabled');
+        }
+      } catch (error) {
+        console.error('Error toggling camera:', error);
+        setError('Failed to toggle camera');
+      }
     } else if (localStream) {
       const videoTrack = localStream.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setIsCameraOn(videoTrack.enabled);
+        
+        // If camera is being enabled, ensure video element is visible and playing
+        if (videoTrack.enabled && localVideoRef.current) {
+          localVideoRef.current.style.display = 'block';
+          localVideoRef.current.play().catch(err => console.error('Video play error:', err));
+        }
       }
     }
   };
