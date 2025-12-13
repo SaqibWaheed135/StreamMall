@@ -613,6 +613,10 @@ import StreamEndedModal from './globalComponents/LiveViewerComponents/StreamEnde
 import { API_BASE_URL, SOCKET_URL } from '../config/api';
 import { Room, RoomEvent, Track } from 'livekit-client';
 
+const isIOS = () => {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+
 const ViewerLiveStream = ({ streamId, onBack }) => {
   const [stream, setStream] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1179,6 +1183,11 @@ newSocket.on('product-added', (data) => {
           track.attach(videoEl);
           videoEl.muted = true;
           videoEl.volume = 0;
+          // iOS fullscreen support
+          if (isIOS()) {
+            videoEl.setAttribute('playsinline', 'false');
+            videoEl.setAttribute('webkit-playsinline', 'false');
+          }
           videoEl.play().catch((err) => console.warn('Video play error:', err));
         }
       }, 200);
@@ -1286,6 +1295,33 @@ newSocket.on('product-added', (data) => {
     if (!videoContainerRef.current) return;
 
     try {
+      // iOS Safari requires using video element's webkitEnterFullscreen
+      const videoElement = videoContainerRef.current.querySelector('video[data-participant]');
+      
+      if (isIOS() && videoElement) {
+        if (!isFullscreen) {
+          // Enter fullscreen on iOS - use video element's native method
+          if (videoElement.webkitEnterFullscreen) {
+            videoElement.webkitEnterFullscreen();
+            setIsFullscreen(true);
+          } else {
+            // Fallback: try container fullscreen
+            if (videoContainerRef.current.webkitRequestFullscreen) {
+              await videoContainerRef.current.webkitRequestFullscreen();
+              setIsFullscreen(true);
+            }
+          }
+        } else {
+          // Exit fullscreen on iOS
+          if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+          }
+          setIsFullscreen(false);
+        }
+        return;
+      }
+
+      // Standard fullscreen for other browsers
       if (!isFullscreen) {
         // Enter fullscreen
         if (videoContainerRef.current.requestFullscreen) {
@@ -1320,6 +1356,16 @@ newSocket.on('product-added', (data) => {
   // Listen for fullscreen changes and ESC key
   useEffect(() => {
     const handleFullscreenChange = () => {
+      // For iOS, check if video is in fullscreen
+      if (isIOS()) {
+        const videoElement = videoContainerRef.current?.querySelector('video[data-participant]');
+        if (videoElement) {
+          const isVideoFullscreen = videoElement.webkitDisplayingFullscreen || false;
+          setIsFullscreen(isVideoFullscreen);
+          return;
+        }
+      }
+      
       const isCurrentlyFullscreen = !!(
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
@@ -1328,6 +1374,29 @@ newSocket.on('product-added', (data) => {
       );
       setIsFullscreen(isCurrentlyFullscreen);
     };
+    
+    // iOS specific: listen for video fullscreen events
+    if (isIOS() && videoContainerRef.current) {
+      const videoElement = videoContainerRef.current.querySelector('video[data-participant]');
+      if (videoElement) {
+        const handleBeginFullscreen = () => setIsFullscreen(true);
+        const handleEndFullscreen = () => setIsFullscreen(false);
+        
+        videoElement.addEventListener('webkitbeginfullscreen', handleBeginFullscreen);
+        videoElement.addEventListener('webkitendfullscreen', handleEndFullscreen);
+        
+        return () => {
+          videoElement.removeEventListener('webkitbeginfullscreen', handleBeginFullscreen);
+          videoElement.removeEventListener('webkitendfullscreen', handleEndFullscreen);
+        };
+      }
+    }
+
+    // Standard fullscreen event listeners for non-iOS
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -1351,17 +1420,22 @@ newSocket.on('product-added', (data) => {
       }
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    // Only add standard fullscreen listeners if not iOS
+    if (!isIOS()) {
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    }
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      if (!isIOS()) {
+        document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      }
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
@@ -1553,6 +1627,21 @@ newSocket.on('product-added', (data) => {
           height: 100% !important;
           object-fit: cover;
         }
+        
+        /* iOS video fullscreen support */
+        video::-webkit-media-controls {
+          display: none !important;
+        }
+        video::-webkit-media-controls-enclosure {
+          display: none !important;
+        }
+        
+        /* Ensure video fills screen on iOS when in native fullscreen */
+        video:fullscreen {
+          width: 100vw !important;
+          height: 100vh !important;
+          object-fit: cover;
+        }
       `}</style>
 
       {error && (
@@ -1663,9 +1752,10 @@ newSocket.on('product-added', (data) => {
                   <video
                     data-participant={hostParticipant.identity}
                     autoPlay
-                    playsInline
+                    playsInline={!isIOS()}
                     muted
                     className="w-full h-full object-cover"
+                    webkit-playsinline={!isIOS()}
                   />
                   <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full text-sm text-white flex items-center gap-2 shadow z-20">
                     <div className="w-2 h-2 bg-green-400 rounded-full" />
