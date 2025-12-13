@@ -167,15 +167,15 @@ const HostLiveStream = ({ onBack }) => {
     };
 
     return (
-      <div className="fixed inset-0 bg-white/90 bg-opacity-60 flex justify-center items-center z-50">
-        <div className="bg-white p-6 rounded-2xl shadow-lg w-80 animate-fadeIn relative">
-          <button className="absolute top-3 right-3 text-gray-600 hover:text-black" onClick={onClose}>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg max-w-sm w-full animate-fadeIn relative my-auto">
+          <button className="absolute top-3 right-3 text-gray-600 hover:text-black transition" onClick={onClose} aria-label="Close">
             <FaTimes size={18} />
           </button>
 
-          <h2 className="text-xl font-bold text-center mb-4 text-gray-900">Share Live Stream</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-center mb-4 sm:mb-5 text-gray-900 pr-6 break-words">Share Live Stream</h2>
 
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
             <button className="share-btn bg-green-500" onClick={() => handleShareClick(shareLinks.whatsapp)}>
               <FaWhatsapp size={22} />
               <span>WhatsApp</span>
@@ -1230,44 +1230,44 @@ const HostLiveStream = ({ onBack }) => {
         )}
 
         {showEarningsModal && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-2xl p-6 max-w-md w-full">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-2xl p-4 sm:p-6 max-w-md w-full my-auto">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <TrendingUp className="w-6 h-6 text-green-400" />
+                <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2 pr-2 break-words">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-400 flex-shrink-0" />
                   Stream Earnings
                 </h3>
                 <button
                   onClick={() => setShowEarningsModal(false)}
-                  className="text-gray-700 hover:text-black"
+                  className="text-gray-700 hover:text-black transition flex-shrink-0" aria-label="Close"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-4">
-                  <p className="text-sm text-gray-700 mb-1">Total Earnings</p>
-                  <p className="text-3xl font-bold text-yellow-600">{coinBalance} coins</p>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-700 mb-1">Total Earnings</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-yellow-600 break-words">{coinBalance} coins</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-2.5 sm:p-3">
                     <p className="text-xs text-gray-700 mb-1">Paid Viewers</p>
-                    <p className="text-xl font-semibold">{paidViewersCount}</p>
+                    <p className="text-lg sm:text-xl font-semibold">{paidViewersCount}</p>
                   </div>
-                  <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-3">
+                  <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-2.5 sm:p-3">
                     <p className="text-xs text-gray-700 mb-1">Tips Received</p>
-                    <p className="text-xl font-semibold">{tips.length}</p>
+                    <p className="text-lg sm:text-xl font-semibold">{tips.length}</p>
                   </div>
                 </div>
 
                 <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-3 max-h-40 overflow-y-auto">
-                  <p className="text-sm font-semibold mb-2">Recent Tips</p>
+                  <p className="text-xs sm:text-sm font-semibold mb-2">Recent Tips</p>
                   {tips.slice(-5).reverse().map((tip) => (
-                    <div key={tip.id} className="flex items-center justify-between py-1 text-sm">
-                      <span>{tip.username}</span>
-                      <span className="text-yellow-700">+{tip.amount}</span>
+                    <div key={tip.id} className="flex items-center justify-between py-1 text-xs sm:text-sm">
+                      <span className="break-words pr-2">{tip.username}</span>
+                      <span className="text-yellow-700 flex-shrink-0">+{tip.amount}</span>
                     </div>
                   ))}
                   {tips.length === 0 && (

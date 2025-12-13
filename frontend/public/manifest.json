@@ -1,6 +1,6 @@
 {
-  "name": "StreamMall",
-  "short_name": "StreamMall",
+  "name": "TheClipStream",
+  "short_name": "TheClipStream",
   "description": "Live streaming and social platform",
   "start_url": "/",
   "display": "standalone",
