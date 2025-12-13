@@ -613,10 +613,6 @@ import StreamEndedModal from './globalComponents/LiveViewerComponents/StreamEnde
 import { API_BASE_URL, SOCKET_URL } from '../config/api';
 import { Room, RoomEvent, Track } from 'livekit-client';
 
-const isIOS = () => {
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-};
-
 const ViewerLiveStream = ({ streamId, onBack }) => {
   const [stream, setStream] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1183,11 +1179,6 @@ newSocket.on('product-added', (data) => {
           track.attach(videoEl);
           videoEl.muted = true;
           videoEl.volume = 0;
-          // iOS fullscreen support
-          if (isIOS()) {
-            videoEl.setAttribute('playsinline', 'false');
-            videoEl.setAttribute('webkit-playsinline', 'false');
-          }
           videoEl.play().catch((err) => console.warn('Video play error:', err));
         }
       }, 200);
@@ -1295,31 +1286,6 @@ newSocket.on('product-added', (data) => {
     if (!videoContainerRef.current) return;
 
     try {
-      // For iOS, use custom CSS-based fullscreen to maintain video playback and show overlays
-      if (isIOS()) {
-        if (!isFullscreen) {
-          // Enter custom fullscreen for iOS
-          setIsFullscreen(true);
-          // Prevent body scroll
-          document.body.style.overflow = 'hidden';
-          // Lock orientation if possible
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-          }
-        } else {
-          // Exit custom fullscreen for iOS
-          setIsFullscreen(false);
-          // Restore body scroll
-          document.body.style.overflow = '';
-          // Unlock orientation
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
-        }
-        return;
-      }
-
-      // Standard fullscreen for other browsers
       if (!isFullscreen) {
         // Enter fullscreen
         if (videoContainerRef.current.requestFullscreen) {
@@ -1363,60 +1329,42 @@ newSocket.on('product-added', (data) => {
       setIsFullscreen(isCurrentlyFullscreen);
     };
 
-    // Only add standard fullscreen listeners if not iOS (iOS uses CSS-based fullscreen)
-    if (!isIOS()) {
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-    }
-    
     const handleKeyDown = (e) => {
-      // Exit fullscreen on ESC key
       if (e.key === 'Escape') {
-        if (isIOS()) {
-          if (isFullscreen) {
-            setIsFullscreen(false);
-            document.body.style.overflow = '';
-          }
-        } else {
-          const isCurrentlyFullscreen = !!(
-            document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement
-          );
-          if (isCurrentlyFullscreen) {
-            if (document.exitFullscreen) {
-              document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-              document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-              document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) {
-              document.msExitFullscreen();
-            }
+        const isCurrentlyFullscreen = !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        );
+        if (isCurrentlyFullscreen) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
           }
         }
       }
     };
-    
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      if (!isIOS()) {
-        document.removeEventListener('fullscreenchange', handleFullscreenChange);
-        document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-      }
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
-      // Cleanup: restore body scroll on unmount
-      if (isIOS()) {
-        document.body.style.overflow = '';
-      }
     };
-  }, [isFullscreen]);
+  }, []);
 
   // Auto-remove overlay comments after 6 seconds
   useEffect(() => {
@@ -1605,39 +1553,6 @@ newSocket.on('product-added', (data) => {
           height: 100% !important;
           object-fit: cover;
         }
-        
-        /* iOS video fullscreen support */
-        video::-webkit-media-controls {
-          display: none !important;
-        }
-        video::-webkit-media-controls-enclosure {
-          display: none !important;
-        }
-        
-        /* Ensure video fills screen on iOS when in native fullscreen */
-        video:fullscreen {
-          width: 100vw !important;
-          height: 100vh !important;
-          object-fit: cover;
-        }
-        
-        /* iOS custom fullscreen - CSS-based to maintain video playback and overlays */
-        .ios-fullscreen-active {
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          z-index: 9999 !important;
-          background: #000 !important;
-          border-radius: 0 !important;
-        }
-        
-        .ios-fullscreen-active video {
-          width: 100% !important;
-          height: 100% !important;
-          object-fit: cover !important;
-        }
       `}</style>
 
       {error && (
@@ -1732,7 +1647,7 @@ newSocket.on('product-added', (data) => {
           <div className="lg:col-span-3 space-y-6">
             <div
               ref={videoContainerRef}
-              className={`bg-white/80 backdrop-blur-2xl border border-white/70 rounded-3xl shadow-2xl overflow-hidden aspect-video relative fullscreen-video-container ${isIOS() && isFullscreen ? 'ios-fullscreen-active' : ''}`}
+              className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-3xl shadow-2xl overflow-hidden aspect-video relative fullscreen-video-container"
             >
               {!hostParticipant ? (
                 <div className="flex items-center justify-center h-full">
@@ -1748,10 +1663,9 @@ newSocket.on('product-added', (data) => {
                   <video
                     data-participant={hostParticipant.identity}
                     autoPlay
-                    playsInline={!isIOS()}
+                    playsInline
                     muted
                     className="w-full h-full object-cover"
-                    webkit-playsinline={!isIOS()}
                   />
                   <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full text-sm text-white flex items-center gap-2 shadow z-20">
                     <div className="w-2 h-2 bg-green-400 rounded-full" />
