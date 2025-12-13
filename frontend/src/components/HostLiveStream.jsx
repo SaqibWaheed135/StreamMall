@@ -631,46 +631,32 @@ const HostLiveStream = ({ onBack }) => {
       await room.localParticipant.enableCameraAndMicrophone();
       console.log('✅ Camera and microphone enabled');
 
+      // Enhanced LocalTrackPublished handler for camera
       room.on(RoomEvent.LocalTrackPublished, (publication) => {
         if (publication.source === Track.Source.Camera) {
+          console.log('📹 Camera track published');
           const localVideoTrack = publication.track;
-          if (localVideoTrack && localVideoTrack.mediaStreamTrack) {
-            const mediaStream = new MediaStream([localVideoTrack.mediaStreamTrack]);
-            if (videoRef.current) {
-              videoRef.current.srcObject = mediaStream;
-              videoRef.current.muted = true;
-              videoRef.current.style.objectFit = 'cover';
-              videoRef.current.style.objectPosition = 'center';
-              videoRef.current.play()
-                .then(() => {
-                  console.log('✅ LiveKit video playing');
-                  setTimeout(() => {
-                    if (localVideoRef.current) {
-                      localVideoRef.current.style.display = 'none';
-                    }
-                  }, 300);
-                })
-                .catch(err => console.error('Video play error:', err));
-            }
+          if (localVideoTrack && localVideoTrack.mediaStreamTrack && videoRef.current) {
+            // Use the helper function to attach video
+            attachVideoStream(localVideoTrack);
           }
         }
       });
 
+      // Also listen for track updates (when camera is toggled)
+      room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+        if (publication.source === Track.Source.Camera) {
+          console.log('📹 Camera track unpublished');
+          // Don't clear the video, keep last frame
+        }
+      });
+
+      // Fallback: Ensure video is attached after a delay (in case event didn't fire)
       setTimeout(() => {
         const camPublication = room.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (camPublication && camPublication.track && videoRef.current) {
-          const mediaStream = new MediaStream([camPublication.track.mediaStreamTrack]);
-          videoRef.current.srcObject = mediaStream;
-          videoRef.current.muted = true;
-          videoRef.current.style.objectFit = 'cover';
-          videoRef.current.style.objectPosition = 'center';
-          videoRef.current.play()
-            .then(() => {
-              if (localVideoRef.current) {
-                localVideoRef.current.style.display = 'none';
-              }
-            })
-            .catch(err => console.error('Manual attach error:', err));
+        if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack) {
+          // Use the helper function for consistency
+          attachVideoStream(camPublication.track);
         }
       }, 1000);
 
@@ -683,20 +669,15 @@ const HostLiveStream = ({ onBack }) => {
         if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack && videoRef.current) {
           const isEnabled = !camPublication.isMuted && camPublication.track.mediaStreamTrack.enabled;
           if (isEnabled) {
-            const mediaStream = new MediaStream([camPublication.track.mediaStreamTrack]);
-            const currentSrc = videoRef.current.srcObject;
-            // Check if we need to update the stream
-            if (!currentSrc || currentSrc.getTracks().length === 0 || 
-                currentSrc.getTracks()[0].id !== mediaStream.getTracks()[0].id) {
-              videoRef.current.srcObject = mediaStream;
-              videoRef.current.play().catch(err => console.error('Video play error on track change:', err));
-            }
+            // Use the helper function to attach video
+            attachVideoStream(camPublication.track);
           }
         }
       };
 
       // Poll for track changes when camera is toggled (LiveKit doesn't always fire events reliably)
-      trackCheckIntervalRef.current = setInterval(updateVideoOnTrackChange, 500);
+      // Reduced interval for faster response
+      trackCheckIntervalRef.current = setInterval(updateVideoOnTrackChange, 300);
       
       // Cleanup interval on disconnect
       room.on(RoomEvent.Disconnected, () => {
@@ -828,68 +809,143 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
+  const attachVideoStream = (track) => {
+    if (!videoRef.current || !track || !track.mediaStreamTrack) return false;
+
+    try {
+      const mediaStream = new MediaStream([track.mediaStreamTrack]);
+      
+      // Check if this is the same track already attached
+      const currentSrc = videoRef.current.srcObject;
+      if (currentSrc && currentSrc.getTracks().length > 0) {
+        const currentTrackId = currentSrc.getTracks()[0].id;
+        const newTrackId = track.mediaStreamTrack.id;
+        if (currentTrackId === newTrackId) {
+          console.log('✅ Same track already attached, skipping');
+          return true;
+        }
+      }
+
+      // Clear previous stream tracks (but don't stop them, LiveKit manages that)
+      if (currentSrc) {
+        currentSrc.getTracks().forEach(t => {
+          if (t.id !== track.mediaStreamTrack.id) {
+            t.stop();
+          }
+        });
+      }
+      
+      // Set new stream
+      videoRef.current.srcObject = mediaStream;
+      videoRef.current.muted = true;
+      videoRef.current.style.objectFit = 'cover';
+      videoRef.current.style.objectPosition = 'center';
+      
+      // Play the video
+      videoRef.current.play()
+        .then(() => {
+          console.log('✅ Video stream attached and playing');
+          if (localVideoRef.current) {
+            localVideoRef.current.style.display = 'none';
+          }
+        })
+        .catch(err => {
+          console.error('Video play error:', err);
+          // Retry play after a short delay
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(e => console.error('Retry play error:', e));
+            }
+          }, 100);
+        });
+      
+      return true;
+    } catch (error) {
+      console.error('Error attaching video stream:', error);
+      return false;
+    }
+  };
+
   const toggleCamera = async () => {
     if (liveKitRoom && isLive) {
       try {
         const isEnabled = liveKitRoom.localParticipant.isCameraEnabled;
         const newState = !isEnabled;
         
-        await liveKitRoom.localParticipant.setCameraEnabled(newState);
+        console.log(`📹 Toggling camera: ${isEnabled ? 'OFF' : 'ON'}`);
+        
+        // Update state immediately for UI responsiveness
         setIsCameraOn(newState);
+        
+        // Toggle camera in LiveKit
+        await liveKitRoom.localParticipant.setCameraEnabled(newState);
 
-        // If camera is being enabled, reattach the video stream
+        // If camera is being enabled, wait for track and attach
         if (newState) {
-          // Wait for the track to be published
-          setTimeout(async () => {
-            try {
-              const camPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-              if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack) {
-                const mediaStream = new MediaStream([camPublication.track.mediaStreamTrack]);
-                
-                if (videoRef.current) {
-                  // Clear previous stream
-                  if (videoRef.current.srcObject) {
-                    const oldStream = videoRef.current.srcObject;
-                    oldStream.getTracks().forEach(track => track.stop());
-                  }
-                  
-                  // Set new stream
-                  videoRef.current.srcObject = mediaStream;
-                  videoRef.current.muted = true;
-                  videoRef.current.style.objectFit = 'cover';
-                  videoRef.current.style.objectPosition = 'center';
-                  
-                  await videoRef.current.play();
-                  console.log('✅ Camera re-enabled, video stream reattached');
-                  
-                  if (localVideoRef.current) {
-                    localVideoRef.current.style.display = 'none';
-                  }
+          // Use multiple strategies to ensure we get the track
+          let attempts = 0;
+          const maxAttempts = 15;
+          let attached = false;
+          
+          const tryAttachVideo = () => {
+            if (attached) return; // Already attached, stop retrying
+            
+            attempts++;
+            const camPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+            
+            if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack) {
+              const track = camPublication.track;
+              const isTrackEnabled = track.mediaStreamTrack.enabled && !camPublication.isMuted;
+              
+              if (isTrackEnabled) {
+                const success = attachVideoStream(track);
+                if (success) {
+                  console.log('✅ Camera enabled and video attached');
+                  attached = true;
+                  return;
                 }
               } else {
-                console.warn('Camera publication not found, retrying...');
-                // Retry after a longer delay
-                setTimeout(() => {
-                  const retryPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-                  if (retryPublication && retryPublication.track && retryPublication.track.mediaStreamTrack && videoRef.current) {
-                    const mediaStream = new MediaStream([retryPublication.track.mediaStreamTrack]);
-                    videoRef.current.srcObject = mediaStream;
-                    videoRef.current.muted = true;
-                    videoRef.current.play().catch(err => console.error('Retry video play error:', err));
-                  }
-                }, 500);
+                console.log('⏳ Track not yet enabled, waiting...');
               }
-            } catch (error) {
-              console.error('Error reattaching video stream:', error);
+            } else {
+              console.log(`⏳ Track not available yet (attempt ${attempts}/${maxAttempts})`);
             }
-          }, 200);
+            
+            // Retry if not successful and haven't exceeded max attempts
+            if (attempts < maxAttempts && !attached) {
+              setTimeout(tryAttachVideo, 150);
+            } else if (!attached) {
+              console.warn('⚠️ Could not attach video after multiple attempts, trying final recovery...');
+              // Final recovery attempt with longer delay
+              setTimeout(() => {
+                const finalPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+                if (finalPublication && finalPublication.track && finalPublication.track.mediaStreamTrack) {
+                  const finalTrack = finalPublication.track;
+                  if (finalTrack.mediaStreamTrack.enabled && !finalPublication.isMuted) {
+                    attachVideoStream(finalTrack);
+                  }
+                }
+              }, 800);
+            }
+          };
+          
+          // Start trying with progressive delays
+          setTimeout(tryAttachVideo, 50);
+          setTimeout(tryAttachVideo, 200);
+          setTimeout(tryAttachVideo, 400);
+          setTimeout(tryAttachVideo, 600);
         } else {
-          // Camera is being disabled - keep the video element but show it's off
+          // Camera is being disabled
           console.log('📹 Camera disabled');
+          // Keep the last frame visible, don't clear the video
+          // The video element will show the last frame
         }
       } catch (error) {
         console.error('Error toggling camera:', error);
-        setError('Failed to toggle camera');
+        setError('Failed to toggle camera. Please try again.');
+        // Revert state on error
+        const currentState = liveKitRoom.localParticipant.isCameraEnabled;
+        setIsCameraOn(currentState);
       }
     } else if (localStream) {
       const videoTrack = localStream.getVideoTracks()[0];
