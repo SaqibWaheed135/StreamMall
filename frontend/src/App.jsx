@@ -10,7 +10,7 @@ import {
 import { Home, Search, User, CircleDot, Bell, MessageSquare, FileText } from "lucide-react";
 import axios from "axios";
 
-import logo from "./assets/logo.png";
+import logo from "./assets/logo.jpeg";
 import AdBanner from "./components/AdBanner.jsx";
 import HomeScreen from "./components/HomeScreen.jsx";
 import SearchScreen from "./components/SearchScreen.jsx";

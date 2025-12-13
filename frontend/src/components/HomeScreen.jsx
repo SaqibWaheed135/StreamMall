@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import HostLiveStream from "./HostLiveStream";
 import PointsTransfer from "./PointsTransfer";
-import Logo from "../assets/logo.png";
+import Logo from "../assets/logo.jpeg";
 import { useNavigate, useRoutes } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 
