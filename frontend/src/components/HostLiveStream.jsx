@@ -1043,6 +1043,16 @@ const HostLiveStream = ({ onBack }) => {
               opacity: 1; 
             }
           }
+          @keyframes slideInLeft {
+            from { 
+              transform: translateX(-100%); 
+              opacity: 0; 
+            }
+            to { 
+              transform: translateX(0); 
+              opacity: 1; 
+            }
+          }
           @keyframes fadeOut {
             from { 
               opacity: 1; 
@@ -1315,33 +1325,38 @@ const HostLiveStream = ({ onBack }) => {
                 )}
 
                 {/* Comments Overlay - Instagram style */}
-                <div 
-                  className="absolute bottom-0 left-0 right-0 pointer-events-none z-20"
-                  style={{ 
-                    maxHeight: isFullscreen ? '70%' : '60%',
-                    padding: isFullscreen ? '2rem' : '1rem',
-                    overflow: 'hidden'
-                  }}
-                >
-                  <div className="flex flex-col gap-3 items-start">
-                    {overlayComments.map((comment, index) => (
-                      <div
-                        key={comment.overlayId || comment.id}
-                        className="bg-gradient-to-r from-black/85 to-black/70 backdrop-blur-lg text-white px-5 py-3 rounded-full shadow-2xl pointer-events-auto border border-white/20 hover:border-pink-400/50 transition-all"
-                        style={{
-                          animation: 'slideInRight 0.4s ease-out, fadeOut 0.5s ease-in 4.5s',
-                          maxWidth: isFullscreen ? '90%' : '85%',
-                          fontSize: isFullscreen ? '1.1rem' : '0.95rem',
-                          transform: `translateY(${index * 0}px)`,
-                          transition: 'opacity 0.3s ease-out, transform 0.3s ease-out, border-color 0.2s ease'
-                        }}
-                      >
-                        <span className="font-bold text-pink-300 mr-2">@{comment.username}</span>
-                        <span className="text-white">{comment.text}</span>
-                      </div>
-                    ))}
+                {isFullscreen && (
+                  <div 
+                    className="absolute bottom-0 left-0 w-80 max-w-[85%] pointer-events-none z-20"
+                    style={{ 
+                      maxHeight: '70%',
+                      padding: '1rem',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div className="flex flex-col gap-2 items-start">
+                      {overlayComments.map((comment, index) => (
+                        <div
+                          key={comment.overlayId || comment.id}
+                          className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto animate-slideInLeft shadow-lg border border-white/10"
+                          style={{
+                            animation: 'slideInLeft 0.3s ease-out',
+                            maxWidth: '100%',
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                              {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+                            </div>
+                            <span className="font-semibold text-pink-300">{comment.username}</span>
+                            <span className="text-white/90">{comment.text}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-4 mb-4 flex items-center justify-center gap-4">

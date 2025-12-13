@@ -602,7 +602,9 @@ import {
   X,
   DollarSign,
   Gift,
-  Lock
+  Lock,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 import io from 'socket.io-client';
 import loadLiveKit from './globalComponents/liveKitLoad';
@@ -636,6 +638,11 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  // Fullscreen and overlay comments state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [overlayComments, setOverlayComments] = useState([]);
+  const videoContainerRef = useRef(null);
 
   const commentsEndRef = useRef(null);
 
@@ -790,9 +797,17 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
         id: newComment.id
       });
 
+      // Add to sidebar comments
       setComments(prev => {
         console.log('Current comments before add:', prev.length);
         return [...prev, newComment];
+      });
+
+      // Add to overlay comments (for fullscreen display)
+      setOverlayComments(prev => {
+        const updated = [...prev, { ...newComment, overlayId: Date.now() + Math.random() }];
+        // Keep only last 15 comments in overlay to avoid clutter
+        return updated.slice(-15);
       });
 
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -1251,6 +1266,13 @@ newSocket.on('product-added', (data) => {
     };
 
     setComments((prev) => [...prev, newComment]);
+    
+    // Also add to overlay comments
+    setOverlayComments(prev => {
+      const updated = [...prev, { ...newComment, overlayId: Date.now() + Math.random() }];
+      return updated.slice(-15);
+    });
+    
     setComment('');
 
     // Emit comment to server
@@ -1259,6 +1281,105 @@ newSocket.on('product-added', (data) => {
       text: comment.trim()
     });
   };
+
+  const toggleFullscreen = async () => {
+    if (!videoContainerRef.current) return;
+
+    try {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        if (videoContainerRef.current.requestFullscreen) {
+          await videoContainerRef.current.requestFullscreen();
+        } else if (videoContainerRef.current.webkitRequestFullscreen) {
+          await videoContainerRef.current.webkitRequestFullscreen();
+        } else if (videoContainerRef.current.mozRequestFullScreen) {
+          await videoContainerRef.current.mozRequestFullScreen();
+        } else if (videoContainerRef.current.msRequestFullscreen) {
+          await videoContainerRef.current.msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error('Fullscreen error:', error);
+      setIsFullscreen(!isFullscreen);
+    }
+  };
+
+  // Listen for fullscreen changes and ESC key
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        const isCurrentlyFullscreen = !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        );
+        if (isCurrentlyFullscreen) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Auto-remove overlay comments after 6 seconds
+  useEffect(() => {
+    if (overlayComments.length === 0) return;
+
+    const timeouts = overlayComments.map((comment) => {
+      return setTimeout(() => {
+        setOverlayComments(prev => prev.filter(c => c.overlayId !== comment.overlayId));
+      }, 6000); // Remove after 6 seconds
+    });
+
+    return () => {
+      timeouts.forEach(timeout => clearTimeout(timeout));
+    };
+  }, [overlayComments.length]);
 
   if (loading) {
     return (
@@ -1363,6 +1484,75 @@ newSocket.on('product-added', (data) => {
           0% { transform: translateY(0) scale(1); opacity: 1; }
           100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
         }
+        @keyframes slideInLeft {
+          from { 
+            transform: translateX(-100%); 
+            opacity: 0; 
+          }
+          to { 
+            transform: translateX(0); 
+            opacity: 1; 
+          }
+        }
+        
+        /* Fullscreen styles */
+        .fullscreen-video-container:fullscreen {
+          width: 100vw !important;
+          height: 100vh !important;
+          border-radius: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #000;
+        }
+        .fullscreen-video-container:-webkit-full-screen {
+          width: 100vw !important;
+          height: 100vh !important;
+          border-radius: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #000;
+        }
+        .fullscreen-video-container:-moz-full-screen {
+          width: 100vw !important;
+          height: 100vh !important;
+          border-radius: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #000;
+        }
+        .fullscreen-video-container:-ms-fullscreen {
+          width: 100vw !important;
+          height: 100vh !important;
+          border-radius: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #000;
+        }
+        
+        .fullscreen-video-container:fullscreen video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover;
+        }
+        .fullscreen-video-container:-webkit-full-screen video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover;
+        }
+        .fullscreen-video-container:-moz-full-screen video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover;
+        }
+        .fullscreen-video-container:-ms-fullscreen video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover;
+        }
       `}</style>
 
       {error && (
@@ -1455,7 +1645,10 @@ newSocket.on('product-added', (data) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-6">
-            <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-3xl shadow-2xl overflow-hidden aspect-video relative">
+            <div
+              ref={videoContainerRef}
+              className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-3xl shadow-2xl overflow-hidden aspect-video relative fullscreen-video-container"
+            >
               {!hostParticipant ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -1474,17 +1667,88 @@ newSocket.on('product-added', (data) => {
                     muted
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full text-sm text-white flex items-center gap-2 shadow">
+                  <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full text-sm text-white flex items-center gap-2 shadow z-20">
                     <div className="w-2 h-2 bg-green-400 rounded-full" />
                     <span>@{hostParticipant.identity}</span>
                   </div>
                 </div>
               )}
 
+              {/* Fullscreen Button */}
+              <button
+                onClick={toggleFullscreen}
+                className="absolute top-4 right-4 z-30 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
+              >
+                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+              </button>
+
+              {/* Instagram-style Comments Overlay (Left Side) - Only in fullscreen */}
+              {isFullscreen && (
+                <div className="absolute bottom-0 left-0 w-80 max-w-[85%] p-4 pointer-events-none z-20" style={{ maxHeight: '70%', overflow: 'hidden' }}>
+                  <div className="flex flex-col gap-2 items-start">
+                    {overlayComments.map((comment, index) => (
+                      <div
+                        key={comment.overlayId || comment.id}
+                        className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto animate-slideInLeft shadow-lg border border-white/10"
+                        style={{
+                          animation: 'slideInLeft 0.3s ease-out',
+                          maxWidth: '100%',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                            {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+                          </div>
+                          <span className="font-semibold text-pink-300">{comment.username}</span>
+                          <span className="text-white/90">{comment.text}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Comment Input at Bottom (Only in fullscreen) */}
+              {isFullscreen && (
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-25">
+                  <form 
+                    onSubmit={sendComment} 
+                    className="flex gap-2 pointer-events-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="text"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder={!socketConnected ? 'Connecting...' : !hasAccess ? 'Join stream to comment...' : 'Comment...'}
+                      maxLength={200}
+                      disabled={!socketConnected || !hasAccess}
+                      className="flex-1 bg-white/90 border border-white/30 rounded-full px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-400 disabled:opacity-60"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!socketConnected || !hasAccess || !comment.trim()}
+                      className="bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg text-white p-2.5 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={sendHeart}
+                      disabled={!socketConnected}
+                      className="bg-white/90 text-pink-600 p-2.5 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      <Heart className="w-4 h-4" />
+                    </button>
+                  </form>
+                </div>
+              )}
+
               {hearts.map((heart) => (
                 <div
                   key={heart.id}
-                  className="absolute pointer-events-none text-3xl drop-shadow"
+                  className="absolute pointer-events-none text-3xl drop-shadow z-15"
                   style={{
                     left: `${heart.x}%`,
                     bottom: '0',
