@@ -1003,26 +1003,45 @@ const HostLiveStream = ({ onBack }) => {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   const toggleFullscreen = async () => {
-    // Use container fullscreen for all browsers (including iOS) to keep chat overlays visible
-    // iOS Safari supports webkitRequestFullscreen on containers, which allows overlays
     if (!videoContainerRef.current) return;
 
     try {
       if (!isFullscreen) {
-        // Enter fullscreen - try standard API first, then vendor prefixes
+        // For iOS, use CSS-based fullscreen since container fullscreen API doesn't work
+        if (isIOS) {
+          // iOS doesn't support container fullscreen API, use CSS approach
+          videoContainerRef.current.classList.add('ios-fullscreen');
+          document.body.style.overflow = 'hidden';
+          setIsFullscreen(true);
+          return;
+        }
+
+        // For other browsers, use native fullscreen API
         if (videoContainerRef.current.requestFullscreen) {
           await videoContainerRef.current.requestFullscreen();
         } else if (videoContainerRef.current.webkitRequestFullscreen) {
-          // iOS Safari and older WebKit browsers
           await videoContainerRef.current.webkitRequestFullscreen();
         } else if (videoContainerRef.current.mozRequestFullScreen) {
           await videoContainerRef.current.mozRequestFullScreen();
         } else if (videoContainerRef.current.msRequestFullscreen) {
           await videoContainerRef.current.msRequestFullscreen();
+        } else {
+          // Fallback to CSS-based fullscreen if API not available
+          videoContainerRef.current.classList.add('ios-fullscreen');
+          document.body.style.overflow = 'hidden';
         }
         setIsFullscreen(true);
       } else {
         // Exit fullscreen
+        if (isIOS) {
+          // Remove CSS-based fullscreen for iOS
+          videoContainerRef.current.classList.remove('ios-fullscreen');
+          document.body.style.overflow = '';
+          setIsFullscreen(false);
+          return;
+        }
+
+        // For other browsers, use native exit fullscreen
         if (document.exitFullscreen) {
           await document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
@@ -1031,13 +1050,25 @@ const HostLiveStream = ({ onBack }) => {
           await document.mozCancelFullScreen();
         } else if (document.msExitFullscreen) {
           await document.msExitFullscreen();
+        } else {
+          // Fallback: remove CSS-based fullscreen
+          videoContainerRef.current.classList.remove('ios-fullscreen');
+          document.body.style.overflow = '';
         }
         setIsFullscreen(false);
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
-      // Fallback: try to update state anyway
-      setIsFullscreen(!isFullscreen);
+      // Fallback to CSS-based fullscreen on error
+      if (!isFullscreen) {
+        videoContainerRef.current.classList.add('ios-fullscreen');
+        document.body.style.overflow = 'hidden';
+        setIsFullscreen(true);
+      } else {
+        videoContainerRef.current.classList.remove('ios-fullscreen');
+        document.body.style.overflow = '';
+        setIsFullscreen(false);
+      }
     }
   };
 
@@ -1072,6 +1103,13 @@ const HostLiveStream = ({ onBack }) => {
           } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
           }
+        } else if (isFullscreen && isIOS) {
+          // Exit iOS CSS-based fullscreen
+          if (videoContainerRef.current) {
+            videoContainerRef.current.classList.remove('ios-fullscreen');
+            document.body.style.overflow = '';
+            setIsFullscreen(false);
+          }
         }
       }
     };
@@ -1089,8 +1127,14 @@ const HostLiveStream = ({ onBack }) => {
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
+      
+      // Cleanup iOS fullscreen on unmount
+      if (videoContainerRef.current && isIOS) {
+        videoContainerRef.current.classList.remove('ios-fullscreen');
+        document.body.style.overflow = '';
+      }
     };
-  }, []);
+  }, [isFullscreen, isIOS]);
 
   // Auto-remove overlay comments after 5 seconds
   useEffect(() => {
@@ -1243,8 +1287,27 @@ const HostLiveStream = ({ onBack }) => {
             position: relative;
           }
           
+          /* iOS CSS-based fullscreen fallback */
+          .fullscreen-video-container.ios-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            border-radius: 0 !important;
+            background: #000 !important;
+          }
+          
+          .fullscreen-video-container.ios-fullscreen video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+          }
+          
           /* Ensure chat overlays are visible in fullscreen on iOS */
-          .fullscreen-video-container:-webkit-full-screen .absolute {
+          .fullscreen-video-container:-webkit-full-screen .absolute,
+          .fullscreen-video-container.ios-fullscreen .absolute {
             position: absolute !important;
           }
         `}</style>
