@@ -1513,6 +1513,10 @@ newSocket.on('product-added', (data) => {
           align-items: center;
           justify-content: center;
           background: #000;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          z-index: 9999 !important;
         }
         .fullscreen-video-container:-webkit-full-screen {
           width: 100vw !important;
@@ -1522,6 +1526,10 @@ newSocket.on('product-added', (data) => {
           align-items: center;
           justify-content: center;
           background: #000;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          z-index: 9999 !important;
         }
         .fullscreen-video-container:-moz-full-screen {
           width: 100vw !important;
@@ -1531,6 +1539,10 @@ newSocket.on('product-added', (data) => {
           align-items: center;
           justify-content: center;
           background: #000;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          z-index: 9999 !important;
         }
         .fullscreen-video-container:-ms-fullscreen {
           width: 100vw !important;
@@ -1540,27 +1552,40 @@ newSocket.on('product-added', (data) => {
           align-items: center;
           justify-content: center;
           background: #000;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          z-index: 9999 !important;
         }
         
         .fullscreen-video-container:fullscreen video {
           width: 100% !important;
           height: 100% !important;
           object-fit: cover;
+          position: relative;
         }
         .fullscreen-video-container:-webkit-full-screen video {
           width: 100% !important;
           height: 100% !important;
           object-fit: cover;
+          position: relative;
         }
         .fullscreen-video-container:-moz-full-screen video {
           width: 100% !important;
           height: 100% !important;
           object-fit: cover;
+          position: relative;
         }
         .fullscreen-video-container:-ms-fullscreen video {
           width: 100% !important;
           height: 100% !important;
           object-fit: cover;
+          position: relative;
+        }
+        
+        /* Ensure chat overlays are visible in fullscreen on iOS */
+        .fullscreen-video-container:-webkit-full-screen .absolute {
+          position: absolute !important;
         }
       `}</style>
 
@@ -1687,7 +1712,8 @@ newSocket.on('product-added', (data) => {
               {/* Fullscreen Button */}
               <button
                 onClick={toggleFullscreen}
-                className="absolute top-4 right-4 z-30 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                style={{ zIndex: 50 }}
                 title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
               >
                 {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
@@ -1695,7 +1721,15 @@ newSocket.on('product-added', (data) => {
 
               {/* Instagram-style Comments Overlay (Left Side) - Only in fullscreen */}
               {isFullscreen && (
-                <div className="absolute bottom-0 left-0 w-80 max-w-[85%] p-4 pointer-events-none z-20" style={{ maxHeight: '70%', overflow: 'hidden' }}>
+                <div 
+                  className="absolute bottom-0 left-0 w-80 max-w-[85%] p-4 pointer-events-none z-50" 
+                  style={{ 
+                    maxHeight: '70%', 
+                    overflow: 'hidden',
+                    position: 'absolute',
+                    zIndex: 50
+                  }}
+                >
                   <div className="flex flex-col gap-2 items-start">
                     {overlayComments.map((comment, index) => (
                       <div
@@ -1722,7 +1756,13 @@ newSocket.on('product-added', (data) => {
 
               {/* Comment Input at Bottom (Only in fullscreen) */}
               {isFullscreen && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-25">
+                <div 
+                  className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-50"
+                  style={{
+                    position: 'absolute',
+                    zIndex: 50
+                  }}
+                >
                   <form 
                     onSubmit={sendComment} 
                     className="flex gap-2 pointer-events-auto"
