@@ -1288,35 +1288,17 @@ newSocket.on('product-added', (data) => {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   const toggleFullscreen = async () => {
-    // For iOS, use webkitEnterFullscreen on the video element directly
-    if (isIOS && videoRef.current) {
-      try {
-        if (!isFullscreen) {
-          // iOS Safari requires webkitEnterFullscreen on video element
-          if (videoRef.current.webkitEnterFullscreen) {
-            videoRef.current.webkitEnterFullscreen();
-            setIsFullscreen(true);
-          }
-        } else {
-          // iOS doesn't support programmatic exit, user must use native controls
-          // But we can try to update state if video exits fullscreen
-          setIsFullscreen(false);
-        }
-      } catch (error) {
-        console.error('iOS Fullscreen error:', error);
-      }
-      return;
-    }
-
-    // For other browsers, use container fullscreen
+    // Use container fullscreen for all browsers (including iOS) to keep chat overlays visible
+    // iOS Safari supports webkitRequestFullscreen on containers, which allows overlays
     if (!videoContainerRef.current) return;
 
     try {
       if (!isFullscreen) {
-        // Enter fullscreen
+        // Enter fullscreen - try standard API first, then vendor prefixes
         if (videoContainerRef.current.requestFullscreen) {
           await videoContainerRef.current.requestFullscreen();
         } else if (videoContainerRef.current.webkitRequestFullscreen) {
+          // iOS Safari and older WebKit browsers
           await videoContainerRef.current.webkitRequestFullscreen();
         } else if (videoContainerRef.current.mozRequestFullScreen) {
           await videoContainerRef.current.mozRequestFullScreen();
@@ -1377,22 +1359,12 @@ newSocket.on('product-added', (data) => {
       }
     };
 
-    // iOS-specific video fullscreen event handlers
-    const handleIOSBeginFullscreen = () => setIsFullscreen(true);
-    const handleIOSEndFullscreen = () => setIsFullscreen(false);
-
-    // Standard fullscreen events for non-iOS browsers
+    // Standard fullscreen events for all browsers (including iOS)
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     document.addEventListener('keydown', handleKeyDown);
-
-    // iOS-specific video fullscreen events
-    if (isIOS && videoRef.current) {
-      videoRef.current.addEventListener('webkitbeginfullscreen', handleIOSBeginFullscreen);
-      videoRef.current.addEventListener('webkitendfullscreen', handleIOSEndFullscreen);
-    }
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
@@ -1400,13 +1372,8 @@ newSocket.on('product-added', (data) => {
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
-      
-      if (isIOS && videoRef.current) {
-        videoRef.current.removeEventListener('webkitbeginfullscreen', handleIOSBeginFullscreen);
-        videoRef.current.removeEventListener('webkitendfullscreen', handleIOSEndFullscreen);
-      }
     };
-  }, [isIOS]);
+  }, []);
 
   // Auto-remove overlay comments after 6 seconds
   useEffect(() => {
