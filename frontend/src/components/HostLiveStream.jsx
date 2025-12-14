@@ -1036,29 +1036,58 @@ const HostLiveStream = ({ onBack }) => {
 
   // Listen for fullscreen changes and ESC key
  const toggleFullscreen = async () => {
-  const videoEl = videoRef.current || localVideoRef.current;
-  if (!videoEl) return;
+  // Helper to detect iPhone (not iPad)
+  const isIphone = /iPhone/.test(navigator.userAgent) && !/iPad/.test(navigator.userAgent);
+
+  if (isIphone) {
+    // Use iOS-native fullscreen on the <video> element only
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+
+    if (videoEl.webkitDisplayingFullscreen) {
+      // Exit native fullscreen
+      videoEl.webkitExitFullscreen();
+    } else {
+      // Enter native fullscreen (must be called from user gesture)
+      videoEl.webkitEnterFullscreen();
+    }
+    // Update your state for icon toggle (optional, since native UI handles exit)
+    setIsFullscreen(!isFullscreen);
+    return;
+  }
+
+  // Existing code for non-iPhone (Android, PC, iPad)
+  if (!videoContainerRef.current) return;
 
   try {
-    // iOS Safari: ONLY video fullscreen works
-    if (isIOS()) {
-      if (videoEl.webkitEnterFullscreen) {
-        videoEl.webkitEnterFullscreen();
+    if (!isFullscreen) {
+      if (videoContainerRef.current.requestFullscreen) {
+        await videoContainerRef.current.requestFullscreen();
+      } else if (videoContainerRef.current.webkitRequestFullscreen) {
+        await videoContainerRef.current.webkitRequestFullscreen();
+      } else if (videoContainerRef.current.mozRequestFullScreen) {
+        await videoContainerRef.current.mozRequestFullScreen();
+      } else if (videoContainerRef.current.msRequestFullscreen) {
+        await videoContainerRef.current.msRequestFullscreen();
       }
-      return;
-    }
-
-    // Android + Desktop
-    if (!document.fullscreenElement) {
-      await videoContainerRef.current.requestFullscreen();
+      setIsFullscreen(true);
     } else {
-      await document.exitFullscreen();
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        await document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        await document.msExitFullscreen();
+      }
+      setIsFullscreen(false);
     }
-  } catch (err) {
-    console.error('Fullscreen error:', err);
+  } catch (error) {
+    console.error('Fullscreen error:', error);
+    setIsFullscreen(!isFullscreen);
   }
 };
-
  
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1367,7 +1396,7 @@ const HostLiveStream = ({ onBack }) => {
                 <video
                   ref={videoRef}
                   autoPlay
-                  playsInline={!isIOS()}
+                  playsInline
                   muted
                   className="w-full h-full"
                   style={{
