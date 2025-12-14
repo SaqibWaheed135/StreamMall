@@ -998,43 +998,68 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  const toggleFullscreen = async () => {
-    if (!videoContainerRef.current) return;
+  // const toggleFullscreen = async () => {
+  //   if (!videoContainerRef.current) return;
 
-    try {
-      if (!isFullscreen) {
-        // Enter fullscreen
-        if (videoContainerRef.current.requestFullscreen) {
-          await videoContainerRef.current.requestFullscreen();
-        } else if (videoContainerRef.current.webkitRequestFullscreen) {
-          await videoContainerRef.current.webkitRequestFullscreen();
-        } else if (videoContainerRef.current.mozRequestFullScreen) {
-          await videoContainerRef.current.mozRequestFullScreen();
-        } else if (videoContainerRef.current.msRequestFullscreen) {
-          await videoContainerRef.current.msRequestFullscreen();
-        }
-        setIsFullscreen(true);
-      } else {
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-          await document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-          await document.msExitFullscreen();
-        }
-        setIsFullscreen(false);
-      }
-    } catch (error) {
-      console.error('Fullscreen error:', error);
-      // Fallback: try to update state anyway
-      setIsFullscreen(!isFullscreen);
-    }
-  };
+  //   try {
+  //     if (!isFullscreen) {
+  //       // Enter fullscreen
+  //       if (videoContainerRef.current.requestFullscreen) {
+  //         await videoContainerRef.current.requestFullscreen();
+  //       } else if (videoContainerRef.current.webkitRequestFullscreen) {
+  //         await videoContainerRef.current.webkitRequestFullscreen();
+  //       } else if (videoContainerRef.current.mozRequestFullScreen) {
+  //         await videoContainerRef.current.mozRequestFullScreen();
+  //       } else if (videoContainerRef.current.msRequestFullscreen) {
+  //         await videoContainerRef.current.msRequestFullscreen();
+  //       }
+  //       setIsFullscreen(true);
+  //     } else {
+  //       // Exit fullscreen
+  //       if (document.exitFullscreen) {
+  //         await document.exitFullscreen();
+  //       } else if (document.webkitExitFullscreen) {
+  //         await document.webkitExitFullscreen();
+  //       } else if (document.mozCancelFullScreen) {
+  //         await document.mozCancelFullScreen();
+  //       } else if (document.msExitFullscreen) {
+  //         await document.msExitFullscreen();
+  //       }
+  //       setIsFullscreen(false);
+  //     }
+  //   } catch (error) {
+  //     console.error('Fullscreen error:', error);
+  //     // Fallback: try to update state anyway
+  //     setIsFullscreen(!isFullscreen);
+  //   }
+  // };
 
   // Listen for fullscreen changes and ESC key
+ const toggleFullscreen = async () => {
+  const videoEl = videoRef.current || localVideoRef.current;
+  if (!videoEl) return;
+
+  try {
+    // iOS Safari: ONLY video fullscreen works
+    if (isIOS()) {
+      if (videoEl.webkitEnterFullscreen) {
+        videoEl.webkitEnterFullscreen();
+      }
+      return;
+    }
+
+    // Android + Desktop
+    if (!document.fullscreenElement) {
+      await videoContainerRef.current.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch (err) {
+    console.error('Fullscreen error:', err);
+  }
+};
+
+ 
   useEffect(() => {
     const handleFullscreenChange = () => {
       const isCurrentlyFullscreen = !!(
@@ -1342,7 +1367,7 @@ const HostLiveStream = ({ onBack }) => {
                 <video
                   ref={videoRef}
                   autoPlay
-                  playsInline
+                  playsInline={!isIOS()}
                   muted
                   className="w-full h-full"
                   style={{
