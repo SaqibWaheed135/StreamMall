@@ -1178,6 +1178,80 @@ const HostLiveStream = ({ onBack }) => {
   };
 
   // Detect iOS device
+  // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+  //   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // const toggleFullscreen = async () => {
+  //   if (!videoContainerRef.current) return;
+
+  //   try {
+  //     if (!isFullscreen) {
+  //       // For iOS, use CSS-based fullscreen since container fullscreen API doesn't work
+  //       if (isIOS) {
+  //         // iOS doesn't support container fullscreen API, use CSS approach
+  //         videoContainerRef.current.classList.add('ios-fullscreen');
+  //         document.body.style.overflow = 'hidden';
+  //         setIsFullscreen(true);
+  //         return;
+  //       }
+
+  //       // For other browsers, use native fullscreen API
+  //       if (videoContainerRef.current.requestFullscreen) {
+  //         await videoContainerRef.current.requestFullscreen();
+  //       } else if (videoContainerRef.current.webkitRequestFullscreen) {
+  //         await videoContainerRef.current.webkitRequestFullscreen();
+  //       } else if (videoContainerRef.current.mozRequestFullScreen) {
+  //         await videoContainerRef.current.mozRequestFullScreen();
+  //       } else if (videoContainerRef.current.msRequestFullscreen) {
+  //         await videoContainerRef.current.msRequestFullscreen();
+  //       } else {
+  //         // Fallback to CSS-based fullscreen if API not available
+  //         videoContainerRef.current.classList.add('ios-fullscreen');
+  //         document.body.style.overflow = 'hidden';
+  //       }
+  //       setIsFullscreen(true);
+  //     } else {
+  //       // Exit fullscreen
+  //       if (isIOS) {
+  //         // Remove CSS-based fullscreen for iOS
+  //         videoContainerRef.current.classList.remove('ios-fullscreen');
+  //         document.body.style.overflow = '';
+  //         setIsFullscreen(false);
+  //         return;
+  //       }
+
+  //       // For other browsers, use native exit fullscreen
+  //       if (document.exitFullscreen) {
+  //         await document.exitFullscreen();
+  //       } else if (document.webkitExitFullscreen) {
+  //         await document.webkitExitFullscreen();
+  //       } else if (document.mozCancelFullScreen) {
+  //         await document.mozCancelFullScreen();
+  //       } else if (document.msExitFullscreen) {
+  //         await document.msExitFullscreen();
+  //       } else {
+  //         // Fallback: remove CSS-based fullscreen
+  //         videoContainerRef.current.classList.remove('ios-fullscreen');
+  //         document.body.style.overflow = '';
+  //       }
+  //       setIsFullscreen(false);
+  //     }
+  //   } catch (error) {
+  //     console.error('Fullscreen error:', error);
+  //     // Fallback to CSS-based fullscreen on error
+  //     if (!isFullscreen) {
+  //       videoContainerRef.current.classList.add('ios-fullscreen');
+  //       document.body.style.overflow = 'hidden';
+  //       setIsFullscreen(true);
+  //     } else {
+  //       videoContainerRef.current.classList.remove('ios-fullscreen');
+  //       document.body.style.overflow = '';
+  //       setIsFullscreen(false);
+  //     }
+  //   }
+  // };
+
+  // Detect iOS device
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
@@ -1191,6 +1265,11 @@ const HostLiveStream = ({ onBack }) => {
           // iOS doesn't support container fullscreen API, use CSS approach
           videoContainerRef.current.classList.add('ios-fullscreen');
           document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden'; // Also prevent html scroll
+          // Lock screen orientation to landscape on iOS if possible
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+          }
           setIsFullscreen(true);
           return;
         }
@@ -1208,6 +1287,7 @@ const HostLiveStream = ({ onBack }) => {
           // Fallback to CSS-based fullscreen if API not available
           videoContainerRef.current.classList.add('ios-fullscreen');
           document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
         }
         setIsFullscreen(true);
       } else {
@@ -1216,6 +1296,11 @@ const HostLiveStream = ({ onBack }) => {
           // Remove CSS-based fullscreen for iOS
           videoContainerRef.current.classList.remove('ios-fullscreen');
           document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
+          // Unlock screen orientation
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
           setIsFullscreen(false);
           return;
         }
@@ -1233,6 +1318,7 @@ const HostLiveStream = ({ onBack }) => {
           // Fallback: remove CSS-based fullscreen
           videoContainerRef.current.classList.remove('ios-fullscreen');
           document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
         }
         setIsFullscreen(false);
       }
@@ -1242,10 +1328,12 @@ const HostLiveStream = ({ onBack }) => {
       if (!isFullscreen) {
         videoContainerRef.current.classList.add('ios-fullscreen');
         document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
         setIsFullscreen(true);
       } else {
         videoContainerRef.current.classList.remove('ios-fullscreen');
         document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
         setIsFullscreen(false);
       }
     }
