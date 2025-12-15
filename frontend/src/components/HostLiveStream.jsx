@@ -1263,13 +1263,12 @@ const HostLiveStream = ({ onBack }) => {
         // For iOS, use CSS-based fullscreen since container fullscreen API doesn't work
         if (isIOS) {
           // iOS doesn't support container fullscreen API, use CSS approach
+          document.body.classList.add('ios-fullscreen-active');
           videoContainerRef.current.classList.add('ios-fullscreen');
           document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden'; // Also prevent html scroll
-          // Lock screen orientation to landscape on iOS if possible
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-          }
+          document.documentElement.style.overflow = 'hidden';
+          // Force repaint to ensure styles apply
+          videoContainerRef.current.offsetHeight;
           setIsFullscreen(true);
           return;
         }
@@ -1294,13 +1293,10 @@ const HostLiveStream = ({ onBack }) => {
         // Exit fullscreen
         if (isIOS) {
           // Remove CSS-based fullscreen for iOS
+          document.body.classList.remove('ios-fullscreen-active');
           videoContainerRef.current.classList.remove('ios-fullscreen');
           document.body.style.overflow = '';
           document.documentElement.style.overflow = '';
-          // Unlock screen orientation
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
           setIsFullscreen(false);
           return;
         }
@@ -1326,11 +1322,17 @@ const HostLiveStream = ({ onBack }) => {
       console.error('Fullscreen error:', error);
       // Fallback to CSS-based fullscreen on error
       if (!isFullscreen) {
+        if (isIOS) {
+          document.body.classList.add('ios-fullscreen-active');
+        }
         videoContainerRef.current.classList.add('ios-fullscreen');
         document.body.style.overflow = 'hidden';
         document.documentElement.style.overflow = 'hidden';
         setIsFullscreen(true);
       } else {
+        if (isIOS) {
+          document.body.classList.remove('ios-fullscreen-active');
+        }
         videoContainerRef.current.classList.remove('ios-fullscreen');
         document.body.style.overflow = '';
         document.documentElement.style.overflow = '';
@@ -1397,8 +1399,10 @@ const HostLiveStream = ({ onBack }) => {
       
       // Cleanup iOS fullscreen on unmount
       if (videoContainerRef.current && isIOS) {
+        document.body.classList.remove('ios-fullscreen-active');
         videoContainerRef.current.classList.remove('ios-fullscreen');
         document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
       }
     };
   }, [isFullscreen, isIOS]);
@@ -1559,17 +1563,41 @@ const HostLiveStream = ({ onBack }) => {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            z-index: 9999 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 99999 !important;
             border-radius: 0 !important;
             background: #000 !important;
+            transform: none !important;
           }
           
           .fullscreen-video-container.ios-fullscreen video {
             width: 100% !important;
             height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
             object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+          }
+          
+          /* Ensure parent containers don't constrain iOS fullscreen */
+          body.ios-fullscreen-active {
+            overflow: hidden !important;
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+          }
+          
+          body.ios-fullscreen-active > * {
+            overflow: hidden !important;
           }
           
           /* Ensure chat overlays are visible in fullscreen on iOS */
