@@ -808,7 +808,17 @@ const HostLiveStream = ({ onBack }) => {
         }
 
         const streamInfo = await streamRes.json();
-        setStreamData(streamInfo);
+        // Ensure streamData has streamId field (API might return _id)
+        const normalizedStreamData = {
+          ...streamInfo,
+          streamId: streamInfo.streamId || streamInfo._id || session.streamId,
+          stream: streamInfo.stream || streamInfo,
+          // Preserve other fields that might be needed
+          roomUrl: session.roomUrl,
+          publishToken: session.publishToken
+        };
+        console.log('✅ Resuming stream with data:', normalizedStreamData);
+        setStreamData(normalizedStreamData);
 
         if (!localStream) {
           await startCameraPreview();
@@ -891,10 +901,31 @@ const HostLiveStream = ({ onBack }) => {
   }, [isLive, liveKitReady]);
 
   const endStream = async () => {
-    if (!streamData?.streamId) return;
+    // Get streamId from streamData or fallback to localStorage session
+    let streamId = streamData?.streamId || streamData?._id;
+    
+    if (!streamId) {
+      // Fallback: try to get from saved session
+      const saved = localStorage.getItem(ACTIVE_HOST_STREAM_KEY);
+      if (saved) {
+        try {
+          const session = JSON.parse(saved);
+          streamId = session.streamId;
+        } catch (e) {
+          console.error('Failed to parse saved session:', e);
+        }
+      }
+    }
+    
+    if (!streamId) {
+      console.error('Cannot end stream: streamId not found');
+      console.error('streamData:', streamData);
+      setError('Cannot end stream: stream ID not found');
+      return;
+    }
 
+    console.log('🛑 Ending stream with streamId:', streamId);
     const token = localStorage.getItem('token');
-    const streamId = streamData.streamId;
 
     try {
       const response = await fetch(`${API_BASE_URL}/live/${streamId}/end`, {
