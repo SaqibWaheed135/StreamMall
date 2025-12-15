@@ -8,8 +8,20 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
+    // Get current user ID
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setCurrentUserId(user._id || user.id);
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+      }
+    }
+    
     fetchLiveStreams();
     const interval = setInterval(fetchLiveStreams, 5000);
     return () => clearInterval(interval);
@@ -24,7 +36,26 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
         throw new Error(data.msg || 'Failed to fetch streams');
       }
 
-      setStreams(data);
+      // Filter out the current user's own streams
+      const userData = localStorage.getItem("user");
+      let userId = currentUserId;
+      if (!userId && userData) {
+        try {
+          const user = JSON.parse(userData);
+          userId = user._id || user.id;
+        } catch (e) {
+          console.error("Error parsing user data:", e);
+        }
+      }
+      
+      const filteredData = userId 
+        ? data.filter(stream => {
+            const streamerId = stream.streamer?._id || stream.streamer?.id || stream.streamer;
+            return streamerId !== userId;
+          })
+        : data;
+
+      setStreams(filteredData);
       setError('');
     } catch (err) {
       console.error('Fetch streams error:', err);
@@ -91,7 +122,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                 Live Streams
               </h1>
               <p className="text-sm sm:text-base text-gray-700 mt-2">
-                {streams.length} {streams.length === 1 ? 'stream' : 'streams'} live now
+                {filteredStreams.length} {filteredStreams.length === 1 ? 'stream' : 'streams'} live now
               </p>
             </div>
             <button

@@ -82,7 +82,27 @@ export default function StreamMallHome() {
       if (!response.ok) {
         throw new Error(data.msg || 'Failed to fetch streams');
       }
-      setLiveRooms(data);
+      
+      // Filter out the current user's own streams
+      const userData = localStorage.getItem("user");
+      let currentUserId = null;
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          currentUserId = user._id || user.id;
+        } catch (e) {
+          console.error("Error parsing user data:", e);
+        }
+      }
+      
+      const filteredData = currentUserId 
+        ? data.filter(stream => {
+            const streamerId = stream.streamer?._id || stream.streamer?.id || stream.streamer;
+            return streamerId !== currentUserId;
+          })
+        : data;
+      
+      setLiveRooms(filteredData);
 
     } catch (error) {
       console.error("Error fetching live rooms:", error);
