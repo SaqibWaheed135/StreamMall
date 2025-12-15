@@ -69,6 +69,9 @@ const getCameraConstraints = () => {
   };
 };
 
+// Key used to persist the host's active live session so they can return
+const ACTIVE_HOST_STREAM_KEY = 'activeHostStream';
+
 const HostLiveStream = ({ onBack }) => {
   const [isLive, setIsLive] = useState(false);
   const [streamData, setStreamData] = useState(null);
@@ -259,6 +262,8 @@ const HostLiveStream = ({ onBack }) => {
 
     return () => {
       // Cleanup function - ensure all resources are properly released
+      // NOTE: this only runs when leaving the host screen entirely.
+      // The logical "end" of a stream is controlled by endStream().
       try {
         if (localStream) {
           localStream.getTracks().forEach(track => track.stop());
@@ -543,6 +548,22 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
+  const persistActiveHostStream = (payload) => {
+    try {
+      localStorage.setItem(ACTIVE_HOST_STREAM_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('Could not persist active host stream:', e);
+    }
+  };
+
+  const clearActiveHostStream = () => {
+    try {
+      localStorage.removeItem(ACTIVE_HOST_STREAM_KEY);
+    } catch (e) {
+      console.warn('Could not clear active host stream:', e);
+    }
+  };
+
   const startStream = async () => {
     if (!title.trim()) {
       setError('Please enter a title');
@@ -677,6 +698,15 @@ const HostLiveStream = ({ onBack }) => {
       });
       setViewerCount(0);
       setIsLive(true);
+
+      // Persist session so host can return to this stream after navigating away
+      persistActiveHostStream({
+        streamId: data.streamId,
+        roomUrl: data.roomUrl,
+        publishToken: data.publishToken,
+        title: data.stream?.title || title.trim(),
+        startedAt: Date.now()
+      });
     } catch (err) {
       console.error('Error starting stream:', err);
       setError(err.message);
@@ -745,6 +775,121 @@ const HostLiveStream = ({ onBack }) => {
     };
   }, [isLive]);
 
+  // Auto-resume hosting if there is an active host session saved.
+  // This lets the host navigate to other tabs (e.g. Profile) and come back.
+  useEffect(() => {
+    const saved = localStorage.getItem(ACTIVE_HOST_STREAM_KEY);
+    if (!saved || isLive || !liveKitReady) return;
+
+    const resume = async () => {
+      try {
+        const session = JSON.parse(saved);
+        if (!session?.streamId || !session?.roomUrl || !session?.publishToken) {
+          clearActiveHostStream();
+          return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        const token = localStorage.getItem('token');
+
+        // Fetch latest stream details so UI is up to date
+        const streamRes = await fetch(`${API_BASE_URL}/live/${session.streamId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` })
+          }
+        });
+
+        if (!streamRes.ok) {
+          clearActiveHostStream();
+          return;
+        }
+
+        const streamInfo = await streamRes.json();
+        setStreamData(streamInfo);
+
+        if (!localStream) {
+          await startCameraPreview();
+        }
+
+        const room = new Room({
+          adaptiveStream: true,
+          dynacast: true,
+          videoCaptureDefaults: {
+            ...(isMobile() && {
+              resolution: { width: 640, height: 480 }
+            }),
+            ...(!isMobile() && {
+              resolution: { width: 1280, height: 720, frameRate: 30 }
+            })
+          },
+          audioCaptureDefaults: {
+            echoCancellation: true,
+            noiseSuppression: true,
+          }
+        });
+
+        await room.connect(session.roomUrl, session.publishToken);
+        console.log('✅ Reconnected to LiveKit room as host (resume)');
+
+        room.on(RoomEvent.ParticipantConnected, () => {
+          setViewerCount(room.remoteParticipants.size);
+        });
+
+        room.on(RoomEvent.ParticipantDisconnected, () => {
+          setViewerCount(room.remoteParticipants.size);
+        });
+
+        await room.localParticipant.enableCameraAndMicrophone();
+
+        room.on(RoomEvent.LocalTrackPublished, (publication) => {
+          if (publication.source === Track.Source.Camera) {
+            const localVideoTrack = publication.track;
+            if (localVideoTrack && localVideoTrack.mediaStreamTrack && videoRef.current) {
+              attachVideoStream(localVideoTrack);
+            }
+          }
+        });
+
+        room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+          if (publication.source === Track.Source.Camera) {
+            // keep last frame
+          }
+        });
+
+        const updateVideoOnTrackChange = () => {
+          const camPublication = room.localParticipant.getTrackPublication(Track.Source.Camera);
+          if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack && videoRef.current) {
+            const enabled = !camPublication.isMuted && camPublication.track.mediaStreamTrack.enabled;
+            if (enabled) {
+              attachVideoStream(camPublication.track);
+            }
+          }
+        };
+
+        trackCheckIntervalRef.current = setInterval(updateVideoOnTrackChange, 300);
+        room.on(RoomEvent.Disconnected, () => {
+          if (trackCheckIntervalRef.current) {
+            clearInterval(trackCheckIntervalRef.current);
+            trackCheckIntervalRef.current = null;
+          }
+        });
+
+        setLiveKitRoom(room);
+        setIsLive(true);
+      } catch (err) {
+        console.error('Error resuming host stream:', err);
+        clearActiveHostStream();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    resume();
+  }, [isLive, liveKitReady]);
+
   const endStream = async () => {
     if (!streamData?.streamId) return;
 
@@ -811,6 +956,9 @@ const HostLiveStream = ({ onBack }) => {
       setTips([]);
       setPaidViewersCount(0);
       setOverlayComments([]);
+
+      // Clear saved host session so the app stops showing the "return to live" UI
+      clearActiveHostStream();
 
       // Navigate back after a small delay to ensure cleanup completes
       setTimeout(() => {

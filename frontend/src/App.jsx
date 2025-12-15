@@ -144,10 +144,18 @@ const App = () => {
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [showIosBanner, setShowIosBanner] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [activeHostStream, setActiveHostStream] = useState(null);
 
 
   useEffect(() => {
     setCurrentScreen(location.pathname);
+    // Refresh active host stream info whenever route changes
+    try {
+      const raw = localStorage.getItem('activeHostStream');
+      setActiveHostStream(raw ? JSON.parse(raw) : null);
+    } catch {
+      setActiveHostStream(null);
+    }
   }, [location]);
 
   // Check if app is already installed (running in standalone mode)
@@ -302,6 +310,22 @@ const App = () => {
           />
         </Routes>
       </main>
+
+      {/* Host is live: quick return bar (visible on all screens except the host view) */}
+      {activeHostStream && currentScreen !== '/host-live-stream' && (
+        <div className="fixed bottom-24 left-0 right-0 flex justify-center z-50 px-4">
+          <button
+            onClick={() => navigate('/host-live-stream')}
+            className="max-w-md w-full bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center justify-between gap-3 text-sm sm:text-base"
+          >
+            <span className="flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 rounded-full bg-red-400 animate-ping" />
+              <span className="font-semibold">You are live</span>
+            </span>
+            <span className="font-semibold underline">Return to your stream</span>
+          </button>
+        </div>
+      )}
 
       {/* Android Install Button */}
       {showInstallButton && !isStandalone && (
