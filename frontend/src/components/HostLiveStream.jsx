@@ -118,7 +118,6 @@ const HostLiveStream = ({ onBack }) => {
   // Fullscreen and overlay comments state
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [overlayComments, setOverlayComments] = useState([]);
-  const [iosFullscreenPanel, setIosFullscreenPanel] = useState(null); // 'products' | 'orders' | 'chat' | null
   const videoContainerRef = useRef(null);
 
   const videoRef = useRef(null);
@@ -1180,8 +1179,8 @@ const HostLiveStream = ({ onBack }) => {
   };
 
   // Detect iOS device
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+  //   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   // const toggleFullscreen = async () => {
   //   if (!videoContainerRef.current) return;
@@ -1261,17 +1260,6 @@ const HostLiveStream = ({ onBack }) => {
 
     try {
       if (!isFullscreen) {
-        // iPhone: use native video fullscreen for true system fullscreen
-        if (isIOS && videoEl && typeof videoEl.webkitEnterFullscreen === 'function') {
-          try {
-            videoEl.webkitEnterFullscreen();
-            setIsFullscreen(true);
-            return;
-          } catch (err) {
-            console.error('iOS native video fullscreen error:', err);
-          }
-        }
-
         // 1) Prefer screenfull (cross-browser fullscreen for containers)
         if (screenfull.isEnabled && container) {
           await screenfull.toggle(container);
@@ -1279,7 +1267,18 @@ const HostLiveStream = ({ onBack }) => {
           return;
         }
 
-        // 2) Fallback: use browser fullscreen API directly on container
+        // 2) iOS Safari: try native video fullscreen API
+        if (videoEl && typeof videoEl.webkitEnterFullscreen === 'function') {
+          try {
+            videoEl.webkitEnterFullscreen();
+            setIsFullscreen(true);
+            return;
+          } catch (err) {
+            console.error('iOS video fullscreen error:', err);
+          }
+        }
+
+        // 3) Fallback: use browser fullscreen API directly on container
         if (container) {
           if (container.requestFullscreen) {
             await container.requestFullscreen();
@@ -1290,7 +1289,7 @@ const HostLiveStream = ({ onBack }) => {
           } else if (container.msRequestFullscreen) {
             await container.msRequestFullscreen();
           } else {
-            // 3) Last-resort CSS-based fullscreen (works on older iOS too)
+            // 4) Last-resort CSS-based fullscreen (for very old browsers)
             container.classList.add('ios-fullscreen');
             document.body.classList.add('ios-fullscreen-active');
             document.body.style.overflow = 'hidden';
@@ -1301,16 +1300,6 @@ const HostLiveStream = ({ onBack }) => {
         setIsFullscreen(true);
       } else {
         // Exit fullscreen
-        if (isIOS && videoEl && typeof videoEl.webkitExitFullscreen === 'function') {
-          try {
-            videoEl.webkitExitFullscreen();
-            setIsFullscreen(false);
-            return;
-          } catch (err) {
-            console.error('iOS native video exit fullscreen error:', err);
-          }
-        }
-
         if (screenfull.isEnabled && screenfull.isFullscreen) {
           await screenfull.exit();
           setIsFullscreen(false);
@@ -1338,7 +1327,7 @@ const HostLiveStream = ({ onBack }) => {
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
-      // As a last resort, toggle CSS-based fullscreen on the container
+      // As a last resort, toggle CSS-based fullscreen
       if (container) {
         const isCssFullscreen = container.classList.contains('ios-fullscreen');
         if (!isCssFullscreen) {
@@ -1358,16 +1347,6 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  // On iPhone, automatically enter fullscreen when going live
-  useEffect(() => {
-    if (isLive && isIOS && !isFullscreen) {
-      const timer = setTimeout(() => {
-        toggleFullscreen();
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isLive, isIOS, isFullscreen]);
-
   // Listen for fullscreen changes and ESC key
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1375,8 +1354,7 @@ const HostLiveStream = ({ onBack }) => {
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.mozFullScreenElement ||
-        document.msFullscreenElement ||
-        (screenfull.isEnabled && screenfull.isFullscreen)
+        document.msFullscreenElement
       );
       setIsFullscreen(isCurrentlyFullscreen);
     };
@@ -1416,11 +1394,6 @@ const HostLiveStream = ({ onBack }) => {
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-    // screenfull events (desktop / modern browsers)
-    if (screenfull.isEnabled) {
-      screenfull.on('change', handleFullscreenChange);
-    }
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
@@ -1428,10 +1401,6 @@ const HostLiveStream = ({ onBack }) => {
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-
-      if (screenfull.isEnabled) {
-        screenfull.off('change', handleFullscreenChange);
-      }
       document.removeEventListener('keydown', handleKeyDown);
       
       // Cleanup iOS fullscreen on unmount
@@ -1453,7 +1422,7 @@ const HostLiveStream = ({ onBack }) => {
         setOverlayComments(prev => prev.filter(c => c.overlayId !== comment.overlayId));
       }, 5000); // Remove after 5 seconds
     });
-    
+
     return () => {
       timeouts.forEach(timeout => clearTimeout(timeout));
     };
@@ -1831,175 +1800,41 @@ const HostLiveStream = ({ onBack }) => {
                   </div>
                 )}
 
-              {/* Comments Overlay - Instagram style */}
-              {isFullscreen && (
-                <div 
-                  className="absolute bottom-0 left-0 w-80 max-w-[85%] pointer-events-none z-50"
-                  style={{ 
-                    maxHeight: '70%',
-                    padding: '1rem',
-                    overflow: 'hidden',
-                    position: 'absolute',
-                    zIndex: 50
-                  }}
-                >
-                  <div className="flex flex-col gap-2 items-start">
-                    {overlayComments.map((comment) => (
-                      <div
-                        key={comment.overlayId || comment.id}
-                        className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto animate-slideInLeft shadow-lg border border-white/10"
-                        style={{
-                          animation: 'slideInLeft 0.3s ease-out',
-                          maxWidth: '100%',
-                          fontSize: '0.9rem'
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+                {/* Comments Overlay - Instagram style */}
+                {isFullscreen && (
+                  <div 
+                    className="absolute bottom-0 left-0 w-80 max-w-[85%] pointer-events-none z-50"
+                    style={{ 
+                      maxHeight: '70%',
+                      padding: '1rem',
+                      overflow: 'hidden',
+                      position: 'absolute',
+                      zIndex: 50
+                    }}
+                  >
+                    <div className="flex flex-col gap-2 items-start">
+                      {overlayComments.map((comment, index) => (
+                        <div
+                          key={comment.overlayId || comment.id}
+                          className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto animate-slideInLeft shadow-lg border border-white/10"
+                          style={{
+                            animation: 'slideInLeft 0.3s ease-out',
+                            maxWidth: '100%',
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                              {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+                            </div>
+                            <span className="font-semibold text-pink-300">{comment.username}</span>
+                            <span className="text-white/90">{comment.text}</span>
                           </div>
-                          <span className="font-semibold text-pink-300">{comment.username}</span>
-                          <span className="text-white/90">{comment.text}</span>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* iOS-style fullscreen quick actions & panels (Instagram-like) */}
-              {isFullscreen && isIOS && (
-                <>
-                  {/* Quick action buttons on right side */}
-                  <div className="absolute bottom-24 right-4 flex flex-col items-end gap-2 z-[60]">
-                    <button
-                      onClick={() => setIosFullscreenPanel(prev => prev === 'products' ? null : 'products')}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 bg-black/70 border border-white/20 shadow ${iosFullscreenPanel === 'products' ? 'text-pink-300' : 'text-white'}`}
-                    >
-                      <Gift className="w-3 h-3" />
-                      <span>Products</span>
-                    </button>
-                    <button
-                      onClick={() => setIosFullscreenPanel(prev => prev === 'orders' ? null : 'orders')}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 bg-black/70 border border-white/20 shadow ${iosFullscreenPanel === 'orders' ? 'text-pink-300' : 'text-white'}`}
-                    >
-                      <DollarSign className="w-3 h-3" />
-                      <span>Orders</span>
-                    </button>
-                    <button
-                      onClick={() => setIosFullscreenPanel(prev => prev === 'chat' ? null : 'chat')}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 bg-black/70 border border-white/20 shadow ${iosFullscreenPanel === 'chat' ? 'text-pink-300' : 'text-white'}`}
-                    >
-                      <MessageCircle className="w-3 h-3" />
-                      <span>Chat</span>
-                    </button>
-                  </div>
-
-                  {/* Bottom sheet panel for iOS fullscreen options */}
-                  {iosFullscreenPanel && (
-                    <div className="absolute inset-x-0 bottom-0 z-[55]">
-                      <div className="mx-3 mb-4 bg-black/80 text-white rounded-2xl p-3 max-h-[45vh] overflow-y-auto backdrop-blur-md border border-white/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2 text-sm font-semibold">
-                            {iosFullscreenPanel === 'products' && <Gift className="w-4 h-4" />}
-                            {iosFullscreenPanel === 'orders' && <DollarSign className="w-4 h-4" />}
-                            {iosFullscreenPanel === 'chat' && <MessageCircle className="w-4 h-4" />}
-                            <span className="capitalize">
-                              {iosFullscreenPanel === 'products' && 'Products'}
-                              {iosFullscreenPanel === 'orders' && 'Orders'}
-                              {iosFullscreenPanel === 'chat' && 'Live Chat'}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => setIosFullscreenPanel(null)}
-                            className="text-xs text-white/70 hover:text-white"
-                          >
-                            Close
-                          </button>
-                        </div>
-
-                        {iosFullscreenPanel === 'products' && (
-                          <div className="space-y-2 text-xs">
-                            {products.length === 0 && (
-                              <p className="text-white/70">No products added yet.</p>
-                            )}
-                            {products.map((p, i) => (
-                              <div key={i} className="flex items-center justify-between gap-2 py-1 border-b border-white/10 last:border-b-0">
-                                <div className="min-w-0">
-                                  <p className="font-semibold truncate">{p.name}</p>
-                                  <p className="text-white/70">${p.price}</p>
-                                </div>
-                                {p.link && (
-                                  <a
-                                    href={p.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-[10px] text-blue-300 underline flex-shrink-0"
-                                  >
-                                    Link
-                                  </a>
-                                )}
-                              </div>
-                            ))}
-                            <button
-                              onClick={() => {
-                                setIosFullscreenPanel(null);
-                                toggleFullscreen(); // exit fullscreen to open full product panel
-                              }}
-                              className="mt-3 w-full bg-pink-600 text-white text-xs font-semibold py-2 rounded-xl"
-                            >
-                              Add / Manage Products (exit fullscreen)
-                            </button>
-                          </div>
-                        )}
-
-                        {iosFullscreenPanel === 'orders' && (
-                          <div className="space-y-2 text-xs">
-                            {orders.length === 0 && (
-                              <p className="text-white/70">No orders yet.</p>
-                            )}
-                            {orders.map((order, i) => (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  const product = products[order.productIndex];
-                                  setSelectedOrderDetails({ order, product });
-                                  setIosFullscreenPanel(null);
-                                }}
-                                className="w-full text-left py-2 border-b border-white/10 last:border-b-0"
-                              >
-                                <p className="font-semibold truncate">
-                                  {products[order.productIndex]?.name || 'Product'}
-                                </p>
-                                <p className="text-white/70 text-[11px]">
-                                  By: {order.buyer?.username || order.buyerUsername}
-                                </p>
-                                <p className="text-pink-300 text-[11px] mt-0.5">
-                                  +{Math.ceil((products[order.productIndex]?.price || 0) * 100)} coins
-                                </p>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {iosFullscreenPanel === 'chat' && (
-                          <div className="space-y-2 text-xs">
-                            {comments.length === 0 && (
-                              <p className="text-white/70">No comments yet.</p>
-                            )}
-                            {comments.map((c) => (
-                              <div key={c.id} className="py-1 border-b border-white/10 last:border-b-0">
-                                <span className="font-semibold text-pink-300">@{c.username}: </span>
-                                <span className="text-white/90">{c.text}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  )}
-                </>
-              )}
+                  </div>
+                )}
               </div>
 
               <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-4 mb-4 flex items-center justify-center gap-4">
