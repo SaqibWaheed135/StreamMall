@@ -1255,38 +1255,62 @@ const HostLiveStream = ({ onBack }) => {
 
   const toggleFullscreen = async () => {
     const container = videoContainerRef.current;
+    const videoEl = videoRef.current || localVideoRef.current;
 
-    if (!container) return;
+    if (!container && !videoEl) return;
 
     try {
       if (!isFullscreen) {
+        // iPhone: use native video fullscreen for true system fullscreen
+        if (isIOS && videoEl && typeof videoEl.webkitEnterFullscreen === 'function') {
+          try {
+            videoEl.webkitEnterFullscreen();
+            setIsFullscreen(true);
+            return;
+          } catch (err) {
+            console.error('iOS native video fullscreen error:', err);
+          }
+        }
+
         // 1) Prefer screenfull (cross-browser fullscreen for containers)
-        if (screenfull.isEnabled) {
+        if (screenfull.isEnabled && container) {
           await screenfull.toggle(container);
           setIsFullscreen(screenfull.isFullscreen);
           return;
         }
 
         // 2) Fallback: use browser fullscreen API directly on container
-        if (container.requestFullscreen) {
-          await container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-          await container.webkitRequestFullscreen();
-        } else if (container.mozRequestFullScreen) {
-          await container.mozRequestFullScreen();
-        } else if (container.msRequestFullscreen) {
-          await container.msRequestFullscreen();
-        } else {
-          // 3) Last-resort CSS-based fullscreen (works on iOS too)
-          container.classList.add('ios-fullscreen');
-          document.body.classList.add('ios-fullscreen-active');
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
+        if (container) {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+          } else if (container.webkitRequestFullscreen) {
+            await container.webkitRequestFullscreen();
+          } else if (container.mozRequestFullScreen) {
+            await container.mozRequestFullScreen();
+          } else if (container.msRequestFullscreen) {
+            await container.msRequestFullscreen();
+          } else {
+            // 3) Last-resort CSS-based fullscreen (works on older iOS too)
+            container.classList.add('ios-fullscreen');
+            document.body.classList.add('ios-fullscreen-active');
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+          }
         }
 
         setIsFullscreen(true);
       } else {
         // Exit fullscreen
+        if (isIOS && videoEl && typeof videoEl.webkitExitFullscreen === 'function') {
+          try {
+            videoEl.webkitExitFullscreen();
+            setIsFullscreen(false);
+            return;
+          } catch (err) {
+            console.error('iOS native video exit fullscreen error:', err);
+          }
+        }
+
         if (screenfull.isEnabled && screenfull.isFullscreen) {
           await screenfull.exit();
           setIsFullscreen(false);
@@ -1302,7 +1326,7 @@ const HostLiveStream = ({ onBack }) => {
           await document.mozCancelFullScreen();
         } else if (document.msExitFullscreen) {
           await document.msExitFullscreen();
-        } else {
+        } else if (container) {
           // Fallback: remove CSS-based fullscreen
           container.classList.remove('ios-fullscreen');
           document.body.classList.remove('ios-fullscreen-active');
@@ -1314,27 +1338,29 @@ const HostLiveStream = ({ onBack }) => {
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
-      // As a last resort, toggle CSS-based fullscreen
-      const isCssFullscreen = container.classList.contains('ios-fullscreen');
-      if (!isCssFullscreen) {
-        container.classList.add('ios-fullscreen');
-        document.body.classList.add('ios-fullscreen-active');
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        setIsFullscreen(true);
-      } else {
-        container.classList.remove('ios-fullscreen');
-        document.body.classList.remove('ios-fullscreen-active');
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        setIsFullscreen(false);
+      // As a last resort, toggle CSS-based fullscreen on the container
+      if (container) {
+        const isCssFullscreen = container.classList.contains('ios-fullscreen');
+        if (!isCssFullscreen) {
+          container.classList.add('ios-fullscreen');
+          document.body.classList.add('ios-fullscreen-active');
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
+          setIsFullscreen(true);
+        } else {
+          container.classList.remove('ios-fullscreen');
+          document.body.classList.remove('ios-fullscreen-active');
+          document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
+          setIsFullscreen(false);
+        }
       }
     }
   };
 
   // On iPhone, automatically enter fullscreen when going live
   useEffect(() => {
-    if (isLive && isIOS && !isFullscreen && videoContainerRef.current) {
+    if (isLive && isIOS && !isFullscreen) {
       const timer = setTimeout(() => {
         toggleFullscreen();
       }, 300);
@@ -1349,7 +1375,8 @@ const HostLiveStream = ({ onBack }) => {
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.mozFullScreenElement ||
-        document.msFullscreenElement
+        document.msFullscreenElement ||
+        (screenfull.isEnabled && screenfull.isFullscreen)
       );
       setIsFullscreen(isCurrentlyFullscreen);
     };
@@ -1389,6 +1416,11 @@ const HostLiveStream = ({ onBack }) => {
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    // screenfull events (desktop / modern browsers)
+    if (screenfull.isEnabled) {
+      screenfull.on('change', handleFullscreenChange);
+    }
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
@@ -1396,6 +1428,10 @@ const HostLiveStream = ({ onBack }) => {
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+
+      if (screenfull.isEnabled) {
+        screenfull.off('change', handleFullscreenChange);
+      }
       document.removeEventListener('keydown', handleKeyDown);
       
       // Cleanup iOS fullscreen on unmount
