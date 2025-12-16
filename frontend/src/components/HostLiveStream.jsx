@@ -33,6 +33,7 @@ import {
 } from 'react-icons/fa';
 
 import io from 'socket.io-client';
+import screenfull from 'screenfull';
 import loadLiveKit from './globalComponents/liveKitLoad';
 import OrderDetailsModal from './globalComponents/hostStreamComponents/OrderDetailsModal';
 import ConfirmEndModal from './globalComponents/hostStreamComponents/ConfirmEndModal';
@@ -1178,8 +1179,8 @@ const HostLiveStream = ({ onBack }) => {
   };
 
   // Detect iOS device
-  // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-  //   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   // const toggleFullscreen = async () => {
   //   if (!videoContainerRef.current) return;
@@ -1251,57 +1252,61 @@ const HostLiveStream = ({ onBack }) => {
   //   }
   // };
 
-  // Detect iOS device
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
   const toggleFullscreen = async () => {
-    if (!videoContainerRef.current) return;
+    const container = videoContainerRef.current;
+    const videoEl = videoRef.current || localVideoRef.current;
+
+    if (!container && !videoEl) return;
 
     try {
       if (!isFullscreen) {
-        // For iOS, use CSS-based fullscreen since container fullscreen API doesn't work
-        if (isIOS) {
-          // iOS doesn't support container fullscreen API, use CSS approach
-          document.body.classList.add('ios-fullscreen-active');
-          videoContainerRef.current.classList.add('ios-fullscreen');
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
-          // Force repaint to ensure styles apply
-          videoContainerRef.current.offsetHeight;
-          setIsFullscreen(true);
+        // 1) Prefer screenfull (cross-browser fullscreen for containers)
+        if (screenfull.isEnabled && container) {
+          await screenfull.toggle(container);
+          setIsFullscreen(screenfull.isFullscreen);
           return;
         }
 
-        // For other browsers, use native fullscreen API
-        if (videoContainerRef.current.requestFullscreen) {
-          await videoContainerRef.current.requestFullscreen();
-        } else if (videoContainerRef.current.webkitRequestFullscreen) {
-          await videoContainerRef.current.webkitRequestFullscreen();
-        } else if (videoContainerRef.current.mozRequestFullScreen) {
-          await videoContainerRef.current.mozRequestFullScreen();
-        } else if (videoContainerRef.current.msRequestFullscreen) {
-          await videoContainerRef.current.msRequestFullscreen();
-        } else {
-          // Fallback to CSS-based fullscreen if API not available
-          videoContainerRef.current.classList.add('ios-fullscreen');
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
+        // 2) iOS Safari: try native video fullscreen API
+        if (videoEl && typeof videoEl.webkitEnterFullscreen === 'function') {
+          try {
+            videoEl.webkitEnterFullscreen();
+            setIsFullscreen(true);
+            return;
+          } catch (err) {
+            console.error('iOS video fullscreen error:', err);
+          }
         }
+
+        // 3) Fallback: use browser fullscreen API directly on container
+        if (container) {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+          } else if (container.webkitRequestFullscreen) {
+            await container.webkitRequestFullscreen();
+          } else if (container.mozRequestFullScreen) {
+            await container.mozRequestFullScreen();
+          } else if (container.msRequestFullscreen) {
+            await container.msRequestFullscreen();
+          } else {
+            // 4) Last-resort CSS-based fullscreen (for very old browsers)
+            container.classList.add('ios-fullscreen');
+            document.body.classList.add('ios-fullscreen-active');
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+          }
+        }
+
         setIsFullscreen(true);
       } else {
         // Exit fullscreen
-        if (isIOS) {
-          // Remove CSS-based fullscreen for iOS
-          document.body.classList.remove('ios-fullscreen-active');
-          videoContainerRef.current.classList.remove('ios-fullscreen');
-          document.body.style.overflow = '';
-          document.documentElement.style.overflow = '';
+        if (screenfull.isEnabled && screenfull.isFullscreen) {
+          await screenfull.exit();
           setIsFullscreen(false);
           return;
         }
 
-        // For other browsers, use native exit fullscreen
+        // Native document fullscreen exit
         if (document.exitFullscreen) {
           await document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
@@ -1310,33 +1315,34 @@ const HostLiveStream = ({ onBack }) => {
           await document.mozCancelFullScreen();
         } else if (document.msExitFullscreen) {
           await document.msExitFullscreen();
-        } else {
+        } else if (container) {
           // Fallback: remove CSS-based fullscreen
-          videoContainerRef.current.classList.remove('ios-fullscreen');
+          container.classList.remove('ios-fullscreen');
+          document.body.classList.remove('ios-fullscreen-active');
           document.body.style.overflow = '';
           document.documentElement.style.overflow = '';
         }
+
         setIsFullscreen(false);
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
-      // Fallback to CSS-based fullscreen on error
-      if (!isFullscreen) {
-        if (isIOS) {
+      // As a last resort, toggle CSS-based fullscreen
+      if (container) {
+        const isCssFullscreen = container.classList.contains('ios-fullscreen');
+        if (!isCssFullscreen) {
+          container.classList.add('ios-fullscreen');
           document.body.classList.add('ios-fullscreen-active');
-        }
-        videoContainerRef.current.classList.add('ios-fullscreen');
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        setIsFullscreen(true);
-      } else {
-        if (isIOS) {
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
+          setIsFullscreen(true);
+        } else {
+          container.classList.remove('ios-fullscreen');
           document.body.classList.remove('ios-fullscreen-active');
+          document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
+          setIsFullscreen(false);
         }
-        videoContainerRef.current.classList.remove('ios-fullscreen');
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        setIsFullscreen(false);
       }
     }
   };
