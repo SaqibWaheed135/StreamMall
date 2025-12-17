@@ -127,6 +127,26 @@ const HostLiveStream = ({ onBack }) => {
   const trackCheckIntervalRef = useRef(null);
   const isBlockingNavigationRef = useRef(false);
 
+  // Handle iOS viewport height changes
+  useEffect(() => {
+    const handleResize = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Initial calculation
+    handleResize();
+
+    // Update on resize and orientation change
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
 
   const getGiftIcon = (type) => {
     const icons = {
@@ -1258,65 +1278,83 @@ const HostLiveStream = ({ onBack }) => {
 
     if (!container && !videoEl) return;
 
-    // Detect iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // More specific iOS detection (excludes iPad and Mac with touchscreen)
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isIPad = /iPad/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     try {
       if (!isFullscreen) {
-        // iOS: Use CSS-based fullscreen to preserve overlays
-        if (isIOS && container) {
+        // iPhone-specific: Use enhanced CSS fullscreen
+        if (isIPhone) {
+          // Scroll to top first to hide address bar
+          window.scrollTo(0, 1);
+
+          // Add fullscreen classes
           container.classList.add('ios-fullscreen');
           document.body.classList.add('ios-fullscreen-active');
           document.documentElement.classList.add('ios-fullscreen-active');
 
-          // Lock orientation to landscape if possible
-          if (screen.orientation && screen.orientation.lock) {
-            try {
-              await screen.orientation.lock('landscape').catch(() => { });
-            } catch (e) {
-              console.log('Orientation lock not supported');
-            }
-          }
+          // Force viewport height calculation
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+          // Prevent body scroll
+          document.body.style.position = 'fixed';
+          document.body.style.top = '0';
+          document.body.style.left = '0';
+          document.body.style.right = '0';
+          document.body.style.bottom = '0';
 
           setIsFullscreen(true);
+
+          // Request orientation lock if available
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {
+              console.log('Orientation lock not available');
+            });
+          }
+
           return;
         }
 
-        // For non-iOS: Use native fullscreen API
+        // iPad and desktop: Try native fullscreen first
         if (screenfull.isEnabled && container) {
           await screenfull.toggle(container);
           setIsFullscreen(screenfull.isFullscreen);
           return;
         }
 
-        // Standard fullscreen API fallback
-        if (container) {
-          if (container.requestFullscreen) {
-            await container.requestFullscreen();
-          } else if (container.webkitRequestFullscreen) {
-            await container.webkitRequestFullscreen();
-          } else if (container.mozRequestFullScreen) {
-            await container.mozRequestFullScreen();
-          } else if (container.msRequestFullscreen) {
-            await container.msRequestFullscreen();
-          }
-          setIsFullscreen(true);
+        // Standard fullscreen API
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+          await container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+          await container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+          await container.msRequestFullscreen();
         }
+
+        setIsFullscreen(true);
+
       } else {
         // Exit fullscreen
-        if (isIOS && container) {
+        if (isIPhone) {
           container.classList.remove('ios-fullscreen');
           document.body.classList.remove('ios-fullscreen-active');
           document.documentElement.classList.remove('ios-fullscreen-active');
 
+          // Restore body scroll
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.left = '';
+          document.body.style.right = '';
+          document.body.style.bottom = '';
+
           // Unlock orientation
           if (screen.orientation && screen.orientation.unlock) {
-            try {
-              screen.orientation.unlock();
-            } catch (e) {
-              console.log('Orientation unlock not supported');
-            }
+            screen.orientation.unlock();
           }
 
           setIsFullscreen(false);
@@ -1452,7 +1490,7 @@ const HostLiveStream = ({ onBack }) => {
     to { opacity: 0; transform: translateY(-10px); }
   }
   
-  /* Native fullscreen styles for non-iOS */
+  /* Native fullscreen styles for desktop/iPad */
   :fullscreen {
     background: #000;
   }
@@ -1493,8 +1531,15 @@ const HostLiveStream = ({ onBack }) => {
     position: relative;
   }
   
-  /* iOS CSS-based fullscreen - ENHANCED */
-  html.ios-fullscreen-active,
+  /* iPhone-specific CSS fullscreen */
+  html.ios-fullscreen-active {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
   body.ios-fullscreen-active {
     overflow: hidden !important;
     position: fixed !important;
@@ -1502,6 +1547,7 @@ const HostLiveStream = ({ onBack }) => {
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   
   .fullscreen-video-container.ios-fullscreen {
@@ -1512,14 +1558,17 @@ const HostLiveStream = ({ onBack }) => {
     bottom: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
+    height: calc(var(--vh, 1vh) * 100) !important;
     max-width: 100vw !important;
     max-height: 100vh !important;
     margin: 0 !important;
     padding: 0 !important;
-    z-index: 999999 !important;
+    z-index: 2147483647 !important; /* Maximum z-index */
     border-radius: 0 !important;
     background: #000 !important;
     transform: none !important;
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
   }
   
   .fullscreen-video-container.ios-fullscreen video {
@@ -1527,32 +1576,43 @@ const HostLiveStream = ({ onBack }) => {
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    object-fit: cover;
-    position: absolute;
-    top: 0;
-    left: 0;
+    object-fit: cover !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
   }
   
-  /* Ensure overlays work in iOS fullscreen */
+  /* Ensure all overlays work in iOS fullscreen with maximum z-index */
+  .fullscreen-video-container.ios-fullscreen > * {
+    position: relative !important;
+    z-index: 2147483646 !important;
+  }
+  
   .fullscreen-video-container.ios-fullscreen .absolute {
     position: absolute !important;
-    z-index: 1000000 !important;
+    z-index: 2147483646 !important;
   }
   
-  /* Make sure comment overlays are visible in iOS fullscreen */
+  /* Comment overlay specific */
   .fullscreen-video-container.ios-fullscreen .comment-overlay {
     position: absolute !important;
-    z-index: 1000001 !important;
+    z-index: 2147483646 !important;
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
   }
   
-  /* Ensure buttons are visible and clickable in iOS fullscreen */
+  /* Buttons in fullscreen */
   .fullscreen-video-container.ios-fullscreen button {
     position: absolute !important;
-    z-index: 1000002 !important;
+    z-index: 2147483646 !important;
     pointer-events: auto !important;
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
   }
   
-  /* Hide address bar in iOS fullscreen */
+  /* Safari-specific height handling */
   @supports (-webkit-touch-callout: none) {
     .ios-fullscreen-active {
       height: 100vh;
@@ -1562,6 +1622,14 @@ const HostLiveStream = ({ onBack }) => {
     .fullscreen-video-container.ios-fullscreen {
       height: 100vh;
       height: -webkit-fill-available;
+      min-height: -webkit-fill-available;
+    }
+  }
+  
+  /* Prevent iOS Safari from adding extra space */
+  @media screen and (max-width: 768px) {
+    .fullscreen-video-container.ios-fullscreen {
+      -webkit-overflow-scrolling: touch;
     }
   }
 `}</style>
@@ -1754,16 +1822,22 @@ const HostLiveStream = ({ onBack }) => {
                 )}
 
                 {/* Comments Overlay - Instagram style */}
-                {/* Comments Overlay - Instagram style */}
-                {(isFullscreen || (videoContainerRef.current?.classList.contains('ios-fullscreen'))) && (
+                {isFullscreen && (
                   <div
-                    className="absolute bottom-0 left-0 w-80 max-w-[85%] pointer-events-none comment-overlay"
+                    className="comment-overlay"
                     style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: '320px',
+                      maxWidth: '85%',
                       maxHeight: '70%',
                       padding: '1rem',
                       overflow: 'hidden',
-                      position: 'absolute',
-                      zIndex: 1000001
+                      zIndex: 2147483646,
+                      pointerEvents: 'none',
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)'
                     }}
                   >
                     <div className="flex flex-col gap-2 items-start">
@@ -1775,7 +1849,8 @@ const HostLiveStream = ({ onBack }) => {
                             animation: 'slideInLeft 0.3s ease-out',
                             maxWidth: '100%',
                             fontSize: '0.9rem',
-                            zIndex: 1000001
+                            transform: 'translate3d(0,0,0)',
+                            WebkitTransform: 'translate3d(0,0,0)'
                           }}
                         >
                           <div className="flex items-center gap-2">
