@@ -1179,8 +1179,8 @@ const HostLiveStream = ({ onBack }) => {
   };
 
   // Detect iOS device
-  // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-  //   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   // const toggleFullscreen = async () => {
   //   if (!videoContainerRef.current) return;
