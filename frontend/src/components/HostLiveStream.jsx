@@ -90,6 +90,8 @@ const HostLiveStream = ({ onBack }) => {
   const [comments, setComments] = useState([]);
   const [hearts, setHearts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [showFullscreenToast, setShowFullscreenToast] = useState(false);
+
   const [newProduct, setNewProduct] = useState({
     type: 'product',
     name: '',
@@ -146,6 +148,42 @@ const HostLiveStream = ({ onBack }) => {
       window.removeEventListener('orientationchange', handleResize);
     };
   }, []);
+
+  // Auto-fullscreen for iPhone when going live
+  useEffect(() => {
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (isLive && isIPhone && !isFullscreen) {
+      // Show toast notification
+      setShowFullscreenToast(true);
+
+      // Small delay to ensure video is ready
+      const timer = setTimeout(() => {
+        toggleFullscreen();
+
+        // Hide toast after fullscreen is activated
+        setTimeout(() => {
+          setShowFullscreenToast(false);
+        }, 2000);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLive]);
+
+  // Auto-fullscreen for iPhone when going live
+  useEffect(() => {
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (isLive && isIPhone && !isFullscreen) {
+      // Small delay to ensure video is ready
+      const timer = setTimeout(() => {
+        toggleFullscreen();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLive]); // Only trigger when isLive changes
 
 
   const getGiftIcon = (type) => {
@@ -1804,14 +1842,17 @@ const HostLiveStream = ({ onBack }) => {
                 ))}
 
                 {/* Fullscreen Button - Top Right */}
-                <button
-                  onClick={toggleFullscreen}
-                  className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
-                  style={{ zIndex: 50 }}
-                  title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
-                >
-                  {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                </button>
+                {/* Fullscreen Button - Top Right - Hidden on iPhone since it auto-opens */}
+                {!(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <button
+                    onClick={toggleFullscreen}
+                    className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                    style={{ zIndex: 50 }}
+                    title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
+                  >
+                    {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                  </button>
+                )}
 
                 {/* Live Chat Indicator */}
                 {overlayComments.length > 0 && (
@@ -1882,13 +1923,17 @@ const HostLiveStream = ({ onBack }) => {
                 >
                   {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                 </button>
-                <button
-                  onClick={toggleFullscreen}
-                  className="p-4 rounded-full transition-colors bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white shadow-lg"
-                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                >
-                  {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
-                </button>
+
+                {/* Only show fullscreen toggle on non-iPhone devices */}
+                {!(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <button
+                    onClick={toggleFullscreen}
+                    className="p-4 rounded-full transition-colors bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white shadow-lg"
+                    title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  >
+                    {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
+                  </button>
+                )}
               </div>
               {/* iOS Fullscreen Indicator */}
               {isFullscreen && /iPad|iPhone|iPod/.test(navigator.userAgent) && (
@@ -2452,7 +2497,15 @@ const HostLiveStream = ({ onBack }) => {
           }}
         />
       )}
+      {/* iPhone Fullscreen Toast */}
+      {showFullscreenToast && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 backdrop-blur-md">
+          <Maximize className="w-4 h-4" />
+          <span className="text-sm font-medium">Opening in fullscreen...</span>
+        </div>
+      )}
     </div>
+
   );
 };
 
