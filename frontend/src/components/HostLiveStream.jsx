@@ -336,10 +336,10 @@ const HostLiveStream = ({ onBack }) => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     // In the socket listener setup
     socket.on('new-comment', (data) => {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📨 HOST: New comment received');
-    console.log('Comment data:', JSON.stringify(data, null, 2));
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📨 HOST: New comment received');
+      console.log('Comment data:', JSON.stringify(data, null, 2));
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       const newComment = {
         _id: data._id || data.id, // ✅ Use _id or fall back to id
         id: data.id || data._id,   // ✅ Include both for compatibility
@@ -362,11 +362,11 @@ const HostLiveStream = ({ onBack }) => {
 
     // ✅ ENHANCED reply listener with debugging
     socket.on('new-reply', (data) => {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('💬 HOST: Reply received');
-    console.log('Comment ID to match:', data.commentId);
-    console.log('Reply data:', JSON.stringify(data.reply, null, 2));
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('💬 HOST: Reply received');
+      console.log('Comment ID to match:', data.commentId);
+      console.log('Reply data:', JSON.stringify(data.reply, null, 2));
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       setComments(prev => {
         console.log('Looking through comments to find match...');
@@ -673,7 +673,7 @@ const HostLiveStream = ({ onBack }) => {
 
       // Store room reference for camera toggle
       setLiveKitRoom(room);
-      
+
       // Set up listener for track updates when camera is toggled
       const updateVideoOnTrackChange = () => {
         const camPublication = room.localParticipant.getTrackPublication(Track.Source.Camera);
@@ -689,7 +689,7 @@ const HostLiveStream = ({ onBack }) => {
       // Poll for track changes when camera is toggled (LiveKit doesn't always fire events reliably)
       // Reduced interval for faster response
       trackCheckIntervalRef.current = setInterval(updateVideoOnTrackChange, 300);
-      
+
       // Cleanup interval on disconnect
       room.on(RoomEvent.Disconnected, () => {
         if (trackCheckIntervalRef.current) {
@@ -904,7 +904,7 @@ const HostLiveStream = ({ onBack }) => {
   const endStream = async () => {
     // Get streamId from streamData or fallback to localStorage session
     let streamId = streamData?.streamId || streamData?._id;
-    
+
     if (!streamId) {
       // Fallback: try to get from saved session
       const saved = localStorage.getItem(ACTIVE_HOST_STREAM_KEY);
@@ -917,7 +917,7 @@ const HostLiveStream = ({ onBack }) => {
         }
       }
     }
-    
+
     if (!streamId) {
       console.error('Cannot end stream: streamId not found');
       console.error('streamData:', streamData);
@@ -1016,7 +1016,7 @@ const HostLiveStream = ({ onBack }) => {
 
     try {
       const mediaStream = new MediaStream([track.mediaStreamTrack]);
-      
+
       // Check if this is the same track already attached
       const currentSrc = videoRef.current.srcObject;
       if (currentSrc && currentSrc.getTracks().length > 0) {
@@ -1036,13 +1036,13 @@ const HostLiveStream = ({ onBack }) => {
           }
         });
       }
-      
+
       // Set new stream
       videoRef.current.srcObject = mediaStream;
       videoRef.current.muted = true;
       videoRef.current.style.objectFit = 'cover';
       videoRef.current.style.objectPosition = 'center';
-      
+
       // Play the video
       videoRef.current.play()
         .then(() => {
@@ -1060,7 +1060,7 @@ const HostLiveStream = ({ onBack }) => {
             }
           }, 100);
         });
-      
+
       return true;
     } catch (error) {
       console.error('Error attaching video stream:', error);
@@ -1073,12 +1073,12 @@ const HostLiveStream = ({ onBack }) => {
       try {
         const isEnabled = liveKitRoom.localParticipant.isCameraEnabled;
         const newState = !isEnabled;
-        
+
         console.log(`📹 Toggling camera: ${isEnabled ? 'OFF' : 'ON'}`);
-        
+
         // Update state immediately for UI responsiveness
         setIsCameraOn(newState);
-        
+
         // Toggle camera in LiveKit
         await liveKitRoom.localParticipant.setCameraEnabled(newState);
 
@@ -1088,17 +1088,17 @@ const HostLiveStream = ({ onBack }) => {
           let attempts = 0;
           const maxAttempts = 15;
           let attached = false;
-          
+
           const tryAttachVideo = () => {
             if (attached) return; // Already attached, stop retrying
-            
+
             attempts++;
             const camPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-            
+
             if (camPublication && camPublication.track && camPublication.track.mediaStreamTrack) {
               const track = camPublication.track;
               const isTrackEnabled = track.mediaStreamTrack.enabled && !camPublication.isMuted;
-              
+
               if (isTrackEnabled) {
                 const success = attachVideoStream(track);
                 if (success) {
@@ -1112,7 +1112,7 @@ const HostLiveStream = ({ onBack }) => {
             } else {
               console.log(`⏳ Track not available yet (attempt ${attempts}/${maxAttempts})`);
             }
-            
+
             // Retry if not successful and haven't exceeded max attempts
             if (attempts < maxAttempts && !attached) {
               setTimeout(tryAttachVideo, 150);
@@ -1130,7 +1130,7 @@ const HostLiveStream = ({ onBack }) => {
               }, 800);
             }
           };
-          
+
           // Start trying with progressive delays
           setTimeout(tryAttachVideo, 50);
           setTimeout(tryAttachVideo, 200);
@@ -1154,7 +1154,7 @@ const HostLiveStream = ({ onBack }) => {
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setIsCameraOn(videoTrack.enabled);
-        
+
         // If camera is being enabled, ensure video element is visible and playing
         if (videoTrack.enabled && localVideoRef.current) {
           localVideoRef.current.style.display = 'block';
@@ -1179,7 +1179,7 @@ const HostLiveStream = ({ onBack }) => {
   };
 
   // Detect iOS device
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   // const toggleFullscreen = async () => {
@@ -1258,27 +1258,39 @@ const HostLiveStream = ({ onBack }) => {
 
     if (!container && !videoEl) return;
 
+    // Detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
     try {
       if (!isFullscreen) {
-        // 1) Prefer screenfull (cross-browser fullscreen for containers)
+        // iOS: Use CSS-based fullscreen to preserve overlays
+        if (isIOS && container) {
+          container.classList.add('ios-fullscreen');
+          document.body.classList.add('ios-fullscreen-active');
+          document.documentElement.classList.add('ios-fullscreen-active');
+
+          // Lock orientation to landscape if possible
+          if (screen.orientation && screen.orientation.lock) {
+            try {
+              await screen.orientation.lock('landscape').catch(() => { });
+            } catch (e) {
+              console.log('Orientation lock not supported');
+            }
+          }
+
+          setIsFullscreen(true);
+          return;
+        }
+
+        // For non-iOS: Use native fullscreen API
         if (screenfull.isEnabled && container) {
           await screenfull.toggle(container);
           setIsFullscreen(screenfull.isFullscreen);
           return;
         }
 
-        // 2) iOS Safari: try native video fullscreen API
-        if (videoEl && typeof videoEl.webkitEnterFullscreen === 'function') {
-          try {
-            videoEl.webkitEnterFullscreen();
-            setIsFullscreen(true);
-            return;
-          } catch (err) {
-            console.error('iOS video fullscreen error:', err);
-          }
-        }
-
-        // 3) Fallback: use browser fullscreen API directly on container
+        // Standard fullscreen API fallback
         if (container) {
           if (container.requestFullscreen) {
             await container.requestFullscreen();
@@ -1288,25 +1300,35 @@ const HostLiveStream = ({ onBack }) => {
             await container.mozRequestFullScreen();
           } else if (container.msRequestFullscreen) {
             await container.msRequestFullscreen();
-          } else {
-            // 4) Last-resort CSS-based fullscreen (for very old browsers)
-            container.classList.add('ios-fullscreen');
-            document.body.classList.add('ios-fullscreen-active');
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
           }
+          setIsFullscreen(true);
         }
-
-        setIsFullscreen(true);
       } else {
         // Exit fullscreen
+        if (isIOS && container) {
+          container.classList.remove('ios-fullscreen');
+          document.body.classList.remove('ios-fullscreen-active');
+          document.documentElement.classList.remove('ios-fullscreen-active');
+
+          // Unlock orientation
+          if (screen.orientation && screen.orientation.unlock) {
+            try {
+              screen.orientation.unlock();
+            } catch (e) {
+              console.log('Orientation unlock not supported');
+            }
+          }
+
+          setIsFullscreen(false);
+          return;
+        }
+
         if (screenfull.isEnabled && screenfull.isFullscreen) {
           await screenfull.exit();
           setIsFullscreen(false);
           return;
         }
 
-        // Native document fullscreen exit
         if (document.exitFullscreen) {
           await document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
@@ -1315,35 +1337,12 @@ const HostLiveStream = ({ onBack }) => {
           await document.mozCancelFullScreen();
         } else if (document.msExitFullscreen) {
           await document.msExitFullscreen();
-        } else if (container) {
-          // Fallback: remove CSS-based fullscreen
-          container.classList.remove('ios-fullscreen');
-          document.body.classList.remove('ios-fullscreen-active');
-          document.body.style.overflow = '';
-          document.documentElement.style.overflow = '';
         }
 
         setIsFullscreen(false);
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
-      // As a last resort, toggle CSS-based fullscreen
-      if (container) {
-        const isCssFullscreen = container.classList.contains('ios-fullscreen');
-        if (!isCssFullscreen) {
-          container.classList.add('ios-fullscreen');
-          document.body.classList.add('ios-fullscreen-active');
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
-          setIsFullscreen(true);
-        } else {
-          container.classList.remove('ios-fullscreen');
-          document.body.classList.remove('ios-fullscreen-active');
-          document.body.style.overflow = '';
-          document.documentElement.style.overflow = '';
-          setIsFullscreen(false);
-        }
-      }
     }
   };
 
@@ -1402,7 +1401,7 @@ const HostLiveStream = ({ onBack }) => {
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
-      
+
       // Cleanup iOS fullscreen on unmount
       if (videoContainerRef.current && isIOS) {
         document.body.classList.remove('ios-fullscreen-active');
@@ -1432,186 +1431,140 @@ const HostLiveStream = ({ onBack }) => {
     return (
       <div className="min-h-screen bg-[#FFC0CB] text-black p-4">
         <style>{`
-          @keyframes float-up {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
-          }
-          @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-          }
-          @keyframes slideInRight {
-            from { 
-              transform: translateX(-100%); 
-              opacity: 0; 
-            }
-            to { 
-              transform: translateX(0); 
-              opacity: 1; 
-            }
-          }
-          @keyframes slideInLeft {
-            from { 
-              transform: translateX(-100%); 
-              opacity: 0; 
-            }
-            to { 
-              transform: translateX(0); 
-              opacity: 1; 
-            }
-          }
-          @keyframes fadeOut {
-            from { 
-              opacity: 1; 
-            }
-            to { 
-              opacity: 0; 
-              transform: translateY(-10px);
-            }
-          }
-          
-          /* Fullscreen styles */
-          :fullscreen {
-            background: #000;
-          }
-          :-webkit-full-screen {
-            background: #000;
-          }
-          :-moz-full-screen {
-            background: #000;
-          }
-          :-ms-fullscreen {
-            background: #000;
-          }
-          
-          /* Ensure video container fills fullscreen */
-          .fullscreen-video-container:fullscreen {
-            width: 100vw !important;
-            height: 100vh !important;
-            border-radius: 0 !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 9999 !important;
-          }
-          .fullscreen-video-container:-webkit-full-screen {
-            width: 100vw !important;
-            height: 100vh !important;
-            border-radius: 0 !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 9999 !important;
-          }
-          .fullscreen-video-container:-moz-full-screen {
-            width: 100vw !important;
-            height: 100vh !important;
-            border-radius: 0 !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 9999 !important;
-          }
-          .fullscreen-video-container:-ms-fullscreen {
-            width: 100vw !important;
-            height: 100vh !important;
-            border-radius: 0 !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 9999 !important;
-          }
-          
-          /* Ensure video fills fullscreen container */
-          .fullscreen-video-container:fullscreen video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover;
-            position: relative;
-          }
-          .fullscreen-video-container:-webkit-full-screen video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover;
-            position: relative;
-          }
-          .fullscreen-video-container:-moz-full-screen video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover;
-            position: relative;
-          }
-          .fullscreen-video-container:-ms-fullscreen video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover;
-            position: relative;
-          }
-          
-          /* iOS CSS-based fullscreen fallback */
-          .fullscreen-video-container.ios-fullscreen {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            z-index: 99999 !important;
-            border-radius: 0 !important;
-            background: #000 !important;
-            transform: none !important;
-          }
-          
-          .fullscreen-video-container.ios-fullscreen video {
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-          }
-          
-          /* Ensure parent containers don't constrain iOS fullscreen */
-          body.ios-fullscreen-active {
-            overflow: hidden !important;
-            position: fixed !important;
-            width: 100% !important;
-            height: 100% !important;
-          }
-          
-          body.ios-fullscreen-active > * {
-            overflow: hidden !important;
-          }
-          
-          /* Ensure chat overlays are visible in fullscreen on iOS */
-          .fullscreen-video-container:-webkit-full-screen .absolute,
-          .fullscreen-video-container.ios-fullscreen .absolute {
-            position: absolute !important;
-          }
-        `}</style>
+  @keyframes float-up {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideInLeft {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; transform: translateY(-10px); }
+  }
+  
+  /* Native fullscreen styles for non-iOS */
+  :fullscreen {
+    background: #000;
+  }
+  :-webkit-full-screen {
+    background: #000;
+  }
+  :-moz-full-screen {
+    background: #000;
+  }
+  :-ms-fullscreen {
+    background: #000;
+  }
+  
+  .fullscreen-video-container:fullscreen,
+  .fullscreen-video-container:-webkit-full-screen,
+  .fullscreen-video-container:-moz-full-screen,
+  .fullscreen-video-container:-ms-fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+  }
+  
+  .fullscreen-video-container:fullscreen video,
+  .fullscreen-video-container:-webkit-full-screen video,
+  .fullscreen-video-container:-moz-full-screen video,
+  .fullscreen-video-container:-ms-fullscreen video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    position: relative;
+  }
+  
+  /* iOS CSS-based fullscreen - ENHANCED */
+  html.ios-fullscreen-active,
+  body.ios-fullscreen-active {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .fullscreen-video-container.ios-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 999999 !important;
+    border-radius: 0 !important;
+    background: #000 !important;
+    transform: none !important;
+  }
+  
+  .fullscreen-video-container.ios-fullscreen video {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  
+  /* Ensure overlays work in iOS fullscreen */
+  .fullscreen-video-container.ios-fullscreen .absolute {
+    position: absolute !important;
+    z-index: 1000000 !important;
+  }
+  
+  /* Make sure comment overlays are visible in iOS fullscreen */
+  .fullscreen-video-container.ios-fullscreen .comment-overlay {
+    position: absolute !important;
+    z-index: 1000001 !important;
+  }
+  
+  /* Ensure buttons are visible and clickable in iOS fullscreen */
+  .fullscreen-video-container.ios-fullscreen button {
+    position: absolute !important;
+    z-index: 1000002 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Hide address bar in iOS fullscreen */
+  @supports (-webkit-touch-callout: none) {
+    .ios-fullscreen-active {
+      height: 100vh;
+      height: -webkit-fill-available;
+    }
+    
+    .fullscreen-video-container.ios-fullscreen {
+      height: 100vh;
+      height: -webkit-fill-available;
+    }
+  }
+`}</style>
 
         {showTipNotification && (
           <div
@@ -1801,15 +1754,16 @@ const HostLiveStream = ({ onBack }) => {
                 )}
 
                 {/* Comments Overlay - Instagram style */}
-                {isFullscreen && (
-                  <div 
-                    className="absolute bottom-0 left-0 w-80 max-w-[85%] pointer-events-none z-50"
-                    style={{ 
+                {/* Comments Overlay - Instagram style */}
+                {(isFullscreen || (videoContainerRef.current?.classList.contains('ios-fullscreen'))) && (
+                  <div
+                    className="absolute bottom-0 left-0 w-80 max-w-[85%] pointer-events-none comment-overlay"
+                    style={{
                       maxHeight: '70%',
                       padding: '1rem',
                       overflow: 'hidden',
                       position: 'absolute',
-                      zIndex: 50
+                      zIndex: 1000001
                     }}
                   >
                     <div className="flex flex-col gap-2 items-start">
@@ -1820,7 +1774,8 @@ const HostLiveStream = ({ onBack }) => {
                           style={{
                             animation: 'slideInLeft 0.3s ease-out',
                             maxWidth: '100%',
-                            fontSize: '0.9rem'
+                            fontSize: '0.9rem',
+                            zIndex: 1000001
                           }}
                         >
                           <div className="flex items-center gap-2">
@@ -1860,6 +1815,12 @@ const HostLiveStream = ({ onBack }) => {
                   {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
                 </button>
               </div>
+              {/* iOS Fullscreen Indicator */}
+              {isFullscreen && /iPad|iPhone|iPod/.test(navigator.userAgent) && (
+                <div className="absolute top-16 right-4 z-50 bg-black/70 text-white px-3 py-2 rounded-full text-xs">
+                  Swipe down to exit
+                </div>
+              )}
 
               <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-4 mb-4">
                 <h3 className="font-semibold mb-4">Add Product/Ad</h3>
