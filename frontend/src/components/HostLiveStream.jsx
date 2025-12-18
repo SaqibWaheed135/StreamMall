@@ -1610,8 +1610,13 @@ const HostLiveStream = ({ onBack }) => {
     to { transform: translateX(0); opacity: 1; }
   }
   @keyframes fadeOut {
-    from { opacity: 1; }
+    from { opacity: 1; transform: translateY(0); }
     to { opacity: 0; transform: translateY(-10px); }
+  }
+  
+  /* Comment bubble animation - appears then fades out after 5 seconds */
+  .comment-bubble {
+    animation: slideInLeft 0.3s ease-out, fadeOut 0.5s ease-in 4.5s forwards !important;
   }
   
   /* Native fullscreen styles for desktop/iPad */
@@ -1974,8 +1979,8 @@ const HostLiveStream = ({ onBack }) => {
                   </div>
                 )}
 
-                {/* Comments Overlay - Instagram style - Hide when controls panel is open on iPhone */}
-                {isFullscreen && !(showFullscreenControls && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
+                {/* Comments Overlay - Instagram style - Show for iPhone fullscreen too */}
+                {isFullscreen && !showFullscreenControls && (
                   <div
                     className="comment-overlay"
                     style={{
@@ -1997,9 +2002,9 @@ const HostLiveStream = ({ onBack }) => {
                       {overlayComments.map((comment, index) => (
                         <div
                           key={comment.overlayId || comment.id}
-                          className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto animate-slideInLeft shadow-lg border border-white/10"
+                          className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto shadow-lg border border-white/10 comment-bubble"
                           style={{
-                            animation: 'slideInLeft 0.3s ease-out',
+                            animation: 'slideInLeft 0.3s ease-out, fadeOut 0.5s ease-in 4.5s forwards',
                             maxWidth: '100%',
                             fontSize: '0.9rem',
                             transform: 'translate3d(0,0,0)',
@@ -2051,14 +2056,18 @@ const HostLiveStream = ({ onBack }) => {
                       >
                         {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                       </button>
-                      <button
-                        onClick={() => setShowConfirmEnd(true)}
-                        className="p-3 rounded-full transition-colors bg-red-600 hover:bg-red-700 text-white backdrop-blur-md shadow-lg border border-white/20"
-                        title="End Stream"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
                     </div>
+
+                    {/* End Stream Button - More Prominent */}
+                    <button
+                      onClick={() => setShowConfirmEnd(true)}
+                      className="absolute top-4 left-4 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20 flex items-center gap-2 font-semibold"
+                      style={{ zIndex: 2147483646 }}
+                      title="End Stream"
+                    >
+                      <X className="w-4 h-4" />
+                      <span className="text-sm">End Stream</span>
+                    </button>
 
                     {/* Control Panel - Slides in from right */}
                     {showFullscreenControls && (
