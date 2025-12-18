@@ -192,6 +192,30 @@ const HostLiveStream = ({ onBack }) => {
             document.body.classList.add('ios-fullscreen-active');
             document.documentElement.classList.add('ios-fullscreen-active');
 
+            // Apply aggressive inline styles to container to break out of parent
+            container.style.cssText = `
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              height: calc(var(--vh, 1vh) * 100) !important;
+              max-width: 100vw !important;
+              max-height: 100vh !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              z-index: 2147483647 !important;
+              border-radius: 0 !important;
+              background: #000 !important;
+              transform: none !important;
+              -webkit-transform: translate3d(0,0,0) !important;
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+            `;
+
             // Force viewport height calculation
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -202,9 +226,18 @@ const HostLiveStream = ({ onBack }) => {
             document.body.style.left = '0';
             document.body.style.right = '0';
             document.body.style.bottom = '0';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.overflow = 'hidden';
+
+            // Also set on html
+            document.documentElement.style.position = 'fixed';
+            document.documentElement.style.width = '100%';
+            document.documentElement.style.height = '100%';
+            document.documentElement.style.overflow = 'hidden';
 
             setIsFullscreen(true);
-            console.log('✅ Fullscreen applied');
+            console.log('✅ Fullscreen applied with inline styles');
 
             // Request orientation lock if available
             if (screen.orientation && screen.orientation.lock) {
@@ -1654,6 +1687,9 @@ const HostLiveStream = ({ onBack }) => {
     transform: none !important;
     -webkit-transform: translate3d(0,0,0) !important;
     transform: translate3d(0,0,0) !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   .fullscreen-video-container.ios-fullscreen video {
@@ -1726,6 +1762,19 @@ const HostLiveStream = ({ onBack }) => {
     overflow: hidden !important;
     position: fixed !important;
     width: 100% !important;
+  }
+  
+  /* Hide all content except the fullscreen video container on iPhone */
+  body.ios-fullscreen-active > div.min-h-screen {
+    overflow: hidden !important;
+  }
+  
+  body.ios-fullscreen-active .max-w-7xl {
+    display: none !important;
+  }
+  
+  body.ios-fullscreen-active .bg-white\\/70 {
+    display: none !important;
   }
 `}</style>
 
