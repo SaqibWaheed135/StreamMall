@@ -149,10 +149,12 @@ const HostLiveStream = ({ onBack }) => {
     };
   }, []);
 
-  // Auto-fullscreen for iPhone when going live
+  // Auto-fullscreen for iPhone when going live (only iPhone, not other devices)
   useEffect(() => {
+    // Only detect iPhone specifically (not iPad or other iOS devices)
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+    // Only auto-fullscreen on iPhone when going live
     if (isLive && isIPhone && !isFullscreen) {
       // Show toast notification
       setShowFullscreenToast(true);
@@ -169,21 +171,7 @@ const HostLiveStream = ({ onBack }) => {
 
       return () => clearTimeout(timer);
     }
-  }, [isLive]);
-
-  // Auto-fullscreen for iPhone when going live
-  useEffect(() => {
-    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (isLive && isIPhone && !isFullscreen) {
-      // Small delay to ensure video is ready
-      const timer = setTimeout(() => {
-        toggleFullscreen();
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isLive]); // Only trigger when isLive changes
+  }, [isLive, isFullscreen]); // Only trigger when isLive changes
 
 
   const getGiftIcon = (type) => {
