@@ -120,6 +120,8 @@ const HostLiveStream = ({ onBack }) => {
   // Fullscreen and overlay comments state
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [overlayComments, setOverlayComments] = useState([]);
+  const [showFullscreenControls, setShowFullscreenControls] = useState(false);
+  const [activeFullscreenTab, setActiveFullscreenTab] = useState('chat'); // 'chat', 'products', 'orders'
   const videoContainerRef = useRef(null);
 
   const videoRef = useRef(null);
@@ -1603,6 +1605,10 @@ const HostLiveStream = ({ onBack }) => {
     from { transform: translateX(-100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
   }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
   @keyframes fadeOut {
     from { opacity: 1; }
     to { opacity: 0; transform: translateY(-10px); }
@@ -1968,8 +1974,8 @@ const HostLiveStream = ({ onBack }) => {
                   </div>
                 )}
 
-                {/* Comments Overlay - Instagram style */}
-                {isFullscreen && (
+                {/* Comments Overlay - Instagram style - Hide when controls panel is open on iPhone */}
+                {isFullscreen && !(showFullscreenControls && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
                   <div
                     className="comment-overlay"
                     style={{
@@ -2011,6 +2017,375 @@ const HostLiveStream = ({ onBack }) => {
                       ))}
                     </div>
                   </div>
+                )}
+
+                {/* iPhone Fullscreen Controls Panel */}
+                {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <>
+                    {/* Floating Menu Button */}
+                    <button
+                      onClick={() => setShowFullscreenControls(!showFullscreenControls)}
+                      className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                      style={{ zIndex: 2147483646 }}
+                    >
+                      {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+                    </button>
+
+                    {/* Camera/Mic Controls - Always Visible */}
+                    <div className="absolute bottom-4 right-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483646 }}>
+                      <button
+                        onClick={toggleCamera}
+                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border border-white/20 ${
+                          isCameraOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
+                        }`}
+                        title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
+                      >
+                        {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={toggleMic}
+                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border border-white/20 ${
+                          isMicOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
+                        }`}
+                        title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
+                      >
+                        {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={() => setShowConfirmEnd(true)}
+                        className="p-3 rounded-full transition-colors bg-red-600 hover:bg-red-700 text-white backdrop-blur-md shadow-lg border border-white/20"
+                        title="End Stream"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Control Panel - Slides in from right */}
+                    {showFullscreenControls && (
+                      <div
+                        className="absolute top-0 right-0 h-full w-full max-w-md bg-black/95 backdrop-blur-xl text-white z-50 overflow-y-auto"
+                        style={{
+                          zIndex: 2147483647,
+                          animation: 'slideInRight 0.3s ease-out',
+                          transform: 'translate3d(0,0,0)',
+                          WebkitTransform: 'translate3d(0,0,0)'
+                        }}
+                      >
+                        <div className="p-4 border-b border-white/20 flex items-center justify-between">
+                          <h3 className="text-lg font-bold">Stream Controls</h3>
+                          <button
+                            onClick={() => setShowFullscreenControls(false)}
+                            className="p-2 hover:bg-white/10 rounded-full transition"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-white/20">
+                          <button
+                            onClick={() => setActiveFullscreenTab('chat')}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
+                              activeFullscreenTab === 'chat' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                            }`}
+                          >
+                            <MessageCircle className="w-4 h-4 inline mr-2" />
+                            Chat
+                          </button>
+                          <button
+                            onClick={() => setActiveFullscreenTab('products')}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
+                              activeFullscreenTab === 'products' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                            }`}
+                          >
+                            <Gift className="w-4 h-4 inline mr-2" />
+                            Products
+                          </button>
+                          <button
+                            onClick={() => setActiveFullscreenTab('orders')}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
+                              activeFullscreenTab === 'orders' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                            }`}
+                          >
+                            📦 Orders
+                          </button>
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="p-4">
+                          {/* Chat Tab */}
+                          {activeFullscreenTab === 'chat' && (
+                            <div className="space-y-4">
+                              <div className="flex-1 overflow-y-auto space-y-3 max-h-[60vh]">
+                                {comments.map((c) => (
+                                  <div key={c.id} className="space-y-2">
+                                    <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1">
+                                          <span className="font-semibold text-pink-300">@{c.username}: </span>
+                                          <span className="text-white/90 text-sm">{c.text}</span>
+                                        </div>
+                                        <button
+                                          onClick={() => setReplyingTo(c)}
+                                          className="flex-shrink-0 text-pink-400 hover:text-pink-300 p-1 rounded transition"
+                                        >
+                                          <Reply className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                    {c.replies && c.replies.length > 0 && (
+                                      <div className="ml-6 space-y-2">
+                                        {c.replies.map((reply) => (
+                                          <div
+                                            key={reply._id || reply.id}
+                                            className={`text-sm rounded-xl px-3 py-2 ${
+                                              reply.isHost ? 'bg-pink-500/20 border border-pink-500/50' : 'bg-white/5'
+                                            }`}
+                                          >
+                                            <div className="flex items-start gap-1">
+                                              {reply.isHost && <span>👑</span>}
+                                              <span className="font-semibold text-pink-300">@{reply.username}:</span>
+                                              <span className="text-white/90">{reply.text}</span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                                {comments.length === 0 && (
+                                  <div className="text-center text-white/50 py-8">
+                                    <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                    <p className="text-sm">Waiting for comments...</p>
+                                  </div>
+                                )}
+                                <div ref={commentsEndRef} />
+                              </div>
+
+                              {replyingTo && (
+                                <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
+                                  <span className="text-sm text-pink-300">
+                                    Replying to <span className="font-semibold">@{replyingTo.username}</span>
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setReplyingTo(null);
+                                      setReplyText('');
+                                    }}
+                                    className="text-pink-300 hover:text-pink-200"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-2">
+                                <input
+                                  ref={replyInputRef}
+                                  type="text"
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && replyingTo) {
+                                      handleSendReply();
+                                    }
+                                  }}
+                                  placeholder={replyingTo ? "Type your reply..." : "Click reply button on a comment"}
+                                  disabled={!replyingTo}
+                                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                />
+                                <button
+                                  onClick={handleSendReply}
+                                  disabled={!replyText.trim() || !replyingTo}
+                                  className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                  <Send className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Products Tab */}
+                          {activeFullscreenTab === 'products' && (
+                            <div className="space-y-4">
+                              <h4 className="font-semibold text-lg mb-4">Add Product/Ad</h4>
+                              
+                              <select
+                                value={newProduct.type}
+                                onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                              >
+                                <option value="product" className="bg-black">Product</option>
+                                <option value="ad" className="bg-black">Ad</option>
+                              </select>
+
+                              <input
+                                placeholder="Name"
+                                value={newProduct.name}
+                                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                              />
+
+                              <input
+                                placeholder="Description"
+                                value={newProduct.description}
+                                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                              />
+
+                              <input
+                                type="number"
+                                placeholder="Price"
+                                value={newProduct.price}
+                                onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                              />
+
+                              <div className="mb-2">
+                                <label className="block text-sm font-medium mb-1 text-white/80">Image</label>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    setNewProduct({ ...newProduct, imageFile: file });
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }}
+                                  className="w-full text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-600 file:text-white"
+                                />
+                                {newProduct.imagePreview && (
+                                  <img
+                                    src={newProduct.imagePreview}
+                                    alt="Preview"
+                                    className="mt-2 w-full h-48 object-cover rounded-lg"
+                                  />
+                                )}
+                              </div>
+
+                              <input
+                                placeholder="Link (optional)"
+                                value={newProduct.link}
+                                onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                              />
+
+                              <button
+                                onClick={async () => {
+                                  if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
+                                    setError("Name, price and image are required");
+                                    return;
+                                  }
+                                  const formData = new FormData();
+                                  formData.append("type", newProduct.type);
+                                  formData.append("name", newProduct.name);
+                                  formData.append("description", newProduct.description);
+                                  formData.append("price", newProduct.price.toString());
+                                  formData.append("file", newProduct.imageFile);
+                                  if (newProduct.link) formData.append("link", newProduct.link);
+                                  try {
+                                    const token = localStorage.getItem("token");
+                                    const response = await fetch(`${API_BASE_URL}/live/${streamData.streamId}/add-product`, {
+                                      method: "POST",
+                                      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+                                      body: formData,
+                                    });
+                                    const data = await response.json();
+                                    if (response.ok) {
+                                      setProducts([...products, data.product]);
+                                      setNewProduct({
+                                        type: "product",
+                                        name: "",
+                                        description: "",
+                                        price: 0,
+                                        imageFile: null,
+                                        imagePreview: "",
+                                        link: "",
+                                      });
+                                      setError("");
+                                    } else {
+                                      setError(data.msg || "Failed to add product");
+                                    }
+                                  } catch {
+                                    setError("Failed to add product");
+                                  }
+                                }}
+                                className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+                              >
+                                Add Item
+                              </button>
+
+                              <div className="mt-4">
+                                <h5 className="font-semibold mb-2 text-white/80">Added Items ({products.length})</h5>
+                                {products.length === 0 ? (
+                                  <p className="text-white/50 text-sm">No items added yet</p>
+                                ) : (
+                                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                                    {products.map((p, i) => (
+                                      <div key={i} className="bg-white/10 rounded-lg p-2 flex items-center gap-3">
+                                        {p.imageUrl && (
+                                          <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                                        )}
+                                        <div className="flex-1">
+                                          <p className="font-medium text-white">{p.name}</p>
+                                          <p className="text-sm text-white/70">${p.price}</p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Orders Tab */}
+                          {activeFullscreenTab === 'orders' && (
+                            <div className="space-y-4">
+                              <h4 className="font-semibold text-lg mb-4">Orders ({orders.length})</h4>
+                              {orders.length === 0 ? (
+                                <div className="text-center text-white/50 py-8">
+                                  <p className="text-sm">No orders yet</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                                  {orders.map((order, i) => (
+                                    <div key={i} className="bg-white/10 backdrop-blur-md rounded-xl p-3">
+                                      <button
+                                        onClick={() => {
+                                          const product = products[order.productIndex];
+                                          setSelectedOrderDetails({ order, product });
+                                        }}
+                                        className="w-full text-left hover:bg-white/5 p-3 rounded-xl transition"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1">
+                                            <p className="font-semibold text-white">
+                                              {products[order.productIndex]?.name}
+                                            </p>
+                                            <p className="text-xs text-white/70">
+                                              By: {order.buyer?.username || order.buyerUsername}
+                                            </p>
+                                            <p className="text-xs text-yellow-300 mt-1">
+                                              +{Math.ceil((products[order.productIndex]?.price || 0) * 100)} coins
+                                            </p>
+                                          </div>
+                                          <ChevronDown className="w-4 h-4 text-white/50" />
+                                        </div>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
