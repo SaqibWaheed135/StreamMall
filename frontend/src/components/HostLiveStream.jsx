@@ -153,25 +153,84 @@ const HostLiveStream = ({ onBack }) => {
   useEffect(() => {
     // Only detect iPhone specifically (not iPad or other iOS devices)
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    console.log('🔍 Auto-fullscreen check:', { isLive, isIPhone, isFullscreen });
 
     // Only auto-fullscreen on iPhone when going live
     if (isLive && isIPhone && !isFullscreen) {
+      console.log('📱 iPhone detected - attempting auto-fullscreen');
       // Show toast notification
       setShowFullscreenToast(true);
 
-      // Small delay to ensure video is ready
-      const timer = setTimeout(() => {
-        toggleFullscreen();
+      // Function to attempt fullscreen with retries
+      const attemptFullscreen = (attempts = 0) => {
+        const container = videoContainerRef.current;
+        console.log(`🔄 Fullscreen attempt ${attempts}:`, { container: !!container });
+        
+        // Check if already in fullscreen to avoid duplicate calls
+        if (container && container.classList.contains('ios-fullscreen')) {
+          console.log('✅ Already in fullscreen');
+          setIsFullscreen(true);
+          return;
+        }
+        
+        if (!container && attempts < 20) {
+          // Retry if container not ready yet (up to 4 seconds)
+          setTimeout(() => attemptFullscreen(attempts + 1), 200);
+          return;
+        }
 
-        // Hide toast after fullscreen is activated
-        setTimeout(() => {
-          setShowFullscreenToast(false);
-        }, 2000);
+        if (container && !container.classList.contains('ios-fullscreen')) {
+          console.log('🎬 Applying iPhone fullscreen');
+          
+          // Use requestAnimationFrame to ensure DOM is ready
+          requestAnimationFrame(() => {
+            // Apply iPhone fullscreen directly
+            window.scrollTo(0, 1);
+
+            // Add fullscreen classes
+            container.classList.add('ios-fullscreen');
+            document.body.classList.add('ios-fullscreen-active');
+            document.documentElement.classList.add('ios-fullscreen-active');
+
+            // Force viewport height calculation
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+            // Prevent body scroll
+            document.body.style.position = 'fixed';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.bottom = '0';
+
+            setIsFullscreen(true);
+            console.log('✅ Fullscreen applied');
+
+            // Request orientation lock if available
+            if (screen.orientation && screen.orientation.lock) {
+              screen.orientation.lock('landscape').catch(() => {
+                console.log('Orientation lock not available');
+              });
+            }
+
+            // Hide toast after fullscreen is activated
+            setTimeout(() => {
+              setShowFullscreenToast(false);
+            }, 2000);
+          });
+        } else if (!container) {
+          console.warn('⚠️ Container not found after all retries');
+        }
+      };
+
+      // Start attempting fullscreen after a delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        attemptFullscreen();
       }, 500);
 
       return () => clearTimeout(timer);
     }
-  }, [isLive, isFullscreen]); // Only trigger when isLive changes
+  }, [isLive]); // Only trigger when isLive changes (removed isFullscreen to avoid re-triggers)
 
 
   const getGiftIcon = (type) => {
@@ -1657,6 +1716,16 @@ const HostLiveStream = ({ onBack }) => {
     .fullscreen-video-container.ios-fullscreen {
       -webkit-overflow-scrolling: touch;
     }
+  }
+  
+  /* Ensure parent containers don't interfere with iPhone fullscreen */
+  html.ios-fullscreen-active,
+  body.ios-fullscreen-active {
+    height: 100vh !important;
+    height: calc(var(--vh, 1vh) * 100) !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
   }
 `}</style>
 
