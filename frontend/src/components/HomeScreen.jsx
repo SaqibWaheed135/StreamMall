@@ -143,6 +143,8 @@ export default function StreamMallHome() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    // Clear active host stream when user logs out
+    localStorage.removeItem("activeHostStream");
     window.location.href = "/login";
   };
 
