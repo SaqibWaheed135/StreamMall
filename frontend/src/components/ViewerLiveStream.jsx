@@ -642,6 +642,9 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   // Fullscreen and overlay comments state
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [overlayComments, setOverlayComments] = useState([]);
+  const [showFullscreenControls, setShowFullscreenControls] = useState(false);
+  const [activeFullscreenTab, setActiveFullscreenTab] = useState('comment'); // 'comment', 'products', 'gifts'
+  const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const videoContainerRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -1451,6 +1454,115 @@ newSocket.on('product-added', (data) => {
     };
   }, [overlayComments.length]);
 
+  // Auto-fullscreen for iPhone when stream loads (only iPhone, not other devices)
+  useEffect(() => {
+    // Only detect iPhone specifically (not iPad or other iOS devices)
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    console.log('🔍 Viewer Auto-fullscreen check:', { hasAccess, isIPhone, isFullscreen, hostParticipant: !!hostParticipant });
+
+    // Only auto-fullscreen on iPhone when stream is ready and user has access
+    if (hasAccess && hostParticipant && isIPhone && !isFullscreen && !loading) {
+      console.log('📱 iPhone detected - attempting auto-fullscreen for viewer');
+      // Show toast notification
+      setShowFullscreenToast(true);
+
+      // Function to attempt fullscreen with retries
+      const attemptFullscreen = (attempts = 0) => {
+        const container = videoContainerRef.current;
+        console.log(`🔄 Viewer Fullscreen attempt ${attempts}:`, { container: !!container });
+        
+        // Check if already in fullscreen to avoid duplicate calls
+        if (container && container.classList.contains('ios-fullscreen')) {
+          console.log('✅ Already in fullscreen');
+          setIsFullscreen(true);
+          return;
+        }
+        
+        if (!container && attempts < 20) {
+          // Retry if container not ready yet (up to 4 seconds)
+          setTimeout(() => attemptFullscreen(attempts + 1), 200);
+          return;
+        }
+
+        if (container && !container.classList.contains('ios-fullscreen')) {
+          console.log('🎬 Applying iPhone fullscreen for viewer');
+          
+          // Use requestAnimationFrame to ensure DOM is ready
+          requestAnimationFrame(() => {
+            // Apply iPhone fullscreen directly
+            window.scrollTo(0, 1);
+
+            // Add fullscreen classes
+            container.classList.add('ios-fullscreen');
+            document.body.classList.add('ios-fullscreen-active');
+            document.documentElement.classList.add('ios-fullscreen-active');
+
+            // Apply aggressive inline styles to container to break out of parent
+            container.style.cssText = `
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              height: calc(var(--vh, 1vh) * 100) !important;
+              max-width: 100vw !important;
+              max-height: 100vh !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              z-index: 2147483647 !important;
+              border-radius: 0 !important;
+              background: #000 !important;
+              transform: none !important;
+              -webkit-transform: translate3d(0,0,0) !important;
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+            `;
+
+            // Force viewport height calculation
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+            // Prevent body scroll
+            document.body.style.position = 'fixed';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.bottom = '0';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.overflow = 'hidden';
+
+            // Also set on html
+            document.documentElement.style.position = 'fixed';
+            document.documentElement.style.width = '100%';
+            document.documentElement.style.height = '100%';
+            document.documentElement.style.overflow = 'hidden';
+
+            setIsFullscreen(true);
+            console.log('✅ Viewer Fullscreen applied with inline styles');
+
+            // Hide toast after fullscreen is activated
+            setTimeout(() => {
+              setShowFullscreenToast(false);
+            }, 2000);
+          });
+        } else if (!container) {
+          console.warn('⚠️ Container not found after all retries');
+        }
+      };
+
+      // Start attempting fullscreen after a delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        attemptFullscreen();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasAccess, hostParticipant, loading]); // Trigger when stream is ready
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#FFC0CB] via-[#ffb3c6] to-[#ff99b3] text-gray-900 flex items-center justify-center">
@@ -1644,6 +1756,40 @@ newSocket.on('product-added', (data) => {
           position: relative;
         }
         
+        @keyframes fadeOut {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(-10px); }
+        }
+        
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Comment bubble animation - appears then fades out after 5 seconds (Instagram style) */
+        .comment-bubble {
+          animation: slideInLeft 0.3s ease-out, fadeOut 0.5s ease-in 4.5s forwards !important;
+        }
+        
+        /* iPhone-specific CSS fullscreen */
+        html.ios-fullscreen-active {
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
+          -webkit-overflow-scrolling: touch !important;
+        }
+        
+        body.ios-fullscreen-active {
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          -webkit-overflow-scrolling: touch !important;
+        }
+        
         /* iOS CSS-based fullscreen fallback */
         .fullscreen-video-container.ios-fullscreen {
           position: fixed !important;
@@ -1651,16 +1797,23 @@ newSocket.on('product-added', (data) => {
           left: 0 !important;
           right: 0 !important;
           bottom: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          max-width: 100% !important;
-          max-height: 100% !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          height: calc(var(--vh, 1vh) * 100) !important;
+          max-width: 100vw !important;
+          max-height: 100vh !important;
           margin: 0 !important;
           padding: 0 !important;
-          z-index: 99999 !important;
+          z-index: 2147483647 !important;
           border-radius: 0 !important;
           background: #000 !important;
           transform: none !important;
+          -webkit-transform: translate3d(0,0,0) !important;
+          transform: translate3d(0,0,0) !important;
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
         }
         
         .fullscreen-video-container.ios-fullscreen video {
@@ -1668,22 +1821,48 @@ newSocket.on('product-added', (data) => {
           height: 100% !important;
           max-width: 100% !important;
           max-height: 100% !important;
-          object-fit: cover;
-          position: absolute;
-          top: 0;
-          left: 0;
+          object-fit: cover !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          -webkit-transform: translate3d(0,0,0) !important;
+          transform: translate3d(0,0,0) !important;
+          pointer-events: none !important;
         }
         
-        /* Ensure parent containers don't constrain iOS fullscreen */
+        /* Ensure buttons are above video */
+        .fullscreen-video-container.ios-fullscreen button {
+          pointer-events: auto !important;
+        }
+        
+        /* Ensure parent containers don't interfere with iPhone fullscreen */
+        html.ios-fullscreen-active,
         body.ios-fullscreen-active {
+          height: 100vh !important;
+          height: calc(var(--vh, 1vh) * 100) !important;
           overflow: hidden !important;
           position: fixed !important;
           width: 100% !important;
-          height: 100% !important;
         }
         
-        body.ios-fullscreen-active > * {
+        /* Hide all content except the fullscreen video container on iPhone */
+        body.ios-fullscreen-active > div.min-h-screen {
           overflow: hidden !important;
+        }
+        
+        body.ios-fullscreen-active .max-w-6xl {
+          display: none !important;
+        }
+        
+        /* Buttons in fullscreen */
+        .fullscreen-video-container.ios-fullscreen button {
+          position: absolute !important;
+          z-index: 2147483647 !important;
+          pointer-events: auto !important;
+          -webkit-transform: translate3d(0,0,0) !important;
+          transform: translate3d(0,0,0) !important;
+          -webkit-tap-highlight-color: transparent !important;
+          touch-action: manipulation !important;
         }
         
         /* Ensure chat overlays are visible in fullscreen on iOS */
@@ -1752,6 +1931,14 @@ newSocket.on('product-added', (data) => {
         <StreamEndedModal streamData={endedStreamData} onNavigate={onBack} />
       )}
 
+      {/* iPhone Fullscreen Toast */}
+      {showFullscreenToast && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 backdrop-blur-md">
+          <Maximize className="w-4 h-4" />
+          <span className="text-sm font-medium">Opening in fullscreen...</span>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-10">
         <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-3xl shadow-2xl p-5 sm:p-8 mb-8 transition-all">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
@@ -1813,36 +2000,42 @@ newSocket.on('product-added', (data) => {
                 </div>
               )}
 
-              {/* Fullscreen Button */}
-              <button
-                onClick={toggleFullscreen}
-                className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
-                style={{ zIndex: 50 }}
-                title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
-              >
-                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-              </button>
+              {/* Fullscreen Button - Hidden on iPhone since it auto-opens */}
+              {!(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                <button
+                  onClick={toggleFullscreen}
+                  className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                  style={{ zIndex: 50 }}
+                  title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
+                >
+                  {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                </button>
+              )}
 
-              {/* Instagram-style Comments Overlay (Left Side) - Only in fullscreen */}
-              {isFullscreen && (
+              {/* Instagram-style Comments Overlay (Left Side) - Only in fullscreen, hide when controls panel is open on iPhone */}
+              {isFullscreen && !(showFullscreenControls && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
                 <div 
                   className="absolute bottom-0 left-0 w-80 max-w-[85%] p-4 pointer-events-none z-50" 
                   style={{ 
                     maxHeight: '70%', 
                     overflow: 'hidden',
                     position: 'absolute',
-                    zIndex: 50
+                    zIndex: 2147483646,
+                    transform: 'translate3d(0,0,0)',
+                    WebkitTransform: 'translate3d(0,0,0)'
                   }}
                 >
                   <div className="flex flex-col gap-2 items-start">
                     {overlayComments.map((comment, index) => (
                       <div
                         key={comment.overlayId || comment.id}
-                        className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto animate-slideInLeft shadow-lg border border-white/10"
+                        className="bg-black/75 backdrop-blur-md text-white px-3 py-2 rounded-full pointer-events-auto shadow-lg border border-white/10 comment-bubble"
                         style={{
-                          animation: 'slideInLeft 0.3s ease-out',
+                          animation: 'slideInLeft 0.3s ease-out, fadeOut 0.5s ease-in 4.5s forwards',
                           maxWidth: '100%',
-                          fontSize: '0.9rem'
+                          fontSize: '0.9rem',
+                          transform: 'translate3d(0,0,0)',
+                          WebkitTransform: 'translate3d(0,0,0)'
                         }}
                       >
                         <div className="flex items-center gap-2">
@@ -1858,13 +2051,13 @@ newSocket.on('product-added', (data) => {
                 </div>
               )}
 
-              {/* Comment Input at Bottom (Only in fullscreen) */}
-              {isFullscreen && (
+              {/* Comment Input at Bottom (Only in fullscreen, hide when controls panel is open on iPhone) */}
+              {isFullscreen && !(showFullscreenControls && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
                 <div 
                   className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-50"
                   style={{
                     position: 'absolute',
-                    zIndex: 50
+                    zIndex: 2147483646
                   }}
                 >
                   <form 
@@ -1912,6 +2105,234 @@ newSocket.on('product-added', (data) => {
                   {heart.icon}
                 </div>
               ))}
+
+              {/* iPhone Fullscreen Controls Panel */}
+              {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                <>
+                  {/* Floating Menu Button */}
+                  <button
+                    onClick={() => setShowFullscreenControls(!showFullscreenControls)}
+                    className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                    style={{ zIndex: 2147483646 }}
+                  >
+                    {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+                  </button>
+
+                  {/* Exit Button - Top Left */}
+                  <button
+                    onClick={onBack}
+                    className="absolute top-4 left-4 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
+                    style={{ 
+                      zIndex: 2147483647,
+                      pointerEvents: 'auto',
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none'
+                    }}
+                    title="Exit Stream"
+                    aria-label="Exit Stream"
+                  >
+                    <X className="w-4 h-4" />
+                    <span className="text-sm">Exit</span>
+                  </button>
+
+                  {/* Control Panel - Slides in from right */}
+                  {showFullscreenControls && (
+                    <div
+                      className="absolute top-0 right-0 h-full w-full max-w-md bg-black/95 backdrop-blur-xl text-white z-50 overflow-y-auto"
+                      style={{
+                        zIndex: 2147483647,
+                        animation: 'slideInRight 0.3s ease-out',
+                        transform: 'translate3d(0,0,0)',
+                        WebkitTransform: 'translate3d(0,0,0)'
+                      }}
+                    >
+                      <div className="p-4 border-b border-white/20 flex items-center justify-between">
+                        <h3 className="text-lg font-bold">Stream Options</h3>
+                        <button
+                          onClick={() => setShowFullscreenControls(false)}
+                          className="p-2 hover:bg-white/10 rounded-full transition"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* Tabs */}
+                      <div className="flex border-b border-white/20">
+                        <button
+                          onClick={() => setActiveFullscreenTab('comment')}
+                          className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
+                            activeFullscreenTab === 'comment' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                          }`}
+                        >
+                          <MessageCircle className="w-4 h-4 inline mr-2" />
+                          Comment
+                        </button>
+                        <button
+                          onClick={() => setActiveFullscreenTab('products')}
+                          className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
+                            activeFullscreenTab === 'products' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                          }`}
+                        >
+                          <Gift className="w-4 h-4 inline mr-2" />
+                          Products
+                        </button>
+                        <button
+                          onClick={() => setActiveFullscreenTab('gifts')}
+                          className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
+                            activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                          }`}
+                        >
+                          🎁 Gifts
+                        </button>
+                      </div>
+
+                      {/* Tab Content */}
+                      <div className="p-4">
+                        {/* Comment Tab */}
+                        {activeFullscreenTab === 'comment' && (
+                          <div className="space-y-4">
+                            <div className="flex-1 overflow-y-auto space-y-3 max-h-[60vh]">
+                              {comments.map((c) => (
+                                <div key={c.id} className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
+                                  <span className="font-semibold text-pink-300">@{c.username}: </span>
+                                  <span className="text-white/90 text-sm">{c.text}</span>
+                                </div>
+                              ))}
+                              {comments.length === 0 && (
+                                <div className="text-center text-white/50 py-8">
+                                  <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                  <p className="text-sm">Be the first to comment!</p>
+                                </div>
+                              )}
+                              <div ref={commentsEndRef} />
+                            </div>
+
+                            <form 
+                              onSubmit={sendComment} 
+                              className="flex gap-2"
+                            >
+                              <input
+                                type="text"
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                placeholder={!socketConnected ? 'Connecting...' : !hasAccess ? 'Join stream to comment...' : 'Comment...'}
+                                maxLength={200}
+                                disabled={!socketConnected || !hasAccess}
+                                className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                              />
+                              <button
+                                type="submit"
+                                disabled={!socketConnected || !hasAccess || !comment.trim()}
+                                className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                              >
+                                <Send className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={sendHeart}
+                                disabled={!socketConnected}
+                                className="bg-white/10 text-pink-400 p-2 rounded-lg hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                              >
+                                <Heart className="w-5 h-5" />
+                              </button>
+                            </form>
+                          </div>
+                        )}
+
+                        {/* Products Tab */}
+                        {activeFullscreenTab === 'products' && (
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-lg mb-4">Featured Products</h4>
+                            {products.length === 0 ? (
+                              <div className="text-center text-white/50 py-8">
+                                <p className="text-sm">No products available yet</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                                {products.map((p, i) => (
+                                  <div
+                                    key={i}
+                                    className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20"
+                                  >
+                                    {p.imageUrl && (
+                                      <img
+                                        src={p.imageUrl}
+                                        alt={p.name}
+                                        className="w-full h-32 object-cover rounded-lg mb-3"
+                                      />
+                                    )}
+                                    <h4 className="font-semibold text-white mb-1">{p.name}</h4>
+                                    <p className="text-white/70 text-sm mb-2 line-clamp-2">{p.description}</p>
+                                    <p className="font-bold text-pink-400 mb-3">${p.price}</p>
+                                    {p.type === 'product' ? (
+                                      <button
+                                        onClick={() => {
+                                          const token = localStorage.getItem('token');
+                                          if (!token) {
+                                            setError('Please log in to purchase');
+                                            setTimeout(() => setError(''), 3000);
+                                            return;
+                                          }
+                                          setSelectedProduct({ ...p, index: i });
+                                          setShowCartModal(true);
+                                          setShowFullscreenControls(false);
+                                        }}
+                                        className="w-full bg-pink-600 hover:bg-pink-700 py-2.5 rounded-xl text-sm font-semibold text-white transition"
+                                      >
+                                        Buy Now
+                                      </button>
+                                    ) : (
+                                      <a
+                                        href={p.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full bg-white/10 text-white border border-white/20 hover:bg-white/20 py-2.5 rounded-xl text-sm font-semibold transition block text-center"
+                                      >
+                                        View Ad
+                                      </a>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Gifts Tab */}
+                        {activeFullscreenTab === 'gifts' && (
+                          <div className="space-y-4">
+                            <div className="bg-white/10 border border-white/20 rounded-lg p-3 mb-4">
+                              <p className="text-xs text-white/70">Your Balance</p>
+                              <p className="text-xl font-semibold text-pink-400">{userCoinBalance} coins</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              {gifts.map((gift) => (
+                                <button
+                                  key={gift.type}
+                                  onClick={() => {
+                                    handleSendGift(gift);
+                                    setShowFullscreenControls(false);
+                                  }}
+                                  disabled={userCoinBalance < gift.cost}
+                                  className={`bg-white/10 border border-white/20 rounded-xl p-4 text-center transition-all ${
+                                    userCoinBalance < gift.cost ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/20'
+                                  }`}
+                                >
+                                  <div className="text-4xl mb-2">{gift.icon}</div>
+                                  <p className="text-sm font-semibold text-white mb-1">{gift.label}</p>
+                                  <p className="text-xs text-pink-400">{gift.cost} coins</p>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             <button
