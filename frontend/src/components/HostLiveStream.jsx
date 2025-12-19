@@ -2163,14 +2163,21 @@ const HostLiveStream = ({ onBack }) => {
                           WebkitTransform: 'translate3d(0,0,0)'
                         }}
                       >
-                        <div className="p-4 border-b border-white/20 flex items-center justify-between">
-                          <h3 className="text-lg font-bold">Stream Controls</h3>
-                          <button
-                            onClick={() => setShowFullscreenControls(false)}
-                            className="p-2 hover:bg-white/10 rounded-full transition"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
+                        <div className="p-4 border-b border-white/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-bold">Stream Controls</h3>
+                            <button
+                              onClick={() => setShowFullscreenControls(false)}
+                              className="p-2 hover:bg-white/10 rounded-full transition"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                          {/* Coins Earned Display */}
+                          <div className="bg-white/10 border border-white/20 rounded-lg p-2 mt-2">
+                            <p className="text-xs text-white/70">Total Coins Earned</p>
+                            <p className="text-lg font-semibold text-yellow-400">{coinBalance} coins</p>
+                          </div>
                         </div>
 
                         {/* Tabs */}
@@ -2200,6 +2207,14 @@ const HostLiveStream = ({ onBack }) => {
                             }`}
                           >
                             📦 Orders
+                          </button>
+                          <button
+                            onClick={() => setActiveFullscreenTab('gifts')}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
+                              activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                            }`}
+                          >
+                            🎁 Gifts
                           </button>
                         </div>
 
@@ -2468,6 +2483,39 @@ const HostLiveStream = ({ onBack }) => {
                                           <ChevronDown className="w-4 h-4 text-white/50" />
                                         </div>
                                       </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Gifts Tab */}
+                          {activeFullscreenTab === 'gifts' && (
+                            <div className="space-y-4">
+                              <h4 className="font-semibold text-lg mb-4">Gifts Received ({tips.length})</h4>
+                              {tips.length === 0 ? (
+                                <div className="text-center text-white/50 py-8">
+                                  <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                  <p className="text-sm">No gifts received yet</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                                  {tips.slice().reverse().map((tip) => (
+                                    <div key={tip.id} className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3 flex-1">
+                                          <div className="text-3xl">{getGiftIcon(tip.giftType)}</div>
+                                          <div className="flex-1">
+                                            <p className="font-semibold text-white">{tip.username}</p>
+                                            <p className="text-xs text-white/70">Sent {getGiftIcon(tip.giftType)}</p>
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <p className="text-lg font-semibold text-yellow-400">+{tip.amount}</p>
+                                          <p className="text-xs text-white/70">coins</p>
+                                        </div>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
