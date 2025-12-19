@@ -1042,16 +1042,21 @@ const HostLiveStream = ({ onBack }) => {
   }, [isLive, liveKitReady]);
 
   const endStream = async () => {
+    console.log('🛑 endStream function called');
+    console.log('Current state:', { isLive, streamData: !!streamData, liveKitRoom: !!liveKitRoom });
+    
     // Get streamId from streamData or fallback to localStorage session
     let streamId = streamData?.streamId || streamData?._id;
 
     if (!streamId) {
+      console.log('⚠️ streamId not found in streamData, checking localStorage...');
       // Fallback: try to get from saved session
       const saved = localStorage.getItem(ACTIVE_HOST_STREAM_KEY);
       if (saved) {
         try {
           const session = JSON.parse(saved);
           streamId = session.streamId;
+          console.log('✅ Found streamId in localStorage:', streamId);
         } catch (e) {
           console.error('Failed to parse saved session:', e);
         }
@@ -1059,7 +1064,7 @@ const HostLiveStream = ({ onBack }) => {
     }
 
     if (!streamId) {
-      console.error('Cannot end stream: streamId not found');
+      console.error('❌ Cannot end stream: streamId not found');
       console.error('streamData:', streamData);
       setError('Cannot end stream: stream ID not found');
       return;
@@ -1069,6 +1074,7 @@ const HostLiveStream = ({ onBack }) => {
     const token = localStorage.getItem('token');
 
     try {
+      console.log('📡 Sending end stream request to:', `${API_BASE_URL}/live/${streamId}/end`);
       const response = await fetch(`${API_BASE_URL}/live/${streamId}/end`, {
         method: 'POST',
         headers: {
@@ -1077,12 +1083,18 @@ const HostLiveStream = ({ onBack }) => {
         }
       });
 
+      console.log('📡 Response status:', response.status, response.ok);
+
       if (!response.ok) {
         const err = await response.json();
+        console.error('❌ Failed to end stream:', err);
         throw new Error(err.msg || 'Failed to end stream');
       }
 
+      console.log('✅ Stream ended successfully on server');
+
       if (liveKitRoom) {
+        console.log('🔌 Disconnecting from LiveKit room...');
         // Cleanup track check interval
         if (trackCheckIntervalRef.current) {
           clearInterval(trackCheckIntervalRef.current);
@@ -1090,6 +1102,7 @@ const HostLiveStream = ({ onBack }) => {
         }
         await liveKitRoom.disconnect();
         setLiveKitRoom(null);
+        console.log('✅ LiveKit room disconnected');
       }
 
       if (localStream) {
@@ -1585,6 +1598,11 @@ const HostLiveStream = ({ onBack }) => {
     };
   }, [overlayComments.length]);
 
+  // Debug: Log when showConfirmEnd changes
+  useEffect(() => {
+    console.log('🔔 showConfirmEnd state changed:', showConfirmEnd);
+  }, [showConfirmEnd]);
+
   if (isLive) {
     return (
       <div className="min-h-screen bg-[#FFC0CB] text-black p-4">
@@ -1804,6 +1822,13 @@ const HostLiveStream = ({ onBack }) => {
   
   body.ios-fullscreen-active .bg-white\\/70 {
     display: none !important;
+  }
+  
+  /* Ensure modals are always on top of fullscreen container */
+  body.ios-fullscreen-active [class*="fixed"][class*="inset-0"] {
+    z-index: 2147483647 !important;
+    position: fixed !important;
+    pointer-events: auto !important;
   }
 `}</style>
 
@@ -2082,13 +2107,29 @@ const HostLiveStream = ({ onBack }) => {
                         e.preventDefault();
                         e.stopPropagation();
                         console.log('End Stream button clicked');
-                        setShowConfirmEnd(true);
+                        // On iPhone, directly end stream without confirmation modal (modal might not show in fullscreen)
+                        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                        if (isIPhone && isFullscreen) {
+                          console.log('iPhone fullscreen detected - ending stream directly');
+                          endStream();
+                        } else {
+                          console.log('Setting showConfirmEnd to true');
+                          setShowConfirmEnd(true);
+                        }
                       }}
                       onTouchEnd={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         console.log('End Stream button touched');
-                        setShowConfirmEnd(true);
+                        // On iPhone, directly end stream without confirmation modal
+                        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                        if (isIPhone && isFullscreen) {
+                          console.log('iPhone fullscreen detected - ending stream directly');
+                          endStream();
+                        } else {
+                          console.log('Setting showConfirmEnd to true');
+                          setShowConfirmEnd(true);
+                        }
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
@@ -2839,11 +2880,13 @@ const HostLiveStream = ({ onBack }) => {
         {showConfirmEnd && (
           <ConfirmEndModal
             onConfirm={() => {
+              console.log('✅ ConfirmEndModal onConfirm called');
               isBlockingNavigationRef.current = false;
               setShowConfirmEnd(false);
               endStream();
             }}
             onCancel={() => {
+              console.log('❌ ConfirmEndModal onCancel called');
               isBlockingNavigationRef.current = false;
               setShowConfirmEnd(false);
             }}
