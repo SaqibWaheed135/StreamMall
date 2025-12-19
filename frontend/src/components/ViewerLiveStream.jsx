@@ -1455,117 +1455,7 @@ newSocket.on('product-added', (data) => {
     };
   }, [overlayComments.length]);
 
-  // Auto-fullscreen for iPhone when stream loads (only iPhone, not other devices)
-  useEffect(() => {
-    // Calculate hostParticipant inside useEffect to avoid initialization order issues
-    const hostParticipant = liveKitRoom ? Array.from(liveKitRoom.remoteParticipants.values())[0] : null;
-    
-    // Only detect iPhone specifically (not iPad or other iOS devices)
-    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    console.log('🔍 Viewer Auto-fullscreen check:', { hasAccess, isIPhone, isFullscreen, hostParticipant: !!hostParticipant });
-
-    // Only auto-fullscreen on iPhone when stream is ready and user has access
-    if (hasAccess && hostParticipant && isIPhone && !isFullscreen && !loading) {
-      console.log('📱 iPhone detected - attempting auto-fullscreen for viewer');
-      // Show toast notification
-      setShowFullscreenToast(true);
-
-      // Function to attempt fullscreen with retries
-      const attemptFullscreen = (attempts = 0) => {
-        const container = videoContainerRef.current;
-        console.log(`🔄 Viewer Fullscreen attempt ${attempts}:`, { container: !!container });
-        
-        // Check if already in fullscreen to avoid duplicate calls
-        if (container && container.classList.contains('ios-fullscreen')) {
-          console.log('✅ Already in fullscreen');
-          setIsFullscreen(true);
-          return;
-        }
-        
-        if (!container && attempts < 20) {
-          // Retry if container not ready yet (up to 4 seconds)
-          setTimeout(() => attemptFullscreen(attempts + 1), 200);
-          return;
-        }
-
-        if (container && !container.classList.contains('ios-fullscreen')) {
-          console.log('🎬 Applying iPhone fullscreen for viewer');
-          
-          // Use requestAnimationFrame to ensure DOM is ready
-          requestAnimationFrame(() => {
-            // Apply iPhone fullscreen directly
-            window.scrollTo(0, 1);
-
-            // Add fullscreen classes
-            container.classList.add('ios-fullscreen');
-            document.body.classList.add('ios-fullscreen-active');
-            document.documentElement.classList.add('ios-fullscreen-active');
-
-            // Apply aggressive inline styles to container to break out of parent
-            container.style.cssText = `
-              position: fixed !important;
-              top: 0 !important;
-              left: 0 !important;
-              right: 0 !important;
-              bottom: 0 !important;
-              width: 100vw !important;
-              height: 100vh !important;
-              height: calc(var(--vh, 1vh) * 100) !important;
-              max-width: 100vw !important;
-              max-height: 100vh !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              z-index: 2147483647 !important;
-              border-radius: 0 !important;
-              background: #000 !important;
-              transform: none !important;
-              -webkit-transform: translate3d(0,0,0) !important;
-              display: block !important;
-              visibility: visible !important;
-              opacity: 1 !important;
-            `;
-
-            // Force viewport height calculation
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-            // Prevent body scroll
-            document.body.style.position = 'fixed';
-            document.body.style.top = '0';
-            document.body.style.left = '0';
-            document.body.style.right = '0';
-            document.body.style.bottom = '0';
-            document.body.style.width = '100%';
-            document.body.style.height = '100%';
-            document.body.style.overflow = 'hidden';
-
-            // Also set on html
-            document.documentElement.style.position = 'fixed';
-            document.documentElement.style.width = '100%';
-            document.documentElement.style.height = '100%';
-            document.documentElement.style.overflow = 'hidden';
-
-            setIsFullscreen(true);
-            console.log('✅ Viewer Fullscreen applied with inline styles');
-
-            // Hide toast after fullscreen is activated
-            setTimeout(() => {
-              setShowFullscreenToast(false);
-            }, 2000);
-          });
-        } else if (!container) {
-          console.warn('⚠️ Container not found after all retries');
-        }
-      };
-
-      // Start attempting fullscreen after a delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        attemptFullscreen();
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [hasAccess, liveKitRoom, loading, isFullscreen]); // Trigger when stream is ready
+  // Removed iPhone-specific auto-fullscreen - now works same as Android/other browsers
 
   if (loading) {
     return (
@@ -2031,20 +1921,18 @@ newSocket.on('product-added', (data) => {
                 </div>
               )}
 
-              {/* Fullscreen Button - Hidden on iPhone since it auto-opens */}
-              {!(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
-                <button
-                  onClick={toggleFullscreen}
-                  className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
-                  style={{ zIndex: 50 }}
-                  title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
-                >
-                  {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                </button>
-              )}
+              {/* Fullscreen Button - Available on all devices */}
+              <button
+                onClick={toggleFullscreen}
+                className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                style={{ zIndex: 50 }}
+                title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
+              >
+                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+              </button>
 
-              {/* Instagram-style Comments Overlay (Left Side) - Only in fullscreen, hide when controls panel is open on iPhone */}
-              {isFullscreen && !(showFullscreenControls && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
+              {/* Instagram-style Comments Overlay (Left Side) - Only in fullscreen, hide when controls panel is open */}
+              {isFullscreen && !showFullscreenControls && (
                 <div 
                   className="absolute bottom-0 left-0 w-80 max-w-[85%] p-4 pointer-events-none z-50" 
                   style={{ 
@@ -2082,8 +1970,8 @@ newSocket.on('product-added', (data) => {
                 </div>
               )}
 
-              {/* Comment Input at Bottom (Only in fullscreen, hide when controls panel is open on iPhone) */}
-              {isFullscreen && !(showFullscreenControls && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
+              {/* Comment Input at Bottom (Only in fullscreen, hide when controls panel is open) */}
+              {isFullscreen && !showFullscreenControls && (
                 <div 
                   className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-50"
                   style={{
@@ -2137,8 +2025,8 @@ newSocket.on('product-added', (data) => {
                 </div>
               ))}
 
-              {/* iPhone Fullscreen Controls Panel */}
-              {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+              {/* Fullscreen Controls Panel - Available on all devices */}
+              {isFullscreen && (
                 <>
                   {/* Floating Menu Button */}
                   <button
