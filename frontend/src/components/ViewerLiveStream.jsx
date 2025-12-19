@@ -1122,10 +1122,11 @@ newSocket.on('product-added', (data) => {
       const data = await response.json();
 
       if (response.ok) {
-        setUserCoinBalance(data.remainingBalance);
+        setUserCoinBalance(data.remainingBalance || data.balance || (userCoinBalance - gift.cost));
         setShowTipModal(false);
         setError(`You sent a ${gift.label}! 🎁`);
         setTimeout(() => setError(''), 3000);
+        console.log('✅ Gift sent successfully, new balance:', data.remainingBalance || data.balance);
       } else {
         setError(data.msg || 'Failed to send gift');
       }
@@ -1884,7 +1885,14 @@ newSocket.on('product-added', (data) => {
       )}
 
       {showTipModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          style={{ 
+            zIndex: 2147483647,
+            position: 'fixed',
+            pointerEvents: 'auto'
+          }}
+        >
           <div className="bg-white/90 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-[#ffb3c6] shadow-2xl p-4 sm:p-6 md:p-8 max-w-lg w-full my-auto">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <h3 className="text-xl sm:text-2xl font-bold text-pink-700 pr-2 break-words">Send a Gift 🎁</h3>
@@ -1924,7 +1932,27 @@ newSocket.on('product-added', (data) => {
         <CheckoutModal
           product={selectedProduct}
           streamId={streamId}
-          onClose={() => setShowCartModal(false)}
+          onClose={() => {
+            setShowCartModal(false);
+            // Refresh coin balance after purchase
+            const fetchUserCoinBalance = async () => {
+              try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/live/user/coin-balance`, {
+                  headers: {
+                    ...(token && { Authorization: `Bearer ${token}` })
+                  }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                  setUserCoinBalance(data.balance || 0);
+                }
+              } catch (err) {
+                console.error('Error fetching coin balance:', err);
+              }
+            };
+            fetchUserCoinBalance();
+          }}
           setError={setError}
           userCoinBalance={userCoinBalance}
         />
@@ -2152,14 +2180,21 @@ newSocket.on('product-added', (data) => {
                         WebkitTransform: 'translate3d(0,0,0)'
                       }}
                     >
-                      <div className="p-4 border-b border-white/20 flex items-center justify-between">
-                        <h3 className="text-lg font-bold">Stream Options</h3>
-                        <button
-                          onClick={() => setShowFullscreenControls(false)}
-                          className="p-2 hover:bg-white/10 rounded-full transition"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
+                      <div className="p-4 border-b border-white/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-bold">Stream Options</h3>
+                          <button
+                            onClick={() => setShowFullscreenControls(false)}
+                            className="p-2 hover:bg-white/10 rounded-full transition"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        {/* Coin Balance Display */}
+                        <div className="bg-white/10 border border-white/20 rounded-lg p-2 mt-2">
+                          <p className="text-xs text-white/70">Your Balance</p>
+                          <p className="text-lg font-semibold text-pink-400">{userCoinBalance} coins</p>
+                        </div>
                       </div>
 
                       {/* Tabs */}
@@ -2314,9 +2349,10 @@ newSocket.on('product-added', (data) => {
                               {gifts.map((gift) => (
                                 <button
                                   key={gift.type}
-                                  onClick={() => {
-                                    handleSendGift(gift);
-                                    setShowFullscreenControls(false);
+                                  onClick={async () => {
+                                    await handleSendGift(gift);
+                                    // Don't close the panel so user can see updated balance
+                                    // Balance will update automatically via socket or response
                                   }}
                                   disabled={userCoinBalance < gift.cost}
                                   className={`bg-white/10 border border-white/20 rounded-xl p-4 text-center transition-all ${
