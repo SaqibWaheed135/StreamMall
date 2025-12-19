@@ -6,7 +6,14 @@ import React, { useState } from "react";
 
 const ConfirmEndModal = ({ onConfirm, onCancel }) => {
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      style={{ 
+        zIndex: 2147483647,
+        position: 'fixed',
+        pointerEvents: 'auto'
+      }}
+    >
       <div className="bg-white/90 border border-[#ffb3c6] rounded-3xl max-w-md w-full p-4 sm:p-6 md:p-7 shadow-2xl backdrop-blur-xl my-auto">
         <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-5">
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-300 to-amber-400 rounded-full flex items-center justify-center shadow flex-shrink-0">
