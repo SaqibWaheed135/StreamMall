@@ -118,7 +118,14 @@ const CheckoutModal = ({ product, streamId, onClose, setError, userCoinBalance }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4 pb-20 md:pb-24 lg:pb-28 overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 pb-20 md:pb-24 lg:pb-28 overflow-y-auto"
+      style={{ 
+        zIndex: 2147483647,
+        position: 'fixed',
+        pointerEvents: 'auto'
+      }}
+    >
       <div className="bg-white/90 border border-[#ffb3c6] rounded-2xl sm:rounded-3xl max-w-md w-full max-h-[calc(100vh-120px)] sm:max-h-[calc(100vh-100px)] md:max-h-[calc(100vh-140px)] shadow-2xl backdrop-blur-xl flex flex-col my-auto">
         <div className="p-4 sm:p-6 bg-white/85 border-b border-[#ffb3c6]/60 flex justify-between items-center rounded-t-2xl sm:rounded-t-3xl flex-shrink-0">
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-pink-700 pr-2 break-words">
