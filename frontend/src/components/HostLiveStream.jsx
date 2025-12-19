@@ -1701,6 +1701,7 @@ const HostLiveStream = ({ onBack }) => {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    pointer-events: auto !important;
   }
   
   .fullscreen-video-container.ios-fullscreen video {
@@ -1714,6 +1715,12 @@ const HostLiveStream = ({ onBack }) => {
     left: 0 !important;
     -webkit-transform: translate3d(0,0,0) !important;
     transform: translate3d(0,0,0) !important;
+    pointer-events: none !important;
+  }
+  
+  /* Ensure buttons are above video */
+  .fullscreen-video-container.ios-fullscreen button {
+    pointer-events: auto !important;
   }
   
   /* Ensure all overlays work in iOS fullscreen with maximum z-index */
@@ -1738,10 +1745,21 @@ const HostLiveStream = ({ onBack }) => {
   /* Buttons in fullscreen */
   .fullscreen-video-container.ios-fullscreen button {
     position: absolute !important;
-    z-index: 2147483646 !important;
+    z-index: 2147483647 !important;
     pointer-events: auto !important;
     -webkit-transform: translate3d(0,0,0) !important;
     transform: translate3d(0,0,0) !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Ensure End Stream button is always clickable */
+  .fullscreen-video-container.ios-fullscreen button[title="End Stream"] {
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
   }
   
   /* Safari-specific height handling */
@@ -2060,10 +2078,34 @@ const HostLiveStream = ({ onBack }) => {
 
                     {/* End Stream Button - More Prominent */}
                     <button
-                      onClick={() => setShowConfirmEnd(true)}
-                      className="absolute top-4 left-4 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20 flex items-center gap-2 font-semibold"
-                      style={{ zIndex: 2147483646 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('End Stream button clicked');
+                        setShowConfirmEnd(true);
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('End Stream button touched');
+                        setShowConfirmEnd(true);
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
+                      style={{ 
+                        zIndex: 2147483647,
+                        pointerEvents: 'auto',
+                        WebkitTapHighlightColor: 'transparent',
+                        touchAction: 'manipulation',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none'
+                      }}
                       title="End Stream"
+                      aria-label="End Stream"
                     >
                       <X className="w-4 h-4" />
                       <span className="text-sm">End Stream</span>
