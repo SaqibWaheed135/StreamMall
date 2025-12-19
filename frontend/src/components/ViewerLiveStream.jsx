@@ -1456,6 +1456,9 @@ newSocket.on('product-added', (data) => {
 
   // Auto-fullscreen for iPhone when stream loads (only iPhone, not other devices)
   useEffect(() => {
+    // Calculate hostParticipant inside useEffect to avoid initialization order issues
+    const hostParticipant = liveKitRoom ? Array.from(liveKitRoom.remoteParticipants.values())[0] : null;
+    
     // Only detect iPhone specifically (not iPad or other iOS devices)
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     console.log('🔍 Viewer Auto-fullscreen check:', { hasAccess, isIPhone, isFullscreen, hostParticipant: !!hostParticipant });
@@ -1561,7 +1564,7 @@ newSocket.on('product-added', (data) => {
 
       return () => clearTimeout(timer);
     }
-  }, [hasAccess, hostParticipant, loading]); // Trigger when stream is ready
+  }, [hasAccess, liveKitRoom, loading, isFullscreen]); // Trigger when stream is ready
 
   if (loading) {
     return (
