@@ -16,6 +16,8 @@ export default function AuthProvider({ children }) {
     setUser(null);
     setToken("");
     localStorage.removeItem("token");
+    // Clear active host stream when user logs out
+    localStorage.removeItem("activeHostStream");
   };
 
   return (

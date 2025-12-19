@@ -114,6 +114,8 @@ const ProtectedRoute = ({ children }) => {
   const valid = isTokenValid(token);
   if (!valid) {
     localStorage.removeItem("token");
+    // Clear active host stream when token is invalid
+    localStorage.removeItem("activeHostStream");
     return <Navigate to="/login" />;
   }
   return children;
@@ -150,11 +152,21 @@ const App = () => {
   useEffect(() => {
     setCurrentScreen(location.pathname);
     // Refresh active host stream info whenever route changes
-    try {
-      const raw = localStorage.getItem('activeHostStream');
-      setActiveHostStream(raw ? JSON.parse(raw) : null);
-    } catch {
+    // Only show if user has a valid token (not logged out)
+    const token = localStorage.getItem('token');
+    const hasValidToken = token && isTokenValid(token);
+    
+    if (!hasValidToken) {
+      // Clear active host stream if user is not logged in
+      localStorage.removeItem('activeHostStream');
       setActiveHostStream(null);
+    } else {
+      try {
+        const raw = localStorage.getItem('activeHostStream');
+        setActiveHostStream(raw ? JSON.parse(raw) : null);
+      } catch {
+        setActiveHostStream(null);
+      }
     }
   }, [location]);
 
@@ -311,8 +323,8 @@ const App = () => {
         </Routes>
       </main>
 
-      {/* Host is live: quick return bar (visible on all screens except the host view) */}
-      {activeHostStream && currentScreen !== '/host-live-stream' && (
+      {/* Host is live: quick return bar (visible on all screens except the host view and login page) */}
+      {activeHostStream && currentScreen !== '/host-live-stream' && currentScreen !== '/login' && (
         <div className="fixed bottom-24 left-0 right-0 flex justify-center z-50 px-4">
           <button
             onClick={() => navigate('/host-live-stream')}
