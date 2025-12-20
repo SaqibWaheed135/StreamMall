@@ -91,6 +91,8 @@ const HostLiveStream = ({ onBack }) => {
   const [hearts, setHearts] = useState([]);
   const [products, setProducts] = useState([]);
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
+  const [fullscreenComment, setFullscreenComment] = useState('');
+const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
   const [newProduct, setNewProduct] = useState({
     type: 'product',
@@ -112,6 +114,14 @@ const HostLiveStream = ({ onBack }) => {
   const [paidViewersCount, setPaidViewersCount] = useState(0);
   const [showTipNotification, setShowTipNotification] = useState(null);
   const [showEarningsModal, setShowEarningsModal] = useState(false);
+
+  // Focus input to show keyboard after fullscreen is set
+setTimeout(() => {
+  if (fullscreenInputRef.current) {
+    fullscreenInputRef.current.focus();
+    console.log('⌨️ Focused input to show keyboard');
+  }
+}, 500);
 
   // NEW: Reply state
   const [replyingTo, setReplyingTo] = useState(null);
@@ -2070,6 +2080,69 @@ const HostLiveStream = ({ onBack }) => {
                 {/* iPhone Fullscreen Controls Panel */}
                 {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <>
+                
+    {/* Floating Comment Input - Always Visible with Keyboard */}
+    <div 
+      className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
+      style={{ zIndex: 2147483647 }}
+    >
+      <div className="flex items-center gap-2">
+        <input
+          ref={fullscreenInputRef}
+          type="text"
+          value={fullscreenComment}
+          onChange={(e) => setFullscreenComment(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
+              socket.emit('send-comment', {
+                streamId: streamData.streamId,
+                text: fullscreenComment.trim()
+              });
+              setFullscreenComment('');
+            }
+          }}
+          onBlur={() => {
+            // Immediately refocus to keep keyboard visible
+            setTimeout(() => {
+              if (fullscreenInputRef.current && isFullscreen) {
+                fullscreenInputRef.current.focus();
+              }
+            }, 100);
+          }}
+          placeholder="Type a message..."
+          className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+          autoFocus
+        />
+        <button
+          onClick={() => {
+            if (fullscreenComment.trim() && socket) {
+              socket.emit('send-comment', {
+                streamId: streamData.streamId,
+                text: fullscreenComment.trim()
+              });
+              setFullscreenComment('');
+              setTimeout(() => {
+                if (fullscreenInputRef.current) {
+                  fullscreenInputRef.current.focus();
+                }
+              }, 100);
+            }
+          }}
+          disabled={!fullscreenComment.trim()}
+          className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          <Send className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => setShowFullscreenControls(!showFullscreenControls)}
+          className="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-full transition border border-white/20"
+        >
+          <MessageCircle className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+
+    {/* Rest of iPhone controls continue here... */}
                     {/* Floating Menu Button */}
                     <button
                       onClick={() => setShowFullscreenControls(!showFullscreenControls)}
