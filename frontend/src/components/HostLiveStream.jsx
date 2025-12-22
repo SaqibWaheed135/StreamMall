@@ -132,6 +132,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const replyInputRef = useRef(null);  // Add this line
   const trackCheckIntervalRef = useRef(null);
   const isBlockingNavigationRef = useRef(false);
+  const fullscreenControlsTimeoutRef = useRef(null); // For auto-hiding fullscreen controls
+  const isFullscreenRef = useRef(isFullscreen); // Ref to track current fullscreen state
 
   // Handle iOS viewport height changes
   useEffect(() => {
@@ -585,6 +587,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           clearInterval(trackCheckIntervalRef.current);
           trackCheckIntervalRef.current = null;
         }
+        if (fullscreenControlsTimeoutRef.current) {
+          clearTimeout(fullscreenControlsTimeoutRef.current);
+          fullscreenControlsTimeoutRef.current = null;
+        }
       } catch (error) {
         console.error('Cleanup error:', error);
       }
@@ -664,6 +670,24 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         // Keep only last 10 comments in overlay to avoid clutter
         return updated.slice(-10);
       });
+
+      // Auto-show fullscreen chat overlay for 60 seconds when new comment arrives
+      if (isFullscreenRef.current) {
+        // Clear any existing timeout
+        if (fullscreenControlsTimeoutRef.current) {
+          clearTimeout(fullscreenControlsTimeoutRef.current);
+        }
+        
+        // Show the fullscreen controls
+        setShowFullscreenControls(true);
+        setActiveFullscreenTab('chat');
+        
+        // Auto-hide after 60 seconds
+        fullscreenControlsTimeoutRef.current = setTimeout(() => {
+          setShowFullscreenControls(false);
+          fullscreenControlsTimeoutRef.current = null;
+        }, 60000); // 60 seconds
+      }
     });
 
     // ✅ ENHANCED reply listener with debugging
@@ -799,6 +823,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       setPaidViewersCount(streamData.stream.paidViewers?.length || 0);
 
       return () => {
+        // Clear fullscreen controls timeout on cleanup
+        if (fullscreenControlsTimeoutRef.current) {
+          clearTimeout(fullscreenControlsTimeoutRef.current);
+          fullscreenControlsTimeoutRef.current = null;
+        }
         newSocket.disconnect();
       };
     }
@@ -1749,6 +1778,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     };
   }, [isFullscreen, isIOS]);
 
+  // Sync isFullscreen ref with state
+  useEffect(() => {
+    isFullscreenRef.current = isFullscreen;
+  }, [isFullscreen]);
+
   // Auto-remove overlay comments after 5 seconds
   useEffect(() => {
     if (overlayComments.length === 0) return;
@@ -2301,9 +2335,17 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                     {/* Floating Menu Button */}
                     <button
   onClick={() => {
-    setShowFullscreenControls(!showFullscreenControls);
+    const willShow = !showFullscreenControls;
+    setShowFullscreenControls(willShow);
+    
+    // Clear timeout when manually closing
+    if (!willShow && fullscreenControlsTimeoutRef.current) {
+      clearTimeout(fullscreenControlsTimeoutRef.current);
+      fullscreenControlsTimeoutRef.current = null;
+    }
+    
     // When opening chat, immediately focus the input to trigger keyboard
-    if (!showFullscreenControls && fullscreenInputRef.current) {
+    if (willShow && fullscreenInputRef.current) {
       setTimeout(() => {
         fullscreenInputRef.current?.focus();
         fullscreenInputRef.current?.click(); // Extra trigger for iOS
@@ -2406,7 +2448,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-bold">Stream Controls</h3>
                             <button
-                              onClick={() => setShowFullscreenControls(false)}
+                              onClick={() => {
+                                // Clear auto-hide timeout when manually closing
+                                if (fullscreenControlsTimeoutRef.current) {
+                                  clearTimeout(fullscreenControlsTimeoutRef.current);
+                                  fullscreenControlsTimeoutRef.current = null;
+                                }
+                                setShowFullscreenControls(false);
+                              }}
                               className="p-2 hover:bg-white/10 rounded-full transition"
                             >
                               <X className="w-5 h-5" />
