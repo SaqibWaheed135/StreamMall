@@ -243,13 +243,78 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             setIsFullscreen(true);
             console.log('✅ Fullscreen applied with inline styles');
 
-            // Focus input to open keyboard immediately on iPhone
-            setTimeout(() => {
-              if (fullscreenInputRef.current) {
-                fullscreenInputRef.current.focus();
-                console.log('⌨️ Focused input to show keyboard after fullscreen');
+            // Focus input to open keyboard immediately on iPhone - using multiple techniques
+            const triggerKeyboard = () => {
+              const input = fullscreenInputRef.current;
+              if (!input) return;
+
+              // Technique 1: Temporarily change input type to 'tel' (always shows keyboard on iOS), then change back
+              const originalType = input.type;
+              if (originalType === 'text') {
+                input.type = 'tel';
+                // Force reflow
+                void input.offsetHeight;
+                input.type = 'text';
               }
-            }, 300);
+
+              // Technique 2: Programmatic click event (iOS responds better to this)
+              try {
+                const clickEvent = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window
+                });
+                input.dispatchEvent(clickEvent);
+              } catch (e) {
+                console.log('Click event dispatch failed:', e);
+              }
+
+              // Technique 3: Direct focus
+              input.focus();
+              
+              // Technique 4: Click method (iOS sometimes needs this)
+              if (input.click) {
+                input.click();
+              }
+              
+              // Technique 5: Set selection range (makes input more "active" on iOS)
+              if (input.setSelectionRange) {
+                try {
+                  const len = input.value.length || 0;
+                  input.setSelectionRange(len, len);
+                } catch (e) {
+                  // Ignore errors for inputs that don't support selection
+                }
+              }
+
+              // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
+              setTimeout(() => {
+                input.blur();
+                setTimeout(() => {
+                  try {
+                    const clickEvent = new MouseEvent('click', {
+                      bubbles: true,
+                      cancelable: true,
+                      view: window
+                    });
+                    input.dispatchEvent(clickEvent);
+                  } catch (e) {}
+                  input.focus();
+                  if (input.click) {
+                    input.click();
+                  }
+                }, 10);
+              }, 50);
+              
+              console.log('⌨️ Attempted to show keyboard with multiple techniques');
+            };
+
+            // Try multiple times with increasing delays
+            setTimeout(triggerKeyboard, 100);
+            setTimeout(triggerKeyboard, 300);
+            setTimeout(triggerKeyboard, 500);
+            setTimeout(triggerKeyboard, 800);
+            setTimeout(triggerKeyboard, 1000);
 
             // Request orientation lock if available
             if (screen.orientation && screen.orientation.lock) {
@@ -282,26 +347,89 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
     if (isFullscreen && isIPhone && isLive) {
-      // Focus the input to open keyboard with multiple attempts for reliability
-      const focusInput = () => {
-        if (fullscreenInputRef.current) {
-          fullscreenInputRef.current.focus();
-          console.log('⌨️ Auto-focused input to show keyboard in iPhone fullscreen mode');
+      // Aggressive focus with multiple techniques for iOS
+      const triggerKeyboard = () => {
+        const input = fullscreenInputRef.current;
+        if (!input) return;
+
+        // Technique 1: Temporarily change input type to 'tel' (always shows keyboard on iOS), then change back
+        const originalType = input.type;
+        if (originalType === 'text') {
+          input.type = 'tel';
+          // Force reflow
+          void input.offsetHeight;
+          input.type = 'text';
         }
+
+        // Technique 2: Programmatic click event (iOS responds better to this)
+        try {
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          });
+          input.dispatchEvent(clickEvent);
+        } catch (e) {
+          console.log('Click event dispatch failed:', e);
+        }
+
+        // Technique 3: Direct focus
+        input.focus();
+        
+        // Technique 4: Click method (iOS sometimes needs this)
+        if (typeof input.click === 'function') {
+          input.click();
+        }
+        
+        // Technique 5: Set selection range
+        if (typeof input.setSelectionRange === 'function') {
+          try {
+            const len = input.value.length || 0;
+            input.setSelectionRange(len, len);
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+        
+        // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
+        setTimeout(() => {
+          input.blur();
+          setTimeout(() => {
+            try {
+              const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+              });
+              input.dispatchEvent(clickEvent);
+            } catch (e) {}
+            input.focus();
+            if (typeof input.click === 'function') {
+              input.click();
+            }
+          }, 10);
+        }, 50);
+        
+        console.log('⌨️ Auto-focused input to show keyboard in iPhone fullscreen mode');
       };
 
-      // Try to focus immediately
-      focusInput();
+      // Use requestAnimationFrame for better timing
+      requestAnimationFrame(() => {
+        triggerKeyboard();
+      });
       
-      // Also try after a short delay to ensure DOM is ready
-      const timeout1 = setTimeout(focusInput, 100);
-      const timeout2 = setTimeout(focusInput, 300);
-      const timeout3 = setTimeout(focusInput, 500);
+      // Multiple attempts with increasing delays
+      const timeouts = [
+        setTimeout(triggerKeyboard, 100),
+        setTimeout(triggerKeyboard, 300),
+        setTimeout(triggerKeyboard, 500),
+        setTimeout(triggerKeyboard, 800),
+        setTimeout(triggerKeyboard, 1000),
+        setTimeout(triggerKeyboard, 1500),
+      ];
 
       return () => {
-        clearTimeout(timeout1);
-        clearTimeout(timeout2);
-        clearTimeout(timeout3);
+        timeouts.forEach(clearTimeout);
       };
     }
   }, [isFullscreen, isLive]);
@@ -2113,11 +2241,25 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     <div 
       className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
       style={{ zIndex: 2147483647 }}
+      onClick={(e) => {
+        // Make entire area clickable to focus input on iOS
+        if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
+          fullscreenInputRef.current.focus();
+          if (typeof fullscreenInputRef.current.click === 'function') {
+            fullscreenInputRef.current.click();
+          }
+        }
+      }}
     >
       <div className="flex items-center gap-2">
         <input
           ref={fullscreenInputRef}
           type="text"
+          inputMode="text"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="false"
           value={fullscreenComment}
           onChange={(e) => setFullscreenComment(e.target.value)}
           onKeyPress={(e) => {
@@ -2130,12 +2272,35 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             }
           }}
           onBlur={() => {
-            // Immediately refocus to keep keyboard visible
-            setTimeout(() => {
+            // Aggressively refocus to keep keyboard visible on iPhone
               if (fullscreenInputRef.current && isFullscreen) {
-                fullscreenInputRef.current.focus();
+              const input = fullscreenInputRef.current;
+              setTimeout(() => {
+                // Use programmatic click event which sometimes works better on iOS
+                const clickEvent = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window
+                });
+                input.dispatchEvent(clickEvent);
+                input.focus();
+                if (typeof input.click === 'function') {
+                  input.click();
+                }
+              }, 50);
+            }
+          }}
+          onFocus={() => {
+            // Ensure input is properly focused when user taps
+            const input = fullscreenInputRef.current;
+            if (input && typeof input.setSelectionRange === 'function') {
+              try {
+                const len = input.value.length || 0;
+                input.setSelectionRange(len, len);
+              } catch (e) {
+                // Ignore errors
               }
-            }, 100);
+            }
           }}
           placeholder="Type a message..."
           className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
