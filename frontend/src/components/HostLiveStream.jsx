@@ -2238,112 +2238,83 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   <>
                 
     {/* Floating Comment Input - Always Visible with Keyboard */}
-    <div 
-      className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
-      style={{ zIndex: 2147483647 }}
-      onClick={(e) => {
-        // Make entire area clickable to focus input on iOS
-        if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
-          fullscreenInputRef.current.focus();
-          if (typeof fullscreenInputRef.current.click === 'function') {
-            fullscreenInputRef.current.click();
-          }
+         {/* Floating Comment Input - Always Visible with Keyboard */}
+<div 
+  className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
+  style={{ zIndex: 2147483647 }}
+  // Make whole bar tappable → focuses input → opens keyboard
+  onClick={(e) => {
+    if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
+      fullscreenInputRef.current.focus();
+      fullscreenInputRef.current.click();
+    }
+  }}
+>
+  <div className="flex items-center gap-2">
+    <input
+      ref={fullscreenInputRef}
+      type="text"
+      inputMode="text"
+      enterKeyHint="send"
+      autoComplete="off"
+      autoCapitalize="off"
+      autoCorrect="off"
+      spellCheck="false"
+      value={fullscreenComment}
+      onChange={(e) => setFullscreenComment(e.target.value)}
+      onKeyPress={(e) => {
+        if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
+          e.preventDefault();
+          socket.emit('send-comment', {
+            streamId: streamData.streamId,
+            text: fullscreenComment.trim()
+          });
+          setFullscreenComment('');
         }
       }}
+      placeholder="Type a message..."
+      className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+      // Remove autoFocus – it can interfere on iOS
+    />
+    <button
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent parent onClick from re-focusing
+        if (fullscreenComment.trim() && socket) {
+          socket.emit('send-comment', {
+            streamId: streamData.streamId,
+            text: fullscreenComment.trim()
+          });
+          setFullscreenComment('');
+          // Refocus after sending
+          setTimeout(() => fullscreenInputRef.current?.focus(), 100);
+        }
+      }}
+      disabled={!fullscreenComment.trim()}
+      className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
     >
-      <div className="flex items-center gap-2">
-        <input
-          ref={fullscreenInputRef}
-          type="text"
-          inputMode="text"
-          autoComplete="off"
-          autoCapitalize="off"
-          autoCorrect="off"
-          spellCheck="false"
-          value={fullscreenComment}
-          onChange={(e) => setFullscreenComment(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
-              socket.emit('send-comment', {
-                streamId: streamData.streamId,
-                text: fullscreenComment.trim()
-              });
-              setFullscreenComment('');
-            }
-          }}
-          onBlur={() => {
-            // Aggressively refocus to keep keyboard visible on iPhone
-              if (fullscreenInputRef.current && isFullscreen) {
-              const input = fullscreenInputRef.current;
-              setTimeout(() => {
-                // Use programmatic click event which sometimes works better on iOS
-                const clickEvent = new MouseEvent('click', {
-                  bubbles: true,
-                  cancelable: true,
-                  view: window
-                });
-                input.dispatchEvent(clickEvent);
-                input.focus();
-                if (typeof input.click === 'function') {
-                  input.click();
-                }
-              }, 50);
-            }
-          }}
-          onFocus={() => {
-            // Ensure input is properly focused when user taps
-            const input = fullscreenInputRef.current;
-            if (input && typeof input.setSelectionRange === 'function') {
-              try {
-                const len = input.value.length || 0;
-                input.setSelectionRange(len, len);
-              } catch (e) {
-                // Ignore errors
-              }
-            }
-          }}
-          placeholder="Type a message..."
-          className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-          autoFocus
-        />
-        <button
-          onClick={() => {
-            if (fullscreenComment.trim() && socket) {
-              socket.emit('send-comment', {
-                streamId: streamData.streamId,
-                text: fullscreenComment.trim()
-              });
-              setFullscreenComment('');
-              setTimeout(() => {
-                if (fullscreenInputRef.current) {
-                  fullscreenInputRef.current.focus();
-                }
-              }, 100);
-            }
-          }}
-          disabled={!fullscreenComment.trim()}
-          className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          <Send className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => setShowFullscreenControls(!showFullscreenControls)}
-          className="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-full transition border border-white/20"
-        >
-          <MessageCircle className="w-5 h-5" />
-        </button>
-      </div>
-    </div>
+      <Send className="w-5 h-5" />
+    </button>
+  </div>
+</div>
 
     {/* Rest of iPhone controls continue here... */}
                     {/* Floating Menu Button */}
                     <button
-                      onClick={() => setShowFullscreenControls(!showFullscreenControls)}
-                      className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
-                      style={{ zIndex: 2147483646 }}
-                    >
-                      {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
-                    </button>
+  onClick={() => {
+    setShowFullscreenControls(!showFullscreenControls);
+    // When opening chat, immediately focus the input to trigger keyboard
+    if (!showFullscreenControls && fullscreenInputRef.current) {
+      setTimeout(() => {
+        fullscreenInputRef.current?.focus();
+        fullscreenInputRef.current?.click(); // Extra trigger for iOS
+      }, 100);
+    }
+  }}
+  className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+  style={{ zIndex: 2147483646 }}
+>
+  {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+</button>
 
                     {/* Camera/Mic Controls - Always Visible */}
                     <div className="absolute bottom-4 right-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483646 }}>
