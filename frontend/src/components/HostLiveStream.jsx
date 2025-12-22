@@ -93,6 +93,7 @@ const HostLiveStream = ({ onBack }) => {
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const [fullscreenComment, setFullscreenComment] = useState('');
 const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
+  const fullscreenInputContainerRef = useRef(null); // For iPhone fullscreen input container
 
   const [newProduct, setNewProduct] = useState({
     type: 'product',
@@ -1783,6 +1784,87 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     isFullscreenRef.current = isFullscreen;
   }, [isFullscreen]);
 
+  // Handle keyboard appearance on iPhone in fullscreen mode
+  useEffect(() => {
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (!isFullscreen || !isIPhone || !fullscreenInputContainerRef.current) return;
+
+    const inputContainer = fullscreenInputContainerRef.current;
+    
+    // Use Visual Viewport API if available (better keyboard handling)
+    if (window.visualViewport) {
+      const handleViewportResize = () => {
+        if (!inputContainer) return;
+        
+        const viewport = window.visualViewport;
+        const viewportHeight = viewport.height;
+        const windowHeight = window.innerHeight;
+        const keyboardHeight = windowHeight - viewportHeight;
+        
+        // Adjust input container position based on keyboard
+        if (keyboardHeight > 50) {
+          // Keyboard is visible - position input above keyboard
+          inputContainer.style.bottom = `${keyboardHeight}px`;
+          inputContainer.style.position = 'fixed';
+        } else {
+          // Keyboard is hidden - position at bottom
+          inputContainer.style.bottom = 'env(safe-area-inset-bottom, 0px)';
+        }
+      };
+
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      window.visualViewport.addEventListener('scroll', handleViewportResize);
+
+      // Initial call
+      handleViewportResize();
+
+      return () => {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+        window.visualViewport.removeEventListener('scroll', handleViewportResize);
+      };
+    } else {
+      // Fallback: Use window resize events and input focus/blur
+      const handleResize = () => {
+        if (!inputContainer) return;
+        
+        // On iOS, when keyboard appears, window.innerHeight decreases
+        const currentHeight = window.innerHeight;
+        const screenHeight = window.screen.height;
+        const heightDiff = screenHeight - currentHeight;
+        
+        if (heightDiff > 150) {
+          // Likely keyboard is visible (keyboard is usually 200-300px)
+          inputContainer.style.bottom = '0px';
+          inputContainer.style.position = 'fixed';
+        } else {
+          inputContainer.style.bottom = 'env(safe-area-inset-bottom, 0px)';
+        }
+      };
+
+      // Listen for focus/blur on input to detect keyboard
+      const input = fullscreenInputRef.current;
+      if (input) {
+        const handleFocus = () => {
+          setTimeout(handleResize, 300); // Delay to let keyboard appear
+        };
+        const handleBlur = () => {
+          setTimeout(handleResize, 300); // Delay to let keyboard disappear
+        };
+        
+        input.addEventListener('focus', handleFocus);
+        input.addEventListener('blur', handleBlur);
+        window.addEventListener('resize', handleResize);
+        
+        return () => {
+          input.removeEventListener('focus', handleFocus);
+          input.removeEventListener('blur', handleBlur);
+          window.removeEventListener('resize', handleResize);
+        };
+      }
+    }
+  }, [isFullscreen]);
+
   // Auto-remove overlay comments after 5 seconds
   useEffect(() => {
     if (overlayComments.length === 0) return;
@@ -1884,6 +1966,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     position: fixed !important;
     width: 100% !important;
     height: 100% !important;
+    height: 100dvh !important;
     -webkit-overflow-scrolling: touch !important;
   }
   
@@ -1892,9 +1975,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     position: fixed !important;
     width: 100% !important;
     height: 100% !important;
+    height: 100dvh !important;
     margin: 0 !important;
     padding: 0 !important;
     -webkit-overflow-scrolling: touch !important;
+    /* Prevent viewport resize when keyboard appears */
+    touch-action: pan-x pan-y !important;
   }
   
   .fullscreen-video-container.ios-fullscreen {
@@ -1904,10 +1990,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     right: 0 !important;
     bottom: 0 !important;
     width: 100vw !important;
+    width: 100dvw !important;
     height: 100vh !important;
+    height: 100dvh !important;
     height: calc(var(--vh, 1vh) * 100) !important;
     max-width: 100vw !important;
+    max-width: 100dvw !important;
     max-height: 100vh !important;
+    max-height: 100dvh !important;
     margin: 0 !important;
     padding: 0 !important;
     z-index: 2147483647 !important; /* Maximum z-index */
@@ -1920,6 +2010,9 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+    /* Prevent layout shift when keyboard appears */
+    overscroll-behavior: none !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   
   .fullscreen-video-container.ios-fullscreen video {
@@ -2005,10 +2098,28 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   html.ios-fullscreen-active,
   body.ios-fullscreen-active {
     height: 100vh !important;
+    height: 100dvh !important;
     height: calc(var(--vh, 1vh) * 100) !important;
     overflow: hidden !important;
     position: fixed !important;
     width: 100% !important;
+    /* Prevent viewport resize when keyboard appears */
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior: none !important;
+  }
+  
+  /* Prevent fullscreen container from shifting when keyboard appears */
+  .fullscreen-video-container.ios-fullscreen {
+    /* Lock container size - don't resize with keyboard */
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+  }
+  
+  /* Input container should be positioned relative to viewport, not container */
+  .ios-fullscreen-active .fullscreen-video-container.ios-fullscreen > div[style*="position: fixed"] {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
   }
   
   /* Hide all content except the fullscreen video container on iPhone */
@@ -2274,8 +2385,15 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     {/* Floating Comment Input - Always Visible with Keyboard */}
          {/* Floating Comment Input - Always Visible with Keyboard */}
 <div 
-  className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
-  style={{ zIndex: 2147483647 }}
+  ref={fullscreenInputContainerRef}
+  className="absolute left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
+  style={{ 
+    zIndex: 2147483647,
+    bottom: 'env(safe-area-inset-bottom, 0px)',
+    position: 'fixed',
+    width: '100%',
+    maxWidth: '100dvw'
+  }}
   // Make whole bar tappable → focuses input → opens keyboard
   onClick={(e) => {
     if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
