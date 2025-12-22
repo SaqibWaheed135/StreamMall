@@ -115,14 +115,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const [showTipNotification, setShowTipNotification] = useState(null);
   const [showEarningsModal, setShowEarningsModal] = useState(false);
 
-  // Focus input to show keyboard after fullscreen is set
-setTimeout(() => {
-  if (fullscreenInputRef.current) {
-    fullscreenInputRef.current.focus();
-    console.log('⌨️ Focused input to show keyboard');
-  }
-}, 500);
-
   // NEW: Reply state
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
@@ -251,6 +243,14 @@ setTimeout(() => {
             setIsFullscreen(true);
             console.log('✅ Fullscreen applied with inline styles');
 
+            // Focus input to open keyboard immediately on iPhone
+            setTimeout(() => {
+              if (fullscreenInputRef.current) {
+                fullscreenInputRef.current.focus();
+                console.log('⌨️ Focused input to show keyboard after fullscreen');
+              }
+            }, 300);
+
             // Request orientation lock if available
             if (screen.orientation && screen.orientation.lock) {
               screen.orientation.lock('landscape').catch(() => {
@@ -277,6 +277,34 @@ setTimeout(() => {
     }
   }, [isLive]); // Only trigger when isLive changes (removed isFullscreen to avoid re-triggers)
 
+  // Auto-focus input to show keyboard when iPhone enters fullscreen mode
+  useEffect(() => {
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (isFullscreen && isIPhone && isLive) {
+      // Focus the input to open keyboard with multiple attempts for reliability
+      const focusInput = () => {
+        if (fullscreenInputRef.current) {
+          fullscreenInputRef.current.focus();
+          console.log('⌨️ Auto-focused input to show keyboard in iPhone fullscreen mode');
+        }
+      };
+
+      // Try to focus immediately
+      focusInput();
+      
+      // Also try after a short delay to ensure DOM is ready
+      const timeout1 = setTimeout(focusInput, 100);
+      const timeout2 = setTimeout(focusInput, 300);
+      const timeout3 = setTimeout(focusInput, 500);
+
+      return () => {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+        clearTimeout(timeout3);
+      };
+    }
+  }, [isFullscreen, isLive]);
 
   const getGiftIcon = (type) => {
     const icons = {
