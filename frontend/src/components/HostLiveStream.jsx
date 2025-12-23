@@ -2571,10 +2571,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 </button>
 
                     {/* Camera/Mic Controls - Always Visible */}
-                    <div className="absolute bottom-4 right-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483646 }}>
+                    <div className="absolute top-20 left-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483647 }}>
                       <button
                         onClick={toggleCamera}
-                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border border-white/20 ${
+                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border-2 border-white/30 ${
                           isCameraOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
                         }`}
                         title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
@@ -2583,7 +2583,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       </button>
                       <button
                         onClick={toggleMic}
-                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border border-white/20 ${
+                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border-2 border-white/30 ${
                           isMicOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
                         }`}
                         title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
