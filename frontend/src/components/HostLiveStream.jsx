@@ -2571,7 +2571,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 </button>
 
                     {/* Camera/Mic Controls - Always Visible */}
-                    <div className="absolute top-20 left-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483647 }}>
+                    {/* <div className="absolute top-10 left-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483647 }}>
                       <button
                         onClick={toggleCamera}
                         className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border-2 border-white/30 ${
@@ -2590,7 +2590,39 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       >
                         {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                       </button>
-                    </div>
+                    </div> */}
+
+                    {/* Camera/Mic Controls - Prominent & Always Visible on iPhone Fullscreen */}
+<div 
+  className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4"
+  style={{ 
+    zIndex: 2147483648  // Higher than input bar (2147483647)
+  }}
+>
+  <button
+    onClick={toggleCamera}
+    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${
+      isCameraOn 
+        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
+        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+    }`}
+    title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
+  >
+    {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
+  </button>
+
+  <button
+    onClick={toggleMic}
+    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${
+      isMicOn 
+        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
+        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+    }`}
+    title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
+  >
+    {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
+  </button>
+</div>
 
                     {/* End Stream Button - More Prominent */}
                     <button
