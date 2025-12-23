@@ -480,7 +480,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     };
 
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4 overflow-y-auto"
+        style={{ zIndex: 2147483649 }}
+      >
         <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg max-w-sm w-full animate-fadeIn relative my-auto">
           <button className="absolute top-3 right-3 text-gray-600 hover:text-black transition" onClick={onClose} aria-label="Close">
             <FaTimes size={18} />
@@ -2186,7 +2189,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   
   /* Ensure modals are always on top of fullscreen container */
   body.ios-fullscreen-active [class*="fixed"][class*="inset-0"] {
-    z-index: 2147483647 !important;
+    z-index: 2147483649 !important;
     position: fixed !important;
     pointer-events: auto !important;
   }
@@ -2624,8 +2627,27 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   </button>
 
   <button
-    onClick={() => setShowShareModal(true)}
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Share button clicked');
+      setShowShareModal(true);
+    }}
+    onTouchEnd={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Share button touched');
+      setShowShareModal(true);
+    }}
     className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all bg-gradient-to-r from-pink-600 to-pink-500 border-pink-400 text-white hover:from-pink-700 hover:to-pink-600"
+    style={{
+      pointerEvents: 'auto',
+      WebkitTapHighlightColor: 'transparent',
+      touchAction: 'manipulation',
+      cursor: 'pointer',
+      userSelect: 'none',
+      WebkitUserSelect: 'none'
+    }}
     title="Share stream"
   >
     <Share2 className="w-8 h-8" />
