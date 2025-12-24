@@ -2625,33 +2625,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   >
     {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
   </button>
-
-  <button
-    onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('Share button clicked');
-      setShowShareModal(true);
-    }}
-    onTouchEnd={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('Share button touched');
-      setShowShareModal(true);
-    }}
-    className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all bg-gradient-to-r from-pink-600 to-pink-500 border-pink-400 text-white hover:from-pink-700 hover:to-pink-600"
-    style={{
-      pointerEvents: 'auto',
-      WebkitTapHighlightColor: 'transparent',
-      touchAction: 'manipulation',
-      cursor: 'pointer',
-      userSelect: 'none',
-      WebkitUserSelect: 'none'
-    }}
-    title="Share stream"
-  >
-    <Share2 className="w-8 h-8" />
-  </button>
 </div>
 
                     {/* End Stream Button - More Prominent */}
@@ -2740,6 +2713,22 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             <p className="text-xs text-white/70">Total Coins Earned</p>
                             <p className="text-lg font-semibold text-yellow-400">{coinBalance} coins</p>
                           </div>
+                        </div>
+
+                        {/* Share Button */}
+                        <div className="px-4 py-3 border-b border-white/20">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('Share button clicked');
+                              setShowShareModal(true);
+                            }}
+                            className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all shadow-lg"
+                          >
+                            <Share2 className="w-5 h-5" />
+                            Share Stream
+                          </button>
                         </div>
 
                         {/* Tabs */}
