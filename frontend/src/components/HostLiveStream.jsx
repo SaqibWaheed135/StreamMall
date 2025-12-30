@@ -19,7 +19,10 @@ import {
   Reply,
   Send,
   Maximize,
-  Minimize
+  Minimize,
+  Image,
+  Palette,
+  Sparkles
 } from 'lucide-react';
 
 import {
@@ -126,6 +129,17 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const [showFullscreenControls, setShowFullscreenControls] = useState(false);
   const [activeFullscreenTab, setActiveFullscreenTab] = useState('chat'); // 'chat', 'products', 'orders'
   const videoContainerRef = useRef(null);
+
+  // Background filter state
+  const [selectedBackground, setSelectedBackground] = useState('none'); // 'none', 'blur', 'color', 'image'
+  const [backgroundColor, setBackgroundColor] = useState('#00ff00'); // Green screen default
+  const [backgroundBlur, setBackgroundBlur] = useState(10);
+  const [showBackgroundPanel, setShowBackgroundPanel] = useState(false);
+  const [processedStream, setProcessedStream] = useState(null);
+  const backgroundCanvasRef = useRef(null);
+  const backgroundVideoRef = useRef(null);
+  const backgroundProcessingRef = useRef(false);
+  const backgroundAnimationFrameRef = useRef(null);
 
   const videoRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -1530,6 +1544,234 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
   };
 
+  // Background processing functions
+  const processVideoWithBackground = (videoTrack, canvas) => {
+    if (!canvas || !videoTrack) return null;
+
+    const ctx = canvas.getContext('2d');
+    const video = document.createElement('video');
+    video.srcObject = new MediaStream([videoTrack]);
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    
+    let animationFrameId = null;
+
+    const processFrame = () => {
+      if (!backgroundProcessingRef.current) {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+        return;
+      }
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+        // Set canvas dimensions to match video
+        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        }
+
+        // Draw video frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        if (selectedBackground === 'blur') {
+          // Create a temporary canvas for blur effect
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          // Draw current frame to temp canvas
+          tempCtx.drawImage(video, 0, 0);
+          
+          // Apply blur filter
+          ctx.save();
+          ctx.filter = `blur(${backgroundBlur}px)`;
+          ctx.drawImage(tempCanvas, 0, 0);
+          ctx.filter = 'none';
+          ctx.restore();
+          
+          // Keep center region sharp (foreground)
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const keepWidth = canvas.width * 0.7;
+          const keepHeight = canvas.height * 0.7;
+          
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.drawImage(
+            video,
+            centerX - keepWidth/2,
+            centerY - keepHeight/2,
+            keepWidth,
+            keepHeight,
+            centerX - keepWidth/2,
+            centerY - keepHeight/2,
+            keepWidth,
+            keepHeight
+          );
+          ctx.restore();
+        } else if (selectedBackground === 'color') {
+          // Chroma key background replacement
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          
+          // Parse chroma key color (green screen)
+          const chromaKey = '#00ff00'; // Default green screen
+          const chromaR = 0;
+          const chromaG = 255;
+          const chromaB = 0;
+          
+          // Parse replacement color
+          const replaceColor = backgroundColor.startsWith('#') 
+            ? backgroundColor.substring(1) 
+            : backgroundColor;
+          const replaceR = parseInt(replaceColor.substring(0, 2), 16);
+          const replaceG = parseInt(replaceColor.substring(2, 4), 16);
+          const replaceB = parseInt(replaceColor.substring(4, 6), 16);
+          
+          // Replace green screen pixels with new color
+          for (let i = 0; i < data.length; i += 4) {
+            const pixelR = data[i];
+            const pixelG = data[i + 1];
+            const pixelB = data[i + 2];
+            
+            // Calculate distance from green screen color
+            const distance = Math.sqrt(
+              Math.pow(pixelR - chromaR, 2) + 
+              Math.pow(pixelG - chromaG, 2) + 
+              Math.pow(pixelB - chromaB, 2)
+            );
+            
+            // Threshold for chroma key (adjustable sensitivity)
+            const threshold = 80;
+            if (distance < threshold) {
+              // Replace with new background color
+              data[i] = replaceR;
+              data[i + 1] = replaceG;
+              data[i + 2] = replaceB;
+            }
+          }
+          
+          ctx.putImageData(imageData, 0, 0);
+        }
+      }
+      
+      if (backgroundProcessingRef.current) {
+        animationFrameId = requestAnimationFrame(processFrame);
+      }
+    };
+
+    video.addEventListener('loadedmetadata', () => {
+      video.play().then(() => {
+        backgroundProcessingRef.current = true;
+        processFrame();
+      }).catch(err => {
+        console.error('Error playing video for background processing:', err);
+      });
+    });
+
+    const stream = canvas.captureStream(30);
+    return stream;
+  };
+
+  const applyBackgroundFilter = async () => {
+    if (!liveKitRoom || !isLive) return;
+
+    try {
+      const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (!cameraPublication || !cameraPublication.track) {
+        console.warn('No camera track available');
+        return;
+      }
+
+      const originalTrack = cameraPublication.track.mediaStreamTrack;
+      
+      if (selectedBackground === 'none') {
+        // Stop processing
+        backgroundProcessingRef.current = false;
+        if (backgroundAnimationFrameRef.current) {
+          cancelAnimationFrame(backgroundAnimationFrameRef.current);
+          backgroundAnimationFrameRef.current = null;
+        }
+        
+        // Clean up processed stream
+        if (processedStream) {
+          processedStream.getTracks().forEach(track => track.stop());
+          setProcessedStream(null);
+        }
+        
+        // Re-enable camera to get fresh track
+        await liveKitRoom.localParticipant.setCameraEnabled(false);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await liveKitRoom.localParticipant.setCameraEnabled(true);
+        return;
+      }
+
+      // Create canvas for processing
+      if (!backgroundCanvasRef.current) {
+        const canvas = document.createElement('canvas');
+        backgroundCanvasRef.current = canvas;
+      }
+
+      const canvas = backgroundCanvasRef.current;
+      
+      // Stop any existing processing
+      backgroundProcessingRef.current = false;
+      if (backgroundAnimationFrameRef.current) {
+        cancelAnimationFrame(backgroundAnimationFrameRef.current);
+      }
+
+      // Process video with background
+      const processedStream = processVideoWithBackground(originalTrack, canvas);
+      
+      if (processedStream) {
+        const processedTrack = processedStream.getVideoTracks()[0];
+        
+        // Unpublish original track
+        await liveKitRoom.localParticipant.unpublishTrack(originalTrack);
+        
+        // Publish processed track
+        await liveKitRoom.localParticipant.publishTrack(processedTrack, {
+          source: Track.Source.Camera,
+          name: 'camera-with-background'
+        });
+
+        setProcessedStream(processedStream);
+      }
+    } catch (error) {
+      console.error('Error applying background filter:', error);
+    }
+  };
+
+  // Update background when selection changes
+  useEffect(() => {
+    if (!isLive || !liveKitRoom) {
+      // Clean up if not live
+      backgroundProcessingRef.current = false;
+      if (backgroundAnimationFrameRef.current) {
+        cancelAnimationFrame(backgroundAnimationFrameRef.current);
+        backgroundAnimationFrameRef.current = null;
+      }
+      if (processedStream) {
+        processedStream.getTracks().forEach(track => track.stop());
+        setProcessedStream(null);
+      }
+      return;
+    }
+
+    if (selectedBackground !== 'none') {
+      const timer = setTimeout(() => {
+        applyBackgroundFilter();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    } else {
+      applyBackgroundFilter();
+    }
+  }, [selectedBackground, backgroundColor, backgroundBlur, isLive, liveKitRoom]);
+
   // Detect iOS device
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -2417,6 +2659,125 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   </button>
                 )}
 
+                {/* Background Filter Panel - Non-Fullscreen */}
+                {showBackgroundPanel && !isFullscreen && (
+                  <div
+                    className="absolute top-20 right-4 w-80 bg-black/95 backdrop-blur-xl text-white rounded-2xl shadow-2xl z-50 flex flex-col max-h-[600px]"
+                    style={{
+                      zIndex: 100,
+                      animation: 'slideInRight 0.3s ease-out'
+                    }}
+                  >
+                    <div className="p-4 border-b border-white/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                          <Sparkles className="w-5 h-5" />
+                          Background Filters
+                        </h3>
+                        <button
+                          onClick={() => setShowBackgroundPanel(false)}
+                          className="p-2 hover:bg-white/10 rounded-full transition"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {/* Background Options */}
+                      <div>
+                        <label className="block text-sm font-medium mb-3 text-white/80">Background Type</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => setSelectedBackground('none')}
+                            className={`p-3 rounded-lg border-2 transition-all ${
+                              selectedBackground === 'none'
+                                ? 'border-pink-500 bg-pink-500/20'
+                                : 'border-white/20 bg-white/5 hover:bg-white/10'
+                            }`}
+                          >
+                            <X className="w-5 h-5 mx-auto mb-1" />
+                            <span className="text-xs">None</span>
+                          </button>
+                          <button
+                            onClick={() => setSelectedBackground('blur')}
+                            className={`p-3 rounded-lg border-2 transition-all ${
+                              selectedBackground === 'blur'
+                                ? 'border-pink-500 bg-pink-500/20'
+                                : 'border-white/20 bg-white/5 hover:bg-white/10'
+                            }`}
+                          >
+                            <Sparkles className="w-5 h-5 mx-auto mb-1" />
+                            <span className="text-xs">Blur</span>
+                          </button>
+                          <button
+                            onClick={() => setSelectedBackground('color')}
+                            className={`p-3 rounded-lg border-2 transition-all ${
+                              selectedBackground === 'color'
+                                ? 'border-pink-500 bg-pink-500/20'
+                                : 'border-white/20 bg-white/5 hover:bg-white/10'
+                            }`}
+                          >
+                            <Palette className="w-5 h-5 mx-auto mb-1" />
+                            <span className="text-xs">Color</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Blur Settings */}
+                      {selectedBackground === 'blur' && (
+                        <div>
+                          <label className="block text-sm font-medium mb-2 text-white/80">
+                            Blur Intensity: {backgroundBlur}px
+                          </label>
+                          <input
+                            type="range"
+                            min="5"
+                            max="50"
+                            value={backgroundBlur}
+                            onChange={(e) => setBackgroundBlur(parseInt(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+
+                      {/* Color Settings */}
+                      {selectedBackground === 'color' && (
+                        <div>
+                          <label className="block text-sm font-medium mb-2 text-white/80">Background Color</label>
+                          <div className="grid grid-cols-4 gap-2 mb-3">
+                            {['#00ff00', '#0000ff', '#ff0000', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000'].map((color) => (
+                              <button
+                                key={color}
+                                onClick={() => setBackgroundColor(color)}
+                                className={`w-full h-12 rounded-lg border-2 transition-all ${
+                                  backgroundColor === color
+                                    ? 'border-pink-500 scale-110'
+                                    : 'border-white/20'
+                                }`}
+                                style={{ backgroundColor: color }}
+                                title={color}
+                              />
+                            ))}
+                          </div>
+                          <input
+                            type="color"
+                            value={backgroundColor}
+                            onChange={(e) => setBackgroundColor(e.target.value)}
+                            className="w-full h-12 rounded-lg cursor-pointer"
+                          />
+                        </div>
+                      )}
+
+                      <div className="pt-4 border-t border-white/20">
+                        <p className="text-xs text-white/60 mb-2">
+                          💡 Tip: For color backgrounds, use a green screen behind you for best results.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Live Chat Indicator */}
                 {overlayComments.length > 0 && (
                   <div className="absolute top-4 left-4 z-25 bg-gradient-to-r from-pink-600 to-pink-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-2">
@@ -2625,6 +2986,18 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   >
     {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
   </button>
+
+  <button
+    onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
+    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${
+      selectedBackground !== 'none'
+        ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700' 
+        : 'bg-white/90 border-white text-gray-900 hover:bg-white'
+    }`}
+    title="Background Filters"
+  >
+    <Sparkles className="w-8 h-8" />
+  </button>
 </div>
 
                     {/* End Stream Button - More Prominent */}
@@ -2678,7 +3051,129 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       <span className="text-sm">End Stream</span>
                     </button>
 
-                    {/* Control Panel - Slides in from right */}
+                        {/* Background Filter Panel */}
+                    {showBackgroundPanel && (
+                      <div
+                        className="absolute top-0 right-0 h-full w-full max-w-sm bg-black/95 backdrop-blur-xl text-white z-50 flex flex-col"
+                        style={{
+                          zIndex: 2147483648,
+                          animation: 'slideInRight 0.3s ease-out',
+                          transform: 'translate3d(0,0,0)',
+                          WebkitTransform: 'translate3d(0,0,0)',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <div className="p-4 border-b border-white/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                              <Sparkles className="w-5 h-5" />
+                              Background Filters
+                            </h3>
+                            <button
+                              onClick={() => setShowBackgroundPanel(false)}
+                              className="p-2 hover:bg-white/10 rounded-full transition"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                          {/* Background Options */}
+                          <div>
+                            <label className="block text-sm font-medium mb-3 text-white/80">Background Type</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                onClick={() => setSelectedBackground('none')}
+                                className={`p-3 rounded-lg border-2 transition-all ${
+                                  selectedBackground === 'none'
+                                    ? 'border-pink-500 bg-pink-500/20'
+                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                }`}
+                              >
+                                <X className="w-5 h-5 mx-auto mb-1" />
+                                <span className="text-xs">None</span>
+                              </button>
+                              <button
+                                onClick={() => setSelectedBackground('blur')}
+                                className={`p-3 rounded-lg border-2 transition-all ${
+                                  selectedBackground === 'blur'
+                                    ? 'border-pink-500 bg-pink-500/20'
+                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                }`}
+                              >
+                                <Sparkles className="w-5 h-5 mx-auto mb-1" />
+                                <span className="text-xs">Blur</span>
+                              </button>
+                              <button
+                                onClick={() => setSelectedBackground('color')}
+                                className={`p-3 rounded-lg border-2 transition-all ${
+                                  selectedBackground === 'color'
+                                    ? 'border-pink-500 bg-pink-500/20'
+                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                }`}
+                              >
+                                <Palette className="w-5 h-5 mx-auto mb-1" />
+                                <span className="text-xs">Color</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Blur Settings */}
+                          {selectedBackground === 'blur' && (
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-white/80">
+                                Blur Intensity: {backgroundBlur}px
+                              </label>
+                              <input
+                                type="range"
+                                min="5"
+                                max="50"
+                                value={backgroundBlur}
+                                onChange={(e) => setBackgroundBlur(parseInt(e.target.value))}
+                                className="w-full"
+                              />
+                            </div>
+                          )}
+
+                          {/* Color Settings */}
+                          {selectedBackground === 'color' && (
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-white/80">Background Color</label>
+                              <div className="grid grid-cols-4 gap-2 mb-3">
+                                {['#00ff00', '#0000ff', '#ff0000', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000'].map((color) => (
+                                  <button
+                                    key={color}
+                                    onClick={() => setBackgroundColor(color)}
+                                    className={`w-full h-12 rounded-lg border-2 transition-all ${
+                                      backgroundColor === color
+                                        ? 'border-pink-500 scale-110'
+                                        : 'border-white/20'
+                                    }`}
+                                    style={{ backgroundColor: color }}
+                                    title={color}
+                                  />
+                                ))}
+                              </div>
+                              <input
+                                type="color"
+                                value={backgroundColor}
+                                onChange={(e) => setBackgroundColor(e.target.value)}
+                                className="w-full h-12 rounded-lg cursor-pointer"
+                              />
+                            </div>
+                          )}
+
+                          <div className="pt-4 border-t border-white/20">
+                            <p className="text-xs text-white/60 mb-2">
+                              💡 Tip: For color backgrounds, use a green screen behind you for best results.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                        {/* Control Panel - Slides in from right */}
                     {/* Control Panel - Slides in from right */}
                     {showFullscreenControls && (
                       <div
@@ -3544,11 +4039,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             )}
 
             <div className="absolute top-4 right-4 flex space-x-2 z-10">
-              <button
-                onClick={toggleCamera}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isCameraOn
-                  ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
-                  : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
+                <button
+                  onClick={toggleCamera}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isCameraOn
+                    ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
+                    : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
                   }`}
               >
 
@@ -3563,6 +4058,17 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               >
 
                 {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${
+                  selectedBackground !== 'none'
+                    ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
+                    : 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
+                }`}
+                title="Background Filters"
+              >
+                <Sparkles className="w-5 h-5" />
               </button>
             </div>
 
