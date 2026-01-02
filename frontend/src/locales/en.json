@@ -1117,6 +1117,59 @@
       "supportHours": "Support hours: Monday - Friday, 9:00 AM - 6:00 PM EST",
       "lastUpdated": "Last Updated: December 3, 2025"
     }
+  },
+  "login": {
+    "welcomeToClipStream": "Welcome to TheClipStream",
+    "tagline": "Stream, shop, and connect in the most futuristic live platform.",
+    "welcomeBack": "Welcome Back",
+    "signInToStreamMall": "Sign in to StreamMall",
+    "emailAddress": "Email Address",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot Password?",
+    "signIn": "Sign In",
+    "signingIn": "Signing In...",
+    "or": "or",
+    "signingInWithGoogle": "Signing in with Google...",
+    "googleSignInUnavailable": "Google Sign-In unavailable",
+    "dontHaveAccount": "Don't have an account?",
+    "createOne": "Create one",
+    "errors": {
+      "loginFailed": "Login failed",
+      "googleLoginFailed": "Google login failed"
+    }
+  },
+  "signup": {
+    "welcomeToClipStream": "Welcome to TheClipStream",
+    "tagline": "Stream, shop, and connect in the most futuristic live platform.",
+    "createAccount": "Create Account",
+    "joinClipStream": "Join TheClipStream today",
+    "username": "Username",
+    "usernamePlaceholder": "johndoe",
+    "emailAddress": "Email Address",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "confirmPassword": "Confirm Password",
+    "signUp": "Sign Up",
+    "creatingAccount": "Creating Account...",
+    "signingUpWithGoogle": "Signing up with Google...",
+    "or": "or",
+    "byCreatingAccount": "By creating an account, you agree to our",
+    "terms": "Terms",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "alreadyHaveAccount": "Already have an account?",
+    "logIn": "Log In",
+    "errors": {
+      "passwordsDontMatch": "Passwords don't match",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "signupFailed": "Signup failed",
+      "googleSignupFailed": "Google signup failed",
+      "googleSignInUnavailable": "Google Sign-In unavailable"
+    }
   }
 }
 

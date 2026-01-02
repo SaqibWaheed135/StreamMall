@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
@@ -27,6 +28,7 @@ const loadGoogleScript = () => {
 };
 
 export default function Signup() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -69,19 +71,19 @@ export default function Signup() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
+      setError(t('signup.errors.passwordsDontMatch'));
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t('signup.errors.passwordMinLength'));
       setLoading(false);
       return;
     }
 
     if (username.length < 3) {
-      setError("Username must be at least 3 characters");
+      setError(t('signup.errors.usernameMinLength'));
       setLoading(false);
       return;
     }
@@ -108,7 +110,7 @@ export default function Signup() {
         navigate('/');
       }
     } catch (err) {
-      setError(err.response?.data?.msg || "Signup failed");
+      setError(err.response?.data?.msg || t('signup.errors.signupFailed'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +141,7 @@ export default function Signup() {
       }
     } catch (err) {
       console.error("Google signup error:", err);
-      setError(err.response?.data?.msg || "Google signup failed");
+      setError(err.response?.data?.msg || t('signup.errors.googleSignupFailed'));
     } finally {
       setGoogleLoading(false);
     }
@@ -185,7 +187,7 @@ export default function Signup() {
         if (googleButtonDiv) {
           googleButtonDiv.innerHTML = `
             <div className="flex items-center justify-center w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed">
-              <span className="text-sm">Google Sign-In unavailable</span>
+              <span className="text-sm">${t('signup.errors.googleSignInUnavailable')}</span>
             </div>
           `;
         }
@@ -212,10 +214,10 @@ export default function Signup() {
           className="w-44 mb-6 drop-shadow-[0_0_30px_rgba(255,43,85,0.4)] rounded-[12px]"
         />
         <h1 className="text-4xl font-semibold bg-gradient-to-r from-pink-600 to-pink-500 bg-clip-text text-transparent">
-          Welcome to TheClipStream
+          {t('signup.welcomeToClipStream')}
         </h1>
         <p className="text-gray-700 mt-3 text-lg max-w-sm">
-          Stream, shop, and connect in the most futuristic live platform.
+          {t('signup.tagline')}
         </p>
       </div>
 
@@ -225,14 +227,14 @@ export default function Signup() {
           {/* Mobile Header */}
           <div className="md:hidden flex flex-col items-center mb-8">
             <img src={logo} alt="StreamMall Logo" className="w-20 mb-3 rounded-[12px]" />
-            <h1 className="text-2xl font-semibold text-black">Create Account</h1>
-            <p className="text-gray-700 text-sm">Join TheClipStream today</p>
+            <h1 className="text-2xl font-semibold text-black">{t('signup.createAccount')}</h1>
+            <p className="text-gray-700 text-sm">{t('signup.joinClipStream')}</p>
           </div>
 
           {/* Desktop Header */}
           <div className="hidden md:block mb-8">
-            <h2 className="text-3xl font-semibold text-center mb-2">Create Account</h2>
-            <p className="text-gray-700 text-center">Join TheClipStream today</p>
+            <h2 className="text-3xl font-semibold text-center mb-2">{t('signup.createAccount')}</h2>
+            <p className="text-gray-700 text-center">{t('signup.joinClipStream')}</p>
           </div>
 
           {error && (
@@ -250,7 +252,7 @@ export default function Signup() {
             {googleLoading && (
               <div className="flex items-center justify-center mt-3">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-600"></div>
-                <span className="text-gray-700 text-sm ml-2">Signing up with Google...</span>
+                <span className="text-gray-700 text-sm ml-2">{t('signup.signingUpWithGoogle')}</span>
               </div>
             )}
           </div>
@@ -258,7 +260,7 @@ export default function Signup() {
           {/* Divider */}
           <div className="my-6 relative flex items-center">
             <div className="flex-grow border-t border-[#ff99b3]" />
-            <span className="mx-3 text-gray-700 text-sm">or</span>
+            <span className="mx-3 text-gray-700 text-sm">{t('signup.or')}</span>
             <div className="flex-grow border-t border-[#ff99b3]" />
           </div>
 
@@ -266,13 +268,13 @@ export default function Signup() {
           <form className="space-y-5" onSubmit={handleSignup}>
             <div>
               <label htmlFor="username" className="block text-sm text-gray-700 mb-1">
-                Username
+                {t('signup.username')}
               </label>
               <input
                 id="username"
                 type="text"
                 className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-                placeholder="johndoe"
+                placeholder={t('signup.usernamePlaceholder')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -282,13 +284,13 @@ export default function Signup() {
 
             <div>
               <label htmlFor="email" className="block text-sm text-gray-700 mb-1">
-                Email Address
+                {t('signup.emailAddress')}
               </label>
               <input
                 id="email"
                 type="email"
                 className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-                placeholder="you@example.com"
+                placeholder={t('signup.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -298,13 +300,13 @@ export default function Signup() {
 
             <div>
               <label htmlFor="password" className="block text-sm text-gray-700 mb-1">
-                Password
+                {t('signup.password')}
               </label>
               <input
                 id="password"
                 type="password"
                 className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-                placeholder="••••••••"
+                placeholder={t('signup.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -314,13 +316,13 @@ export default function Signup() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm text-gray-700 mb-1">
-                Confirm Password
+                {t('signup.confirmPassword')}
               </label>
               <input
                 id="confirmPassword"
                 type="password"
                 className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-                placeholder="••••••••"
+                placeholder={t('signup.passwordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -333,30 +335,30 @@ export default function Signup() {
               className="w-full py-3 rounded-lg bg-gradient-to-r from-pink-600 to-pink-500 text-white font-semibold hover:opacity-90 transition-all shadow-[0_0_20px_rgba(255,192,203,0.4)]"
               disabled={loading}
             >
-              {loading ? "Creating Account..." : "Sign Up"}
+              {loading ? t('signup.creatingAccount') : t('signup.signUp')}
             </button>
           </form>
 
           {/* Terms */}
           <p className="text-xs text-gray-700 text-center mt-6">
-            By creating an account, you agree to our{" "}
+            {t('signup.byCreatingAccount')}{" "}
             <Link to="/terms" className="text-pink-700 hover:text-pink-600 transition">
-              Terms
+              {t('signup.terms')}
             </Link>{" "}
-            and{" "}
+            {t('signup.and')}{" "}
             <Link to="/privacy" className="text-pink-700 hover:text-pink-600 transition">
-              Privacy Policy
+              {t('signup.privacyPolicy')}
             </Link>
           </p>
 
           {/* Login Link */}
           <p className="text-gray-700 text-center mt-4">
-            Already have an account?{" "}
+            {t('signup.alreadyHaveAccount')}{" "}
             <Link
               to="/login"
               className="text-pink-700 hover:text-pink-600 font-medium transition"
             >
-              Log In
+              {t('signup.logIn')}
             </Link>
           </p>
         </div>

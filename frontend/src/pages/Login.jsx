@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
@@ -27,6 +28,7 @@ const loadGoogleScript = () => {
 };
 
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -79,7 +81,7 @@ const handleLogin = async (e) => {
     }
 
   } catch (err) {
-    setError(err.response?.data?.msg || "Login failed");
+    setError(err.response?.data?.msg || t('login.errors.loginFailed'));
   } finally {
     setLoading(false);
   }
@@ -109,7 +111,7 @@ const handleGoogleResponse = async (response) => {
     }
   } catch (err) {
     console.error("Google login error:", err);
-    setError(err.response?.data?.msg || "Google login failed");
+    setError(err.response?.data?.msg || t('login.errors.googleLoginFailed'));
   } finally {
     setGoogleLoading(false);
   }
@@ -155,7 +157,7 @@ const handleGoogleResponse = async (response) => {
         if (googleButtonDiv) {
           googleButtonDiv.innerHTML = `
             <div className="flex items-center justify-center w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed">
-              <span className="text-sm">Google Sign-In unavailable</span>
+              <span className="text-sm">${t('login.googleSignInUnavailable')}</span>
             </div>
           `;
         }
@@ -182,10 +184,10 @@ const handleGoogleResponse = async (response) => {
           className="w-44 mb-6 drop-shadow-[0_0_30px_rgba(255,43,85,0.4)] rounded-[12px]"
         />
         <h1 className="text-4xl font-semibold bg-gradient-to-r from-pink-600 to-pink-500 bg-clip-text text-transparent">
-          Welcome to TheClipStream
+          {t('login.welcomeToClipStream')}
         </h1>
         <p className="text-gray-700 mt-3 text-lg max-w-sm">
-          Stream, shop, and connect in the most futuristic live platform.
+          {t('login.tagline')}
         </p>
       </div>
 
@@ -195,8 +197,8 @@ const handleGoogleResponse = async (response) => {
           {/* Mobile Header */}
           <div className="md:hidden flex flex-col items-center mb-8">
             <img src={logo} alt="StreamMall Logo" className="w-20 mb-3 rounded-[12px]" />
-            <h1 className="text-2xl font-semibold text-black">Welcome Back</h1>
-            <p className="text-gray-700 text-sm">Sign in to StreamMall</p>
+            <h1 className="text-2xl font-semibold text-black">{t('login.welcomeBack')}</h1>
+            <p className="text-gray-700 text-sm">{t('login.signInToStreamMall')}</p>
           </div>
 
           {error && (
@@ -209,13 +211,13 @@ const handleGoogleResponse = async (response) => {
           <form className="space-y-5" onSubmit={handleLogin}>
             <div>
               <label htmlFor="email" className="block text-sm text-gray-700 mb-1">
-                Email Address
+                {t('login.emailAddress')}
               </label>
               <input
                 id="email"
                 type="email"
                 className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-                placeholder="you@example.com"
+                placeholder={t('login.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -225,13 +227,13 @@ const handleGoogleResponse = async (response) => {
 
             <div>
               <label htmlFor="password" className="block text-sm text-gray-700 mb-1">
-                Password
+                {t('login.password')}
               </label>
               <input
                 id="password"
                 type="password"
                 className="w-full bg-white border border-[#ff99b3] rounded-lg p-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-                placeholder="••••••••"
+                placeholder={t('login.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -244,7 +246,7 @@ const handleGoogleResponse = async (response) => {
                 to="/forgot-password"
                 className="text-sm text-pink-700 hover:text-pink-600 transition"
               >
-                Forgot Password?
+                {t('login.forgotPassword')}
               </Link>
             </div>
 
@@ -253,14 +255,14 @@ const handleGoogleResponse = async (response) => {
               className="w-full py-3 rounded-lg bg-gradient-to-r from-pink-600 to-pink-500 text-white font-semibold hover:opacity-90 transition-all shadow-[0_0_20px_rgba(255,192,203,0.4)]"
               disabled={loading}
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? t('login.signingIn') : t('login.signIn')}
             </button>
           </form>
 
           {/* Divider */}
           <div className="my-6 relative flex items-center">
             <div className="flex-grow border-t border-[#ff99b3]" />
-            <span className="mx-3 text-gray-700 text-sm">or</span>
+            <span className="mx-3 text-gray-700 text-sm">{t('login.or')}</span>
             <div className="flex-grow border-t border-[#ff99b3]" />
           </div>
 
@@ -273,7 +275,7 @@ const handleGoogleResponse = async (response) => {
             {googleLoading && (
               <div className="flex items-center justify-center mt-3">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-600"></div>
-                <span className="text-gray-700 text-sm ml-2">Signing in with Google...</span>
+                <span className="text-gray-700 text-sm ml-2">{t('login.signingInWithGoogle')}</span>
               </div>
             )}
           </div>
@@ -281,12 +283,12 @@ const handleGoogleResponse = async (response) => {
 
           {/* Signup Link */}
           <p className="text-gray-700 text-center mt-6">
-            Don’t have an account?{" "}
+            {t('login.dontHaveAccount')}{" "}
             <Link
               to="/signup"
               className="text-pink-700 hover:text-pink-600 font-medium transition"
             >
-              Create one
+              {t('login.createOne')}
             </Link>
           </p>
         </div>
