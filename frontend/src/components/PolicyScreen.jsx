@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Shield, RefreshCw, Truck, FileText, AlertCircle, CheckCircle, Clock, Mail, Phone } from 'lucide-react';
 
 const PolicyScreens = () => {
+  const { t } = useTranslation();
   const [activeScreen, setActiveScreen] = useState('menu');
 
   // Menu Screen
@@ -9,36 +11,36 @@ const PolicyScreens = () => {
     <div className="min-h-screen bg-[#FFC0CB] text-black">
       <div className="sticky top-0 bg-[#FFC0CB]/95 backdrop-blur-lg border-b border-[#ff99b3] z-10 p-4">
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold">Legal & Policies</h1>
+          <h1 className="text-xl font-bold">{t('policies.menu.title')}</h1>
         </div>
       </div>
 
       <div className="p-4 space-y-3">
         <PolicyCard
           icon={<Shield className="w-6 h-6" />}
-          title="Privacy Policy"
-          description="How we collect, use, and protect your data"
+          title={t('policies.menu.privacyPolicy')}
+          description={t('policies.menu.privacyDescription')}
           onClick={() => setActiveScreen('privacy')}
         />
         
         <PolicyCard
           icon={<RefreshCw className="w-6 h-6" />}
-          title="Return & Refund Policy"
-          description="Our policies on returns and refunds"
+          title={t('policies.menu.refundPolicy')}
+          description={t('policies.menu.refundDescription')}
           onClick={() => setActiveScreen('refund')}
         />
         
         <PolicyCard
           icon={<Truck className="w-6 h-6" />}
-          title="Service Delivery Policy"
-          description="How we deliver our digital services"
+          title={t('policies.menu.deliveryPolicy')}
+          description={t('policies.menu.deliveryDescription')}
           onClick={() => setActiveScreen('shipping')}
         />
         
         <PolicyCard
           icon={<FileText className="w-6 h-6" />}
-          title="Terms & Conditions"
-          description="Rules and guidelines for using our platform"
+          title={t('policies.menu.termsConditions')}
+          description={t('policies.menu.termsDescription')}
           onClick={() => setActiveScreen('terms')}
         />
       </div>
@@ -66,451 +68,434 @@ const PolicyScreens = () => {
   // Privacy Policy Screen
   const PrivacyPolicyScreen = () => (
     <PolicyLayout
-      title="Privacy Policy"
+      title={t('policies.privacy.title')}
       icon={<Shield className="w-6 h-6" />}
       onBack={() => setActiveScreen('menu')}
     >
-      <Section title="Introduction">
+      <Section title={t('policies.privacy.introduction.title')}>
         <p>
-          At ClipStream, we value your privacy and are committed to protecting your personal information. 
-          This Privacy Policy explains how we collect, use, disclose, and safeguard your information when 
-          you use our mobile application and services.
+          {t('policies.privacy.introduction.content')}
         </p>
       </Section>
 
-      <Section title="Information We Collect">
-        <SubSection title="Personal Information">
+      <Section title={t('policies.privacy.informationWeCollect.title')}>
+        <SubSection title={t('policies.privacy.informationWeCollect.personalInformation.title')}>
           <ul>
-            <li>Name and email address</li>
-            <li>Phone number (optional)</li>
-            <li>Profile picture and bio</li>
-            <li>Payment information (processed securely through third-party providers)</li>
-            <li>Device information and IP address</li>
+            <li>{t('policies.privacy.informationWeCollect.personalInformation.nameAndEmail')}</li>
+            <li>{t('policies.privacy.informationWeCollect.personalInformation.phoneNumber')}</li>
+            <li>{t('policies.privacy.informationWeCollect.personalInformation.profilePicture')}</li>
+            <li>{t('policies.privacy.informationWeCollect.personalInformation.paymentInfo')}</li>
+            <li>{t('policies.privacy.informationWeCollect.personalInformation.deviceInfo')}</li>
           </ul>
         </SubSection>
 
-        <SubSection title="Content and Usage Data">
+        <SubSection title={t('policies.privacy.informationWeCollect.contentAndUsageData.title')}>
           <ul>
-            <li>Videos and content you upload or create</li>
-            <li>Comments, likes, and interactions</li>
-            <li>Search history and preferences</li>
-            <li>Usage patterns and analytics</li>
+            <li>{t('policies.privacy.informationWeCollect.contentAndUsageData.videos')}</li>
+            <li>{t('policies.privacy.informationWeCollect.contentAndUsageData.interactions')}</li>
+            <li>{t('policies.privacy.informationWeCollect.contentAndUsageData.searchHistory')}</li>
+            <li>{t('policies.privacy.informationWeCollect.contentAndUsageData.usagePatterns')}</li>
           </ul>
         </SubSection>
       </Section>
 
-      <Section title="How We Use Your Information">
+      <Section title={t('policies.privacy.howWeUse.title')}>
         <ul>
-          <li>Provide and maintain our services</li>
-          <li>Process transactions and send notifications</li>
-          <li>Improve user experience and personalize content</li>
-          <li>Communicate with you about updates and offers</li>
-          <li>Ensure platform safety and prevent fraud</li>
-          <li>Comply with legal obligations</li>
+          <li>{t('policies.privacy.howWeUse.provideServices')}</li>
+          <li>{t('policies.privacy.howWeUse.processTransactions')}</li>
+          <li>{t('policies.privacy.howWeUse.improveExperience')}</li>
+          <li>{t('policies.privacy.howWeUse.communicate')}</li>
+          <li>{t('policies.privacy.howWeUse.ensureSafety')}</li>
+          <li>{t('policies.privacy.howWeUse.complyLegal')}</li>
         </ul>
       </Section>
 
-      <Section title="Information Sharing">
-        <p>We do not sell your personal information. We may share information with:</p>
+      <Section title={t('policies.privacy.informationSharing.title')}>
+        <p>{t('policies.privacy.informationSharing.intro')}</p>
         <ul>
-          <li><strong>Service Providers:</strong> Payment processors, cloud storage, analytics</li>
-          <li><strong>Legal Requirements:</strong> When required by law or to protect rights</li>
-          <li><strong>Business Transfers:</strong> In case of merger or acquisition</li>
-          <li><strong>With Your Consent:</strong> When you explicitly agree to sharing</li>
+          <li><strong>{t('policies.privacy.informationSharing.serviceProviders')}</strong></li>
+          <li><strong>{t('policies.privacy.informationSharing.legalRequirements')}</strong></li>
+          <li><strong>{t('policies.privacy.informationSharing.businessTransfers')}</strong></li>
+          <li><strong>{t('policies.privacy.informationSharing.withConsent')}</strong></li>
         </ul>
       </Section>
 
-      <Section title="Data Security">
+      <Section title={t('policies.privacy.dataSecurity.title')}>
         <p>
-          We implement industry-standard security measures to protect your data, including 
-          encryption, secure servers, and regular security audits. However, no method of 
-          transmission over the internet is 100% secure.
+          {t('policies.privacy.dataSecurity.content')}
         </p>
       </Section>
 
-      <Section title="Your Rights">
+      <Section title={t('policies.privacy.yourRights.title')}>
         <ul>
-          <li>Access and download your data</li>
-          <li>Correct inaccurate information</li>
-          <li>Delete your account and data</li>
-          <li>Opt-out of marketing communications</li>
-          <li>Control privacy settings</li>
+          <li>{t('policies.privacy.yourRights.accessData')}</li>
+          <li>{t('policies.privacy.yourRights.correctInfo')}</li>
+          <li>{t('policies.privacy.yourRights.deleteAccount')}</li>
+          <li>{t('policies.privacy.yourRights.optOut')}</li>
+          <li>{t('policies.privacy.yourRights.controlPrivacy')}</li>
         </ul>
       </Section>
 
-      <Section title="Children's Privacy">
+      <Section title={t('policies.privacy.childrensPrivacy.title')}>
         <AlertBox>
-          Our service is not intended for users under 13 years of age. We do not knowingly 
-          collect personal information from children under 13.
+          {t('policies.privacy.childrensPrivacy.content')}
         </AlertBox>
       </Section>
 
-      <Section title="Contact Us">
+      <Section title={t('policies.common.contactUs', { defaultValue: 'Contact Us' })}>
         <ContactInfo />
       </Section>
 
-      <UpdateDate>Last Updated: December 3, 2025</UpdateDate>
+      <UpdateDate>{t('policies.common.lastUpdated')}</UpdateDate>
     </PolicyLayout>
   );
 
   // Refund Policy Screen
   const RefundPolicyScreen = () => (
     <PolicyLayout
-      title="Return & Refund Policy"
+      title={t('policies.refund.title')}
       icon={<RefreshCw className="w-6 h-6" />}
       onBack={() => setActiveScreen('menu')}
     >
-      <Section title="Digital Products Policy">
+      <Section title={t('policies.refund.digitalProductsPolicy.title')}>
         <AlertBox type="info">
-          As a digital service platform, most purchases are final upon delivery of services 
-          or digital goods. However, we understand issues may arise.
+          {t('policies.refund.digitalProductsPolicy.content')}
         </AlertBox>
       </Section>
 
-      <Section title="Points & Virtual Currency">
-        <SubSection title="Refund Eligibility">
+      <Section title={t('policies.refund.pointsAndVirtualCurrency.title')}>
+        <SubSection title={t('policies.refund.pointsAndVirtualCurrency.refundEligibility.title')}>
           <ul>
-            <li><CheckCircle className="w-4 h-4 inline text-green-600" /> Payment processing errors or duplicate charges</li>
-            <li><CheckCircle className="w-4 h-4 inline text-green-600" /> Technical issues preventing points delivery</li>
-            <li><CheckCircle className="w-4 h-4 inline text-green-600" /> Unauthorized transactions (with proof)</li>
+            <li><CheckCircle className="w-4 h-4 inline text-green-600" /> {t('policies.refund.pointsAndVirtualCurrency.refundEligibility.paymentErrors')}</li>
+            <li><CheckCircle className="w-4 h-4 inline text-green-600" /> {t('policies.refund.pointsAndVirtualCurrency.refundEligibility.technicalIssues')}</li>
+            <li><CheckCircle className="w-4 h-4 inline text-green-600" /> {t('policies.refund.pointsAndVirtualCurrency.refundEligibility.unauthorizedTransactions')}</li>
           </ul>
         </SubSection>
 
-        <SubSection title="Non-Refundable">
+        <SubSection title={t('policies.refund.pointsAndVirtualCurrency.nonRefundable.title')}>
           <ul>
-            <li>Points already spent or used</li>
-            <li>Change of mind after successful purchase</li>
-            <li>Voluntary account deletion</li>
-            <li>Virtual gifts sent to creators</li>
+            <li>{t('policies.refund.pointsAndVirtualCurrency.nonRefundable.pointsSpent')}</li>
+            <li>{t('policies.refund.pointsAndVirtualCurrency.nonRefundable.changeOfMind')}</li>
+            <li>{t('policies.refund.pointsAndVirtualCurrency.nonRefundable.accountDeletion')}</li>
+            <li>{t('policies.refund.pointsAndVirtualCurrency.nonRefundable.virtualGifts')}</li>
           </ul>
         </SubSection>
       </Section>
 
-      <Section title="Refund Request Process">
+      <Section title={t('policies.refund.refundRequestProcess.title')}>
         <div className="space-y-3">
-          <StepCard number="1" title="Submit Request">
-            Contact support within 7 days of purchase via email or in-app support
+          <StepCard number="1" title={t('policies.refund.refundRequestProcess.step1Title')}>
+            {t('policies.refund.refundRequestProcess.step1Content')}
           </StepCard>
-          <StepCard number="2" title="Provide Details">
-            Include transaction ID, purchase date, and reason for refund
+          <StepCard number="2" title={t('policies.refund.refundRequestProcess.step2Title')}>
+            {t('policies.refund.refundRequestProcess.step2Content')}
           </StepCard>
-          <StepCard number="3" title="Review Process">
-            We review requests within 3-5 business days
+          <StepCard number="3" title={t('policies.refund.refundRequestProcess.step3Title')}>
+            {t('policies.refund.refundRequestProcess.step3Content')}
           </StepCard>
-          <StepCard number="4" title="Refund Processing">
-            Approved refunds processed within 7-10 business days
+          <StepCard number="4" title={t('policies.refund.refundRequestProcess.step4Title')}>
+            {t('policies.refund.refundRequestProcess.step4Content')}
           </StepCard>
         </div>
       </Section>
 
-      <Section title="Refund Methods">
+      <Section title={t('policies.refund.refundMethods.title')}>
         <ul>
-          <li><strong>USDT/Crypto:</strong> Refunded to original wallet address</li>
-          <li><strong>Bank Transfer:</strong> Refunded to original account</li>
-          <li><strong>Credit/Debit Card:</strong> Refunded to original card</li>
+          <li><strong>{t('policies.refund.refundMethods.usdtCrypto')}</strong></li>
+          <li><strong>{t('policies.refund.refundMethods.bankTransfer')}</strong></li>
+          <li><strong>{t('policies.refund.refundMethods.creditDebitCard')}</strong></li>
         </ul>
         <p className="text-sm text-gray-700 mt-2">
-          Processing time varies by payment method and financial institution.
+          {t('policies.refund.refundMethods.note')}
         </p>
       </Section>
 
-      <Section title="Disputes & Chargebacks">
+      <Section title={t('policies.refund.disputesAndChargebacks.title')}>
         <AlertBox type="warning">
-          Initiating a chargeback without contacting us first may result in account suspension. 
-          Please reach out to resolve issues before disputing charges.
+          {t('policies.refund.disputesAndChargebacks.content')}
         </AlertBox>
       </Section>
 
-      <Section title="Contact for Refunds">
+      <Section title={t('policies.common.contactForRefunds', { defaultValue: 'Contact for Refunds' })}>
         <ContactInfo />
       </Section>
 
-      <UpdateDate>Last Updated: December 3, 2025</UpdateDate>
+      <UpdateDate>{t('policies.common.lastUpdated')}</UpdateDate>
     </PolicyLayout>
   );
 
   // Service Delivery Policy Screen
   const ShippingPolicyScreen = () => (
     <PolicyLayout
-      title="Service Delivery Policy"
+      title={t('policies.delivery.title')}
       icon={<Truck className="w-6 h-6" />}
       onBack={() => setActiveScreen('menu')}
     >
-      <Section title="Digital Service Delivery">
+      <Section title={t('policies.delivery.digitalServiceDelivery.title')}>
         <p>
-          ClipStream provides digital services and virtual products. There is no physical 
-          shipping involved. All services are delivered electronically.
+          {t('policies.delivery.digitalServiceDelivery.content')}
         </p>
       </Section>
 
-      <Section title="Points & Virtual Currency">
+      <Section title={t('policies.delivery.pointsAndVirtualCurrency.title')}>
         <div className="bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-xl p-4 mb-4">
           <div className="flex items-center space-x-2 mb-2">
             <Clock className="w-5 h-5" />
-            <span className="font-semibold">Instant Delivery</span>
+            <span className="font-semibold">{t('policies.delivery.pointsAndVirtualCurrency.instantDelivery')}</span>
           </div>
           <p className="text-sm">
-            Points are credited to your account immediately upon successful payment verification.
+            {t('policies.delivery.pointsAndVirtualCurrency.instantDeliveryNote')}
           </p>
         </div>
 
-        <SubSection title="Delivery Timeline">
+        <SubSection title={t('policies.delivery.pointsAndVirtualCurrency.deliveryTimeline.title')}>
           <ul>
-            <li><strong>USDT Payments:</strong> 1-5 minutes (blockchain confirmation required)</li>
-            <li><strong>Bank Transfer:</strong> 1-2 business days (manual verification)</li>
-            <li><strong>Card Payments:</strong> Instant (automated processing)</li>
+            <li><strong>{t('policies.delivery.pointsAndVirtualCurrency.deliveryTimeline.usdtPayments')}</strong></li>
+            <li><strong>{t('policies.delivery.pointsAndVirtualCurrency.deliveryTimeline.bankTransfer')}</strong></li>
+            <li><strong>{t('policies.delivery.pointsAndVirtualCurrency.deliveryTimeline.cardPayments')}</strong></li>
           </ul>
         </SubSection>
       </Section>
 
-      <Section title="Virtual Gifts & Features">
+      <Section title={t('policies.delivery.virtualGiftsAndFeatures.title')}>
         <ul>
-          <li>Delivered instantly upon sending</li>
-          <li>Visible to recipients immediately</li>
-          <li>Cannot be recalled after delivery</li>
-          <li>Permanent record in transaction history</li>
+          <li>{t('policies.delivery.virtualGiftsAndFeatures.deliveredInstantly')}</li>
+          <li>{t('policies.delivery.virtualGiftsAndFeatures.visibleImmediately')}</li>
+          <li>{t('policies.delivery.virtualGiftsAndFeatures.cannotBeRecalled')}</li>
+          <li>{t('policies.delivery.virtualGiftsAndFeatures.permanentRecord')}</li>
         </ul>
       </Section>
 
-      <Section title="Premium Features">
+      <Section title={t('policies.delivery.premiumFeatures.title')}>
         <p>
-          Premium features and subscriptions are activated immediately upon successful payment. 
-          Access remains active for the purchased duration.
+          {t('policies.delivery.premiumFeatures.content')}
         </p>
       </Section>
 
-      <Section title="Delivery Issues">
+      <Section title={t('policies.delivery.deliveryIssues.title')}>
         <AlertBox type="info">
-          If you experience delays in receiving points or services, please:
+          {t('policies.delivery.deliveryIssues.intro')}
         </AlertBox>
         <ul className="mt-3">
-          <li>Check your transaction history in the app</li>
-          <li>Verify payment was successfully processed</li>
-          <li>Wait for blockchain confirmation (USDT payments)</li>
-          <li>Contact support if issue persists beyond stated timeframe</li>
+          <li>{t('policies.delivery.deliveryIssues.checkHistory')}</li>
+          <li>{t('policies.delivery.deliveryIssues.verifyPayment')}</li>
+          <li>{t('policies.delivery.deliveryIssues.waitConfirmation')}</li>
+          <li>{t('policies.delivery.deliveryIssues.contactSupport')}</li>
         </ul>
       </Section>
 
-      <Section title="Failed Deliveries">
+      <Section title={t('policies.delivery.failedDeliveries.title')}>
         <p>
-          In rare cases where delivery fails due to technical issues:
+          {t('policies.delivery.failedDeliveries.intro')}
         </p>
         <ul>
-          <li>We will retry delivery automatically</li>
-          <li>You'll be notified of any issues</li>
-          <li>Refund will be processed if delivery cannot be completed</li>
-          <li>No charges for failed delivery attempts</li>
+          <li>{t('policies.delivery.failedDeliveries.retryDelivery')}</li>
+          <li>{t('policies.delivery.failedDeliveries.notified')}</li>
+          <li>{t('policies.delivery.failedDeliveries.refundProcessed')}</li>
+          <li>{t('policies.delivery.failedDeliveries.noCharges')}</li>
         </ul>
       </Section>
 
-      <Section title="Service Availability">
-        <SubSection title="24/7 Platform Access">
-          <p>Our platform operates continuously with occasional maintenance windows.</p>
+      <Section title={t('policies.delivery.serviceAvailability.title')}>
+        <SubSection title={t('policies.delivery.serviceAvailability.platformAccess.title')}>
+          <p>{t('policies.delivery.serviceAvailability.platformAccess.content')}</p>
         </SubSection>
 
-        <SubSection title="Scheduled Maintenance">
+        <SubSection title={t('policies.delivery.serviceAvailability.scheduledMaintenance.title')}>
           <ul>
-            <li>Announced in advance via app notifications</li>
-            <li>Typically scheduled during low-usage hours</li>
-            <li>Usually completed within 1-2 hours</li>
+            <li>{t('policies.delivery.serviceAvailability.scheduledMaintenance.announced')}</li>
+            <li>{t('policies.delivery.serviceAvailability.scheduledMaintenance.scheduled')}</li>
+            <li>{t('policies.delivery.serviceAvailability.scheduledMaintenance.completed')}</li>
           </ul>
         </SubSection>
       </Section>
 
-      <Section title="Geographic Availability">
+      <Section title={t('policies.delivery.geographicAvailability.title')}>
         <p>
-          Our services are available globally, subject to local regulations. Some features 
-          may be restricted in certain regions due to legal requirements.
+          {t('policies.delivery.geographicAvailability.content')}
         </p>
       </Section>
 
-      <Section title="Support & Assistance">
+      <Section title={t('policies.common.supportAndAssistance', { defaultValue: 'Support & Assistance' })}>
         <ContactInfo />
       </Section>
 
-      <UpdateDate>Last Updated: December 3, 2025</UpdateDate>
+      <UpdateDate>{t('policies.common.lastUpdated')}</UpdateDate>
     </PolicyLayout>
   );
 
   // Terms & Conditions Screen
   const TermsConditionsScreen = () => (
     <PolicyLayout
-      title="Terms & Conditions"
+      title={t('policies.terms.title')}
       icon={<FileText className="w-6 h-6" />}
       onBack={() => setActiveScreen('menu')}
     >
-      <Section title="Agreement to Terms">
+      <Section title={t('policies.terms.agreementToTerms.title')}>
         <p>
-          By accessing or using ClipStream, you agree to be bound by these Terms and Conditions. 
-          If you disagree with any part of these terms, you may not access the service.
+          {t('policies.terms.agreementToTerms.content')}
         </p>
       </Section>
 
-      <Section title="User Accounts">
-        <SubSection title="Account Creation">
+      <Section title={t('policies.terms.userAccounts.title')}>
+        <SubSection title={t('policies.terms.userAccounts.accountCreation.title')}>
           <ul>
-            <li>You must be at least 13 years old to create an account</li>
-            <li>Provide accurate and complete information</li>
-            <li>Maintain security of your account credentials</li>
-            <li>One person, one account policy</li>
+            <li>{t('policies.terms.userAccounts.accountCreation.ageRequirement')}</li>
+            <li>{t('policies.terms.userAccounts.accountCreation.accurateInfo')}</li>
+            <li>{t('policies.terms.userAccounts.accountCreation.maintainSecurity')}</li>
+            <li>{t('policies.terms.userAccounts.accountCreation.oneAccount')}</li>
           </ul>
         </SubSection>
 
-        <SubSection title="Account Responsibilities">
+        <SubSection title={t('policies.terms.userAccounts.accountResponsibilities.title')}>
           <ul>
-            <li>You are responsible for all activities under your account</li>
-            <li>Notify us immediately of unauthorized access</li>
-            <li>Do not share your account with others</li>
-            <li>Keep your email and contact information updated</li>
+            <li>{t('policies.terms.userAccounts.accountResponsibilities.responsibleForActivities')}</li>
+            <li>{t('policies.terms.userAccounts.accountResponsibilities.notifyUnauthorized')}</li>
+            <li>{t('policies.terms.userAccounts.accountResponsibilities.doNotShare')}</li>
+            <li>{t('policies.terms.userAccounts.accountResponsibilities.keepUpdated')}</li>
           </ul>
         </SubSection>
       </Section>
 
-      <Section title="Acceptable Use">
+      <Section title={t('policies.terms.acceptableUse.title')}>
         <AlertBox type="warning">
-          Users must not engage in prohibited activities that violate our community guidelines.
+          {t('policies.terms.acceptableUse.warning')}
         </AlertBox>
 
-        <SubSection title="Prohibited Content">
+        <SubSection title={t('policies.terms.acceptableUse.prohibitedContent.title')}>
           <ul>
-            <li>Illegal, harmful, or threatening content</li>
-            <li>Harassment, bullying, or hate speech</li>
-            <li>Sexually explicit or adult content</li>
-            <li>Violence or graphic content</li>
-            <li>Copyright infringement</li>
-            <li>Spam or misleading information</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedContent.illegalContent')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedContent.harassment')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedContent.explicitContent')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedContent.violence')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedContent.copyright')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedContent.spam')}</li>
           </ul>
         </SubSection>
 
-        <SubSection title="Prohibited Activities">
+        <SubSection title={t('policies.terms.acceptableUse.prohibitedActivities.title')}>
           <ul>
-            <li>Impersonating others or creating fake accounts</li>
-            <li>Manipulating engagement metrics artificially</li>
-            <li>Hacking or circumventing security measures</li>
-            <li>Scraping or unauthorized data collection</li>
-            <li>Interfering with platform operation</li>
-          </ul>
-        </SubSection>
-      </Section>
-
-      <Section title="Content Ownership & Rights">
-        <SubSection title="Your Content">
-          <ul>
-            <li>You retain ownership of content you upload</li>
-            <li>You grant us license to use, display, and distribute your content</li>
-            <li>You represent that you have rights to all uploaded content</li>
-            <li>You are responsible for your content and its consequences</li>
-          </ul>
-        </SubSection>
-
-        <SubSection title="Our Rights">
-          <ul>
-            <li>We may remove content that violates these terms</li>
-            <li>We reserve right to moderate all content</li>
-            <li>We own all platform features and functionality</li>
-            <li>Our trademarks and branding are protected</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedActivities.impersonating')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedActivities.manipulatingMetrics')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedActivities.hacking')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedActivities.scraping')}</li>
+            <li>{t('policies.terms.acceptableUse.prohibitedActivities.interfering')}</li>
           </ul>
         </SubSection>
       </Section>
 
-      <Section title="Points & Virtual Currency">
+      <Section title={t('policies.terms.contentOwnership.title')}>
+        <SubSection title={t('policies.terms.contentOwnership.yourContent.title')}>
+          <ul>
+            <li>{t('policies.terms.contentOwnership.yourContent.retainOwnership')}</li>
+            <li>{t('policies.terms.contentOwnership.yourContent.grantLicense')}</li>
+            <li>{t('policies.terms.contentOwnership.yourContent.haveRights')}</li>
+            <li>{t('policies.terms.contentOwnership.yourContent.responsible')}</li>
+          </ul>
+        </SubSection>
+
+        <SubSection title={t('policies.terms.contentOwnership.ourRights.title')}>
+          <ul>
+            <li>{t('policies.terms.contentOwnership.ourRights.removeContent')}</li>
+            <li>{t('policies.terms.contentOwnership.ourRights.moderateContent')}</li>
+            <li>{t('policies.terms.contentOwnership.ourRights.ownFeatures')}</li>
+            <li>{t('policies.terms.contentOwnership.ourRights.trademarks')}</li>
+          </ul>
+        </SubSection>
+      </Section>
+
+      <Section title={t('policies.terms.pointsAndVirtualCurrency.title')}>
         <ul>
-          <li>Points have no real-world cash value</li>
-          <li>Points cannot be transferred between users</li>
-          <li>Points cannot be exchanged for cash</li>
-          <li>Unused points may expire per our policy</li>
-          <li>We may adjust point values with notice</li>
+          <li>{t('policies.terms.pointsAndVirtualCurrency.noCashValue')}</li>
+          <li>{t('policies.terms.pointsAndVirtualCurrency.cannotTransfer')}</li>
+          <li>{t('policies.terms.pointsAndVirtualCurrency.cannotExchange')}</li>
+          <li>{t('policies.terms.pointsAndVirtualCurrency.mayExpire')}</li>
+          <li>{t('policies.terms.pointsAndVirtualCurrency.adjustValues')}</li>
         </ul>
       </Section>
 
-      <Section title="Payments & Billing">
+      <Section title={t('policies.terms.paymentsAndBilling.title')}>
         <ul>
-          <li>All prices are in USD unless stated otherwise</li>
-          <li>Payments are processed securely through third parties</li>
-          <li>You authorize charges for selected services</li>
-          <li>Refunds are subject to our refund policy</li>
-          <li>We reserve right to change pricing with notice</li>
+          <li>{t('policies.terms.paymentsAndBilling.pricesInUSD')}</li>
+          <li>{t('policies.terms.paymentsAndBilling.secureProcessing')}</li>
+          <li>{t('policies.terms.paymentsAndBilling.authorizeCharges')}</li>
+          <li>{t('policies.terms.paymentsAndBilling.refundPolicy')}</li>
+          <li>{t('policies.terms.paymentsAndBilling.changePricing')}</li>
         </ul>
       </Section>
 
-      <Section title="Account Termination">
-        <SubSection title="By You">
-          <p>You may delete your account at any time through account settings.</p>
+      <Section title={t('policies.terms.accountTermination.title')}>
+        <SubSection title={t('policies.terms.accountTermination.byYou.title')}>
+          <p>{t('policies.terms.accountTermination.byYou.content')}</p>
         </SubSection>
 
-        <SubSection title="By Us">
-          <p>We may suspend or terminate accounts for:</p>
+        <SubSection title={t('policies.terms.accountTermination.byUs.title')}>
+          <p>{t('policies.terms.accountTermination.byUs.content')}</p>
           <ul>
-            <li>Violation of these terms</li>
-            <li>Illegal activities</li>
-            <li>Prolonged inactivity</li>
-            <li>Payment disputes or fraud</li>
+            <li>{t('policies.terms.accountTermination.byUs.violation')}</li>
+            <li>{t('policies.terms.accountTermination.byUs.illegalActivities')}</li>
+            <li>{t('policies.terms.accountTermination.byUs.inactivity')}</li>
+            <li>{t('policies.terms.accountTermination.byUs.paymentDisputes')}</li>
           </ul>
         </SubSection>
 
-        <SubSection title="Effects of Termination">
+        <SubSection title={t('policies.terms.accountTermination.effectsOfTermination.title')}>
           <ul>
-            <li>Access to account and content will be lost</li>
-            <li>Unused points will be forfeited</li>
-            <li>Content may be removed from platform</li>
-            <li>Certain provisions of terms will survive termination</li>
+            <li>{t('policies.terms.accountTermination.effectsOfTermination.accessLost')}</li>
+            <li>{t('policies.terms.accountTermination.effectsOfTermination.pointsForfeited')}</li>
+            <li>{t('policies.terms.accountTermination.effectsOfTermination.contentRemoved')}</li>
+            <li>{t('policies.terms.accountTermination.effectsOfTermination.provisionsSurvive')}</li>
           </ul>
         </SubSection>
       </Section>
 
-      <Section title="Disclaimers">
+      <Section title={t('policies.terms.disclaimers.title')}>
         <AlertBox>
-          <p className="font-semibold mb-2">Service Provided "As Is"</p>
+          <p className="font-semibold mb-2">{t('policies.terms.disclaimers.serviceProvidedAsIs')}</p>
           <p className="text-sm">
-            We provide the service without warranties of any kind. We don't guarantee 
-            uninterrupted, secure, or error-free service. Use at your own risk.
+            {t('policies.terms.disclaimers.content')}
           </p>
         </AlertBox>
       </Section>
 
-      <Section title="Limitation of Liability">
+      <Section title={t('policies.terms.limitationOfLiability.title')}>
         <p>
-          To the maximum extent permitted by law, ClipStream shall not be liable for any 
-          indirect, incidental, special, consequential, or punitive damages resulting from 
-          your use or inability to use the service.
+          {t('policies.terms.limitationOfLiability.content')}
         </p>
       </Section>
 
-      <Section title="Indemnification">
+      <Section title={t('policies.terms.indemnification.title')}>
         <p>
-          You agree to indemnify and hold ClipStream harmless from any claims, damages, 
-          losses, or expenses arising from your use of the service or violation of these terms.
+          {t('policies.terms.indemnification.content')}
         </p>
       </Section>
 
-      <Section title="Changes to Terms">
+      <Section title={t('policies.terms.changesToTerms.title')}>
         <p>
-          We reserve the right to modify these terms at any time. We will notify users of 
-          significant changes. Continued use after changes constitutes acceptance of new terms.
+          {t('policies.terms.changesToTerms.content')}
         </p>
       </Section>
 
-      <Section title="Governing Law">
+      <Section title={t('policies.terms.governingLaw.title')}>
         <p>
-          These terms are governed by the laws of the jurisdiction where ClipStream is 
-          registered, without regard to conflict of law provisions.
+          {t('policies.terms.governingLaw.content')}
         </p>
       </Section>
 
-      <Section title="Dispute Resolution">
+      <Section title={t('policies.terms.disputeResolution.title')}>
         <ul>
-          <li>Contact us first to resolve disputes informally</li>
-          <li>Arbitration may be required for unresolved disputes</li>
-          <li>Class action lawsuits are waived</li>
-          <li>Disputes handled individually</li>
+          <li>{t('policies.terms.disputeResolution.contactFirst')}</li>
+          <li>{t('policies.terms.disputeResolution.arbitration')}</li>
+          <li>{t('policies.terms.disputeResolution.classAction')}</li>
+          <li>{t('policies.terms.disputeResolution.handledIndividually')}</li>
         </ul>
       </Section>
 
-      <Section title="Contact Information">
+      <Section title={t('policies.common.contactInformation', { defaultValue: 'Contact Information' })}>
         <ContactInfo />
       </Section>
 
-      <UpdateDate>Last Updated: December 3, 2025</UpdateDate>
+      <UpdateDate>{t('policies.common.lastUpdated')}</UpdateDate>
     </PolicyLayout>
   );
 
@@ -600,19 +585,19 @@ const PolicyScreens = () => {
       <div className="flex items-center space-x-3">
         <Mail className="w-5 h-5 text-pink-700" />
         <div>
-          <p className="text-sm text-gray-700">Email</p>
+          <p className="text-sm text-gray-700">{t('policies.common.email')}</p>
           <p className="font-semibold">bensongomezsu@theclipstream.com</p>
         </div>
       </div>
       <div className="flex items-center space-x-3">
         <Phone className="w-5 h-5 text-pink-700" />
         <div>
-          <p className="text-sm text-gray-700">Phone</p>
+          <p className="text-sm text-gray-700">{t('policies.common.phone')}</p>
           <p className="font-semibold">+66937423012</p>
         </div>
       </div>
       <p className="text-sm text-gray-700">
-        Support hours: Monday - Friday, 9:00 AM - 6:00 PM EST
+        {t('policies.common.supportHours')}
       </p>
     </div>
   );

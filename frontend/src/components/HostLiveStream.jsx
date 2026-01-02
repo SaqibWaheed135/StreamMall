@@ -98,7 +98,7 @@ const HostLiveStream = ({ onBack }) => {
   const [products, setProducts] = useState([]);
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const [fullscreenComment, setFullscreenComment] = useState('');
-const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
+  const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const fullscreenInputContainerRef = useRef(null); // For iPhone fullscreen input container
 
   const [newProduct, setNewProduct] = useState({
@@ -116,7 +116,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const [socket, setSocket] = useState(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [tips, setTips] = useState([]);
   const [paidViewersCount, setPaidViewersCount] = useState(0);
   const [showTipNotification, setShowTipNotification] = useState(null);
@@ -189,14 +188,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       const attemptFullscreen = (attempts = 0) => {
         const container = videoContainerRef.current;
         console.log(`🔄 Fullscreen attempt ${attempts}:`, { container: !!container });
-        
+
         // Check if already in fullscreen to avoid duplicate calls
         if (container && container.classList.contains('ios-fullscreen')) {
           console.log('✅ Already in fullscreen');
           setIsFullscreen(true);
           return;
         }
-        
+
         if (!container && attempts < 20) {
           // Retry if container not ready yet (up to 4 seconds)
           setTimeout(() => attemptFullscreen(attempts + 1), 200);
@@ -205,7 +204,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
         if (container && !container.classList.contains('ios-fullscreen')) {
           console.log('🎬 Applying iPhone fullscreen');
-          
+
           // Use requestAnimationFrame to ensure DOM is ready
           requestAnimationFrame(() => {
             // Apply iPhone fullscreen directly
@@ -291,12 +290,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
               // Technique 3: Direct focus
               input.focus();
-              
+
               // Technique 4: Click method (iOS sometimes needs this)
               if (input.click) {
                 input.click();
               }
-              
+
               // Technique 5: Set selection range (makes input more "active" on iOS)
               if (input.setSelectionRange) {
                 try {
@@ -318,14 +317,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       view: window
                     });
                     input.dispatchEvent(clickEvent);
-                  } catch (e) {}
+                  } catch (e) { }
                   input.focus();
                   if (input.click) {
                     input.click();
                   }
                 }, 10);
               }, 50);
-              
+
               console.log('⌨️ Attempted to show keyboard with multiple techniques');
             };
 
@@ -365,7 +364,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   // Auto-focus input to show keyboard when iPhone enters fullscreen mode
   useEffect(() => {
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    
+
     if (isFullscreen && isIPhone && isLive) {
       // Aggressive focus with multiple techniques for iOS
       const triggerKeyboard = () => {
@@ -395,12 +394,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
         // Technique 3: Direct focus
         input.focus();
-        
+
         // Technique 4: Click method (iOS sometimes needs this)
         if (typeof input.click === 'function') {
           input.click();
         }
-        
+
         // Technique 5: Set selection range
         if (typeof input.setSelectionRange === 'function') {
           try {
@@ -410,7 +409,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             // Ignore errors
           }
         }
-        
+
         // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
         setTimeout(() => {
           input.blur();
@@ -422,14 +421,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                 view: window
               });
               input.dispatchEvent(clickEvent);
-            } catch (e) {}
+            } catch (e) { }
             input.focus();
             if (typeof input.click === 'function') {
               input.click();
             }
           }, 10);
         }, 50);
-        
+
         console.log('⌨️ Auto-focused input to show keyboard in iPhone fullscreen mode');
       };
 
@@ -437,7 +436,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       requestAnimationFrame(() => {
         triggerKeyboard();
       });
-      
+
       // Multiple attempts with increasing delays
       const timeouts = [
         setTimeout(triggerKeyboard, 100),
@@ -465,8 +464,51 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     return icons[type] || '🎁';
   };
 
-  const handleShareClick = () => {
-    setShowShareModal(true);
+  // const handleShareClick = () => {
+  //   setShowShareModal(true);
+  // };
+
+  // Replace the handleShareClick function
+  const handleShareClick = async () => {
+    const shareUrl = `${window.location.origin}/stream/${streamData?.streamId}`;
+    const shareText = streamData?.stream?.title || "Live Stream";
+
+    // Check if Web Share API is supported
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareText,
+          text: `Watch my live stream: ${shareText}`,
+          url: shareUrl,
+        });
+        console.log('Share successful');
+      } catch (error) {
+        // User cancelled the share or error occurred
+        if (error.name !== 'AbortError') {
+          console.error('Error sharing:', error);
+          // Fallback: Copy to clipboard
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            setError(t('stream.linkCopied') || 'Link copied to clipboard!');
+            setTimeout(() => setError(''), 3000);
+          } catch (clipboardError) {
+            console.error('Clipboard error:', clipboardError);
+          }
+        }
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      // Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setError(t('stream.linkCopied') || 'Link copied to clipboard!');
+        setTimeout(() => setError(''), 3000);
+      } catch (error) {
+        console.error('Clipboard error:', error);
+        setError('Unable to share. Please copy the URL manually.');
+        setTimeout(() => setError(''), 3000);
+      }
+    }
   };
 
   const ShareModal = ({ isOpen, stream, onClose }) => {
@@ -488,16 +530,59 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       alert(t('stream.linkCopied'));
     };
 
-    const handleShareClick = (platform) => {
-      if (!platform) {
-        handleCopy();
-        return;
+    // const handleShareClick = (platform) => {
+    //   if (!platform) {
+    //     handleCopy();
+    //     return;
+    //   }
+    //   window.open(platform, "_blank");
+    // };
+
+    // Replace the handleShareClick function
+    const handleShareClick = async () => {
+      const shareUrl = `${window.location.origin}/stream/${streamData?.streamId}`;
+      const shareText = streamData?.stream?.title || "Live Stream";
+
+      // Check if Web Share API is supported
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: shareText,
+            text: `Watch my live stream: ${shareText}`,
+            url: shareUrl,
+          });
+          console.log('Share successful');
+        } catch (error) {
+          // User cancelled the share or error occurred
+          if (error.name !== 'AbortError') {
+            console.error('Error sharing:', error);
+            // Fallback: Copy to clipboard
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              setError(t('stream.linkCopied') || 'Link copied to clipboard!');
+              setTimeout(() => setError(''), 3000);
+            } catch (clipboardError) {
+              console.error('Clipboard error:', clipboardError);
+            }
+          }
+        }
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        // Copy to clipboard
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          setError(t('stream.linkCopied') || 'Link copied to clipboard!');
+          setTimeout(() => setError(''), 3000);
+        } catch (error) {
+          console.error('Clipboard error:', error);
+          setError('Unable to share. Please copy the URL manually.');
+          setTimeout(() => setError(''), 3000);
+        }
       }
-      window.open(platform, "_blank");
     };
 
     return (
-      <div 
+      <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4 overflow-y-auto"
         style={{ zIndex: 2147483649 }}
       >
@@ -698,11 +783,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         if (fullscreenControlsTimeoutRef.current) {
           clearTimeout(fullscreenControlsTimeoutRef.current);
         }
-        
+
         // Show the fullscreen controls
         setShowFullscreenControls(true);
         setActiveFullscreenTab('chat');
-        
+
         // Auto-hide after 60 seconds
         fullscreenControlsTimeoutRef.current = setTimeout(() => {
           setShowFullscreenControls(false);
@@ -1260,7 +1345,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const endStream = async () => {
     console.log('🛑 endStream function called');
     console.log('Current state:', { isLive, streamData: !!streamData, liveKitRoom: !!liveKitRoom });
-    
+
     // Get streamId from streamData or fallback to localStorage session
     let streamId = streamData?.streamId || streamData?._id;
 
@@ -1558,7 +1643,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     video.autoplay = true;
     video.playsInline = true;
     video.muted = true;
-    
+
     let animationFrameId = null;
     let isProcessing = true;
 
@@ -1586,33 +1671,33 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           tempCanvas.width = canvas.width;
           tempCanvas.height = canvas.height;
           const tempCtx = tempCanvas.getContext('2d');
-          
+
           // Draw current frame to temp canvas
           tempCtx.drawImage(video, 0, 0);
-          
+
           // Apply blur filter to entire canvas
           ctx.save();
           ctx.filter = `blur(${bgBlur}px)`;
           ctx.drawImage(tempCanvas, 0, 0);
           ctx.filter = 'none';
           ctx.restore();
-          
+
           // Keep center region sharp (foreground) - overlay original video
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
           const keepWidth = canvas.width * 0.7;
           const keepHeight = canvas.height * 0.7;
-          
+
           ctx.save();
           ctx.globalCompositeOperation = 'source-over';
           ctx.drawImage(
             video,
-            centerX - keepWidth/2,
-            centerY - keepHeight/2,
+            centerX - keepWidth / 2,
+            centerY - keepHeight / 2,
             keepWidth,
             keepHeight,
-            centerX - keepWidth/2,
-            centerY - keepHeight/2,
+            centerX - keepWidth / 2,
+            centerY - keepHeight / 2,
             keepWidth,
             keepHeight
           );
@@ -1621,33 +1706,33 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           // Chroma key background replacement
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
-          
+
           // Parse chroma key color (green screen)
           const chromaR = 0;
           const chromaG = 255;
           const chromaB = 0;
-          
+
           // Parse replacement color
-          const replaceColor = bgColor.startsWith('#') 
-            ? bgColor.substring(1) 
+          const replaceColor = bgColor.startsWith('#')
+            ? bgColor.substring(1)
             : bgColor;
           const replaceR = parseInt(replaceColor.substring(0, 2), 16);
           const replaceG = parseInt(replaceColor.substring(2, 4), 16);
           const replaceB = parseInt(replaceColor.substring(4, 6), 16);
-          
+
           // Replace green screen pixels with new color
           for (let i = 0; i < data.length; i += 4) {
             const pixelR = data[i];
             const pixelG = data[i + 1];
             const pixelB = data[i + 2];
-            
+
             // Calculate distance from green screen color
             const distance = Math.sqrt(
-              Math.pow(pixelR - chromaR, 2) + 
-              Math.pow(pixelG - chromaG, 2) + 
+              Math.pow(pixelR - chromaR, 2) +
+              Math.pow(pixelG - chromaG, 2) +
               Math.pow(pixelB - chromaB, 2)
             );
-            
+
             // Threshold for chroma key (adjustable sensitivity)
             const threshold = 80;
             if (distance < threshold) {
@@ -1657,11 +1742,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               data[i + 2] = replaceB;
             }
           }
-          
+
           ctx.putImageData(imageData, 0, 0);
         }
       }
-      
+
       if (isProcessing && backgroundProcessingRef.current) {
         animationFrameId = requestAnimationFrame(processFrame);
         backgroundAnimationFrameRef.current = animationFrameId;
@@ -1702,7 +1787,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
     // Start the stream immediately - canvas will start capturing once video plays
     const stream = canvas.captureStream(30);
-    
+
     // Store cleanup function
     const cleanup = () => {
       isProcessing = false;
@@ -1725,7 +1810,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
     // Store cleanup on the stream object
     stream._cleanup = cleanup;
-    
+
     return stream;
   };
 
@@ -1743,7 +1828,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       }
 
       const originalTrack = cameraPublication.track.mediaStreamTrack;
-      
+
       if (selectedBackground === 'none') {
         console.log('Background filter: Removing filter');
         // Stop processing
@@ -1752,7 +1837,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           cancelAnimationFrame(backgroundAnimationFrameRef.current);
           backgroundAnimationFrameRef.current = null;
         }
-        
+
         // Clean up processed stream
         setProcessedStream(prev => {
           if (prev) {
@@ -1763,7 +1848,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           }
           return null;
         });
-        
+
         // Unpublish any processed track first
         const publications = liveKitRoom.localParticipant.trackPublications.values();
         for (const pub of publications) {
@@ -1771,7 +1856,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             await liveKitRoom.localParticipant.unpublishTrack(pub.track);
           }
         }
-        
+
         // Re-enable camera to get fresh track
         await liveKitRoom.localParticipant.setCameraEnabled(false);
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1788,7 +1873,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       }
 
       const canvas = backgroundCanvasRef.current;
-      
+
       // Stop any existing processing
       backgroundProcessingRef.current = false;
       if (backgroundAnimationFrameRef.current) {
@@ -1812,26 +1897,26 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
       // Process video with background
       const newProcessedStream = processVideoWithBackground(
-        originalTrack, 
-        canvas, 
-        selectedBackground, 
-        backgroundColor, 
+        originalTrack,
+        canvas,
+        selectedBackground,
+        backgroundColor,
         backgroundBlur
       );
-      
+
       if (newProcessedStream && newProcessedStream.getVideoTracks().length > 0) {
         const processedTrack = newProcessedStream.getVideoTracks()[0];
-        
+
         // Wait for track to be ready
         await new Promise(resolve => setTimeout(resolve, 200));
-        
+
         // Unpublish original track
         try {
           await liveKitRoom.localParticipant.unpublishTrack(originalTrack);
         } catch (e) {
           console.warn('Error unpublishing original track:', e);
         }
-        
+
         // Publish processed track
         await liveKitRoom.localParticipant.publishTrack(processedTrack, {
           source: Track.Source.Camera,
@@ -1881,7 +1966,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     const timer = setTimeout(() => {
       applyBackgroundFilter();
     }, 500);
-    
+
     return () => {
       clearTimeout(timer);
     };
@@ -2148,22 +2233,22 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   useEffect(() => {
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isChrome = /CriOS|Chrome/.test(navigator.userAgent);
-    
+
     if (!isFullscreen || !isIPhone || !fullscreenInputContainerRef.current) return;
 
     const inputContainer = fullscreenInputContainerRef.current;
     const input = fullscreenInputRef.current;
-    
+
     // Store initial viewport height
     let initialViewportHeight = window.visualViewport?.height || window.innerHeight;
     let isKeyboardVisible = false;
-    
+
     // Enhanced handler for Chrome and Safari
     const handleKeyboardToggle = () => {
       if (!inputContainer) return;
-      
+
       let viewportHeight, windowHeight, keyboardHeight;
-      
+
       if (window.visualViewport) {
         viewportHeight = window.visualViewport.height;
         windowHeight = window.innerHeight;
@@ -2174,11 +2259,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         windowHeight = window.screen.height;
         keyboardHeight = windowHeight - viewportHeight;
       }
-      
+
       // Detect keyboard visibility (keyboard is typically 200-400px on iPhone)
       const keyboardThreshold = 150;
       isKeyboardVisible = keyboardHeight > keyboardThreshold;
-      
+
       if (isKeyboardVisible) {
         // Keyboard is visible - position input above keyboard
         if (window.visualViewport) {
@@ -2197,27 +2282,27 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         inputContainer.style.position = 'fixed';
       }
     };
-    
+
     // Chrome-specific: Use multiple event listeners for better detection
     if (isChrome && window.visualViewport) {
       // Chrome supports visual viewport but may need more aggressive handling
       const handleViewportResize = () => {
         requestAnimationFrame(handleKeyboardToggle);
       };
-      
+
       const handleViewportScroll = () => {
         requestAnimationFrame(handleKeyboardToggle);
       };
-      
+
       window.visualViewport.addEventListener('resize', handleViewportResize);
       window.visualViewport.addEventListener('scroll', handleViewportScroll);
-      
+
       // Also listen to window resize as backup
       window.addEventListener('resize', handleKeyboardToggle);
-      
+
       // Initial call
       handleKeyboardToggle();
-      
+
       return () => {
         window.visualViewport.removeEventListener('resize', handleViewportResize);
         window.visualViewport.removeEventListener('scroll', handleViewportScroll);
@@ -2228,12 +2313,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       const handleViewportResize = () => {
         handleKeyboardToggle();
       };
-      
+
       window.visualViewport.addEventListener('resize', handleViewportResize);
       window.visualViewport.addEventListener('scroll', handleViewportResize);
-      
+
       handleKeyboardToggle();
-      
+
       return () => {
         window.visualViewport.removeEventListener('resize', handleViewportResize);
         window.visualViewport.removeEventListener('scroll', handleViewportResize);
@@ -2243,7 +2328,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       const handleResize = () => {
         setTimeout(handleKeyboardToggle, 100);
       };
-      
+
       if (input) {
         const handleFocus = () => {
           // Multiple timeouts to catch keyboard animation
@@ -2251,19 +2336,19 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           setTimeout(handleKeyboardToggle, 300);
           setTimeout(handleKeyboardToggle, 500);
         };
-        
+
         const handleBlur = () => {
           setTimeout(handleKeyboardToggle, 100);
           setTimeout(handleKeyboardToggle, 300);
         };
-        
+
         input.addEventListener('focus', handleFocus);
         input.addEventListener('blur', handleBlur);
         window.addEventListener('resize', handleResize);
-        
+
         // Also listen to orientation change
         window.addEventListener('orientationchange', handleResize);
-        
+
         return () => {
           input.removeEventListener('focus', handleFocus);
           input.removeEventListener('blur', handleBlur);
@@ -2699,7 +2784,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   <X className="w-4 h-4" />
                   {t('stream.endStream')}
                 </button>
-                
+
                 <LanguageSwitcher />
               </div>
             </div>
@@ -2807,33 +2892,30 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => setSelectedBackground('none')}
-                            className={`p-3 rounded-lg border-2 transition-all ${
-                              selectedBackground === 'none'
+                            className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'none'
                                 ? 'border-pink-500 bg-pink-500/20'
                                 : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
+                              }`}
                           >
                             <X className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.none')}</span>
                           </button>
                           <button
                             onClick={() => setSelectedBackground('blur')}
-                            className={`p-3 rounded-lg border-2 transition-all ${
-                              selectedBackground === 'blur'
+                            className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'blur'
                                 ? 'border-pink-500 bg-pink-500/20'
                                 : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
+                              }`}
                           >
                             <Sparkles className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.blur')}</span>
                           </button>
                           <button
                             onClick={() => setSelectedBackground('color')}
-                            className={`p-3 rounded-lg border-2 transition-all ${
-                              selectedBackground === 'color'
+                            className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'color'
                                 ? 'border-pink-500 bg-pink-500/20'
                                 : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
+                              }`}
                           >
                             <Palette className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.color')}</span>
@@ -2867,11 +2949,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               <button
                                 key={color}
                                 onClick={() => setBackgroundColor(color)}
-                                className={`w-full h-12 rounded-lg border-2 transition-all ${
-                                  backgroundColor === color
+                                className={`w-full h-12 rounded-lg border-2 transition-all ${backgroundColor === color
                                     ? 'border-pink-500 scale-110'
                                     : 'border-white/20'
-                                }`}
+                                  }`}
                                 style={{ backgroundColor: color }}
                                 title={color}
                               />
@@ -2951,105 +3032,105 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                 {/* iPhone Fullscreen Controls Panel */}
                 {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <>
-                
-    {/* Floating Comment Input - Always Visible with Keyboard */}
-         {/* Floating Comment Input - Always Visible with Keyboard */}
-<div 
-  ref={fullscreenInputContainerRef}
-  className="absolute left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
-  style={{ 
-    zIndex: 2147483647,
-    bottom: 'env(safe-area-inset-bottom, 0px)',
-    position: 'fixed',
-    width: '100%',
-    maxWidth: '100dvw',
-    left: '0',
-    right: '0',
-    willChange: 'bottom',
-    transform: 'translateZ(0)',
-    WebkitTransform: 'translateZ(0)'
-  }}
-  // Make whole bar tappable → focuses input → opens keyboard
-  onClick={(e) => {
-    if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
-      fullscreenInputRef.current.focus();
-      fullscreenInputRef.current.click();
-    }
-  }}
->
-  <div className="flex items-center gap-2">
-    <input
-      ref={fullscreenInputRef}
-      type="text"
-      inputMode="text"
-      enterKeyHint="send"
-      autoComplete="off"
-      autoCapitalize="off"
-      autoCorrect="off"
-      spellCheck="false"
-      value={fullscreenComment}
-      onChange={(e) => setFullscreenComment(e.target.value)}
-      onKeyPress={(e) => {
-        if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
-          e.preventDefault();
-          socket.emit('send-comment', {
-            streamId: streamData.streamId,
-            text: fullscreenComment.trim()
-          });
-          setFullscreenComment('');
-        }
-      }}
-      placeholder={t('chat.typeMessage')}
-      className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-      // Remove autoFocus – it can interfere on iOS
-    />
-    <button
-      onClick={(e) => {
-        e.stopPropagation(); // Prevent parent onClick from re-focusing
-        if (fullscreenComment.trim() && socket) {
-          socket.emit('send-comment', {
-            streamId: streamData.streamId,
-            text: fullscreenComment.trim()
-          });
-          setFullscreenComment('');
-          // Refocus after sending
-          setTimeout(() => fullscreenInputRef.current?.focus(), 100);
-        }
-      }}
-      disabled={!fullscreenComment.trim()}
-      className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
-    >
-      <Send className="w-5 h-5" />
-    </button>
-  </div>
-</div>
 
-    {/* Rest of iPhone controls continue here... */}
+                    {/* Floating Comment Input - Always Visible with Keyboard */}
+                    {/* Floating Comment Input - Always Visible with Keyboard */}
+                    <div
+                      ref={fullscreenInputContainerRef}
+                      className="absolute left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
+                      style={{
+                        zIndex: 2147483647,
+                        bottom: 'env(safe-area-inset-bottom, 0px)',
+                        position: 'fixed',
+                        width: '100%',
+                        maxWidth: '100dvw',
+                        left: '0',
+                        right: '0',
+                        willChange: 'bottom',
+                        transform: 'translateZ(0)',
+                        WebkitTransform: 'translateZ(0)'
+                      }}
+                      // Make whole bar tappable → focuses input → opens keyboard
+                      onClick={(e) => {
+                        if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
+                          fullscreenInputRef.current.focus();
+                          fullscreenInputRef.current.click();
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={fullscreenInputRef}
+                          type="text"
+                          inputMode="text"
+                          enterKeyHint="send"
+                          autoComplete="off"
+                          autoCapitalize="off"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          value={fullscreenComment}
+                          onChange={(e) => setFullscreenComment(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
+                              e.preventDefault();
+                              socket.emit('send-comment', {
+                                streamId: streamData.streamId,
+                                text: fullscreenComment.trim()
+                              });
+                              setFullscreenComment('');
+                            }
+                          }}
+                          placeholder={t('chat.typeMessage')}
+                          className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        // Remove autoFocus – it can interfere on iOS
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent parent onClick from re-focusing
+                            if (fullscreenComment.trim() && socket) {
+                              socket.emit('send-comment', {
+                                streamId: streamData.streamId,
+                                text: fullscreenComment.trim()
+                              });
+                              setFullscreenComment('');
+                              // Refocus after sending
+                              setTimeout(() => fullscreenInputRef.current?.focus(), 100);
+                            }
+                          }}
+                          disabled={!fullscreenComment.trim()}
+                          className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                        >
+                          <Send className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Rest of iPhone controls continue here... */}
                     {/* Floating Menu Button */}
                     <button
-  onClick={() => {
-    const willShow = !showFullscreenControls;
-    setShowFullscreenControls(willShow);
-    
-    // Clear timeout when manually closing
-    if (!willShow && fullscreenControlsTimeoutRef.current) {
-      clearTimeout(fullscreenControlsTimeoutRef.current);
-      fullscreenControlsTimeoutRef.current = null;
-    }
-    
-    // When opening chat, immediately focus the input to trigger keyboard
-    if (willShow && fullscreenInputRef.current) {
-      setTimeout(() => {
-        fullscreenInputRef.current?.focus();
-        fullscreenInputRef.current?.click(); // Extra trigger for iOS
-      }, 100);
-    }
-  }}
-  className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
-  style={{ zIndex: 2147483646 }}
->
-  {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
-</button>
+                      onClick={() => {
+                        const willShow = !showFullscreenControls;
+                        setShowFullscreenControls(willShow);
+
+                        // Clear timeout when manually closing
+                        if (!willShow && fullscreenControlsTimeoutRef.current) {
+                          clearTimeout(fullscreenControlsTimeoutRef.current);
+                          fullscreenControlsTimeoutRef.current = null;
+                        }
+
+                        // When opening chat, immediately focus the input to trigger keyboard
+                        if (willShow && fullscreenInputRef.current) {
+                          setTimeout(() => {
+                            fullscreenInputRef.current?.focus();
+                            fullscreenInputRef.current?.click(); // Extra trigger for iOS
+                          }, 100);
+                        }
+                      }}
+                      className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                      style={{ zIndex: 2147483646 }}
+                    >
+                      {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+                    </button>
 
                     {/* Camera/Mic Controls - Always Visible */}
                     {/* <div className="absolute top-10 left-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483647 }}>
@@ -3074,48 +3155,45 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                     </div> */}
 
                     {/* Camera/Mic Controls - Prominent & Always Visible on iPhone Fullscreen */}
-<div 
-  className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4"
-  style={{ 
-    zIndex: 2147483648  // Higher than input bar (2147483647)
-  }}
->
-  <button
-    onClick={toggleCamera}
-    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${
-      isCameraOn 
-        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
-        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
-    }`}
-    title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
-  >
-    {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
-  </button>
+                    <div
+                      className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4"
+                      style={{
+                        zIndex: 2147483648  // Higher than input bar (2147483647)
+                      }}
+                    >
+                      <button
+                        onClick={toggleCamera}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isCameraOn
+                            ? 'bg-white/90 border-white text-gray-900 hover:bg-white'
+                            : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+                          }`}
+                        title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
+                      >
+                        {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
+                      </button>
 
-  <button
-    onClick={toggleMic}
-    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${
-      isMicOn 
-        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
-        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
-    }`}
-    title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
-  >
-    {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
-  </button>
+                      <button
+                        onClick={toggleMic}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isMicOn
+                            ? 'bg-white/90 border-white text-gray-900 hover:bg-white'
+                            : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+                          }`}
+                        title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
+                      >
+                        {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
+                      </button>
 
-  <button
-    onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
-    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${
-      selectedBackground !== 'none'
-        ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700' 
-        : 'bg-white/90 border-white text-gray-900 hover:bg-white'
-    }`}
-    title={t('background.backgroundFilters')}
-  >
-    <Sparkles className="w-8 h-8" />
-  </button>
-</div>
+                      <button
+                        onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${selectedBackground !== 'none'
+                            ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700'
+                            : 'bg-white/90 border-white text-gray-900 hover:bg-white'
+                          }`}
+                        title={t('background.backgroundFilters')}
+                      >
+                        <Sparkles className="w-8 h-8" />
+                      </button>
+                    </div>
 
                     {/* End Stream Button - More Prominent */}
                     <button
@@ -3152,7 +3230,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         e.stopPropagation();
                       }}
                       className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
-                      style={{ 
+                      style={{
                         zIndex: 2147483647,
                         pointerEvents: 'auto',
                         WebkitTapHighlightColor: 'transparent',
@@ -3168,7 +3246,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       <span className="text-sm">{t('stream.endStream')}</span>
                     </button>
 
-                        {/* Background Filter Panel */}
+                    {/* Background Filter Panel */}
                     {showBackgroundPanel && (
                       <div
                         className="absolute top-0 right-0 h-full w-full max-w-sm bg-black/95 backdrop-blur-xl text-white z-50 flex flex-col"
@@ -3202,33 +3280,30 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             <div className="grid grid-cols-2 gap-2">
                               <button
                                 onClick={() => setSelectedBackground('none')}
-                                className={`p-3 rounded-lg border-2 transition-all ${
-                                  selectedBackground === 'none'
+                                className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'none'
                                     ? 'border-pink-500 bg-pink-500/20'
                                     : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                }`}
+                                  }`}
                               >
                                 <X className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.none')}</span>
                               </button>
                               <button
                                 onClick={() => setSelectedBackground('blur')}
-                                className={`p-3 rounded-lg border-2 transition-all ${
-                                  selectedBackground === 'blur'
+                                className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'blur'
                                     ? 'border-pink-500 bg-pink-500/20'
                                     : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                }`}
+                                  }`}
                               >
                                 <Sparkles className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.blur')}</span>
                               </button>
                               <button
                                 onClick={() => setSelectedBackground('color')}
-                                className={`p-3 rounded-lg border-2 transition-all ${
-                                  selectedBackground === 'color'
+                                className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'color'
                                     ? 'border-pink-500 bg-pink-500/20'
                                     : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                }`}
+                                  }`}
                               >
                                 <Palette className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.color')}</span>
@@ -3262,11 +3337,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                                   <button
                                     key={color}
                                     onClick={() => setBackgroundColor(color)}
-                                    className={`w-full h-12 rounded-lg border-2 transition-all ${
-                                      backgroundColor === color
+                                    className={`w-full h-12 rounded-lg border-2 transition-all ${backgroundColor === color
                                         ? 'border-pink-500 scale-110'
                                         : 'border-white/20'
-                                    }`}
+                                      }`}
                                     style={{ backgroundColor: color }}
                                     title={color}
                                   />
@@ -3290,7 +3364,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       </div>
                     )}
 
-                        {/* Control Panel - Slides in from right */}
+                    {/* Control Panel - Slides in from right */}
                     {/* Control Panel - Slides in from right */}
                     {showFullscreenControls && (
                       <div
@@ -3330,11 +3404,17 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         {/* Share Button */}
                         <div className="px-4 py-3 border-b border-white/20">
                           <button
+                            // onClick={(e) => {
+                            //   e.preventDefault();
+                            //   e.stopPropagation();
+                            //   console.log('Share button clicked');
+                            //   setShowShareModal(true);
+                            // }}
+                            // To this:
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log('Share button clicked');
-                              setShowShareModal(true);
+                              handleShareClick(); // USE THIS INSTEAD
                             }}
                             className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all shadow-lg"
                           >
@@ -3347,319 +3427,314 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         <div className="flex border-b border-white/20">
                           <button
                             onClick={() => setActiveFullscreenTab('chat')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
-                              activeFullscreenTab === 'chat' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'chat' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                              }`}
                           >
                             <MessageCircle className="w-4 h-4 inline mr-2" />
                             {t('chat.chat')}
                           </button>
                           <button
                             onClick={() => setActiveFullscreenTab('products')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
-                              activeFullscreenTab === 'products' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'products' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                              }`}
                           >
                             <Gift className="w-4 h-4 inline mr-2" />
                             {t('products.products')}
                           </button>
                           <button
                             onClick={() => setActiveFullscreenTab('orders')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
-                              activeFullscreenTab === 'orders' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'orders' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                              }`}
                           >
                             📦 {t('orders.orders')}
                           </button>
                           <button
                             onClick={() => setActiveFullscreenTab('gifts')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${
-                              activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                              }`}
                           >
                             🎁 {t('gifts.gifts')}
                           </button>
                         </div>
 
                         {/* Tab Content */}
-                        <div className="flex-1 overflow-y-auto" style={{ 
+                        <div className="flex-1 overflow-y-auto" style={{
                           WebkitOverflowScrolling: 'touch',
                           paddingBottom: 'env(safe-area-inset-bottom)'
                         }}>
                           <div className="p-4">
-                          {/* Chat Tab */}
-                          {activeFullscreenTab === 'chat' && (
-                            <div className="space-y-4 h-full flex flex-col">
-                              <div className="flex-1 overflow-y-auto space-y-3" style={{ 
-                                maxHeight: 'calc(100vh - 350px)',
-                                WebkitOverflowScrolling: 'touch'
-                              }}>
-                                {comments.map((c) => (
-                                  <div key={c.id} className="space-y-2">
-                                    <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
-                                      <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1">
-                                          <span className="font-semibold text-pink-300">@{c.username}: </span>
-                                          <span className="text-white/90 text-sm">{c.text}</span>
-                                        </div>
-                                        <button
-                                          onClick={() => setReplyingTo(c)}
-                                          className="flex-shrink-0 text-pink-400 hover:text-pink-300 p-1 rounded transition"
-                                        >
-                                          <Reply className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                    {c.replies && c.replies.length > 0 && (
-                                      <div className="ml-6 space-y-2">
-                                        {c.replies.map((reply) => (
-                                          <div
-                                            key={reply._id || reply.id}
-                                            className={`text-sm rounded-xl px-3 py-2 ${
-                                              reply.isHost ? 'bg-pink-500/20 border border-pink-500/50' : 'bg-white/5'
-                                            }`}
-                                          >
-                                            <div className="flex items-start gap-1">
-                                              {reply.isHost && <span>👑</span>}
-                                              <span className="font-semibold text-pink-300">@{reply.username}:</span>
-                                              <span className="text-white/90">{reply.text}</span>
-                                            </div>
+                            {/* Chat Tab */}
+                            {activeFullscreenTab === 'chat' && (
+                              <div className="space-y-4 h-full flex flex-col">
+                                <div className="flex-1 overflow-y-auto space-y-3" style={{
+                                  maxHeight: 'calc(100vh - 350px)',
+                                  WebkitOverflowScrolling: 'touch'
+                                }}>
+                                  {comments.map((c) => (
+                                    <div key={c.id} className="space-y-2">
+                                      <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1">
+                                            <span className="font-semibold text-pink-300">@{c.username}: </span>
+                                            <span className="text-white/90 text-sm">{c.text}</span>
                                           </div>
-                                        ))}
+                                          <button
+                                            onClick={() => setReplyingTo(c)}
+                                            className="flex-shrink-0 text-pink-400 hover:text-pink-300 p-1 rounded transition"
+                                          >
+                                            <Reply className="w-4 h-4" />
+                                          </button>
+                                        </div>
                                       </div>
-                                    )}
-                                  </div>
-                                ))}
-                                {comments.length === 0 && (
-                                  <div className="text-center text-white/50 py-8">
-                                    <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                    <p className="text-sm">{t('chat.waitingForComments')}</p>
+                                      {c.replies && c.replies.length > 0 && (
+                                        <div className="ml-6 space-y-2">
+                                          {c.replies.map((reply) => (
+                                            <div
+                                              key={reply._id || reply.id}
+                                              className={`text-sm rounded-xl px-3 py-2 ${reply.isHost ? 'bg-pink-500/20 border border-pink-500/50' : 'bg-white/5'
+                                                }`}
+                                            >
+                                              <div className="flex items-start gap-1">
+                                                {reply.isHost && <span>👑</span>}
+                                                <span className="font-semibold text-pink-300">@{reply.username}:</span>
+                                                <span className="text-white/90">{reply.text}</span>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {comments.length === 0 && (
+                                    <div className="text-center text-white/50 py-8">
+                                      <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                      <p className="text-sm">{t('chat.waitingForComments')}</p>
+                                    </div>
+                                  )}
+                                  <div ref={commentsEndRef} />
+                                </div>
+
+                                {replyingTo && (
+                                  <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
+                                    <span className="text-sm text-pink-300">
+                                      {t('chat.replyingTo')} <span className="font-semibold">@{replyingTo.username}</span>
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        setReplyingTo(null);
+                                        setReplyText('');
+                                      }}
+                                      className="text-pink-300 hover:text-pink-200"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
                                   </div>
                                 )}
-                                <div ref={commentsEndRef} />
-                              </div>
 
-                              {replyingTo && (
-                                <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
-                                  <span className="text-sm text-pink-300">
-                                    {t('chat.replyingTo')} <span className="font-semibold">@{replyingTo.username}</span>
-                                  </span>
-                                  <button
-                                    onClick={() => {
-                                      setReplyingTo(null);
-                                      setReplyText('');
+                                <div className="flex items-center gap-2 sticky bottom-0 bg-black/95 py-3 px-4 -mx-4">
+                                  <input
+                                    ref={replyInputRef}
+                                    type="text"
+                                    inputMode="text"
+                                    autoComplete="off"
+                                    autoCapitalize="off"
+                                    autoCorrect="off"
+                                    spellCheck="false"
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    onKeyPress={(e) => {
+                                      if (e.key === 'Enter' && replyingTo) {
+                                        handleSendReply();
+                                      }
                                     }}
-                                    className="text-pink-300 hover:text-pink-200"
+                                    onFocus={(e) => {
+                                      // Scroll input into view when focused on iPhone
+                                      setTimeout(() => {
+                                        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      }, 300);
+                                    }}
+                                    placeholder={replyingTo ? t('chat.typeReply') : t('chat.clickReply')}
+                                    disabled={!replyingTo}
+                                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                  />
+                                  <button
+                                    onClick={handleSendReply}
+                                    disabled={!replyText.trim() || !replyingTo}
+                                    className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                   >
-                                    <X className="w-4 h-4" />
+                                    <Send className="w-5 h-5" />
                                   </button>
                                 </div>
-                              )}
+                              </div>
+                            )}
 
-                              <div className="flex items-center gap-2 sticky bottom-0 bg-black/95 py-3 px-4 -mx-4">
+                            {/* Products Tab */}
+                            {activeFullscreenTab === 'products' && (
+                              <div className="space-y-4 pb-8">
+                                <h4 className="font-semibold text-lg mb-4">{t('products.addProduct')}</h4>
+
+                                <select
+                                  value={newProduct.type}
+                                  onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                >
+                                  <option value="product" className="bg-black">{t('products.product')}</option>
+                                  <option value="ad" className="bg-black">{t('products.ad')}</option>
+                                </select>
+
                                 <input
-                                  ref={replyInputRef}
-                                  type="text"
+                                  placeholder={t('products.name')}
                                   inputMode="text"
                                   autoComplete="off"
-                                  autoCapitalize="off"
-                                  autoCorrect="off"
-                                  spellCheck="false"
-                                  value={replyText}
-                                  onChange={(e) => setReplyText(e.target.value)}
-                                  onKeyPress={(e) => {
-                                    if (e.key === 'Enter' && replyingTo) {
-                                      handleSendReply();
-                                    }
-                                  }}
+                                  value={newProduct.name}
+                                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                                   onFocus={(e) => {
-                                    // Scroll input into view when focused on iPhone
                                     setTimeout(() => {
                                       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     }, 300);
                                   }}
-                                  placeholder={replyingTo ? t('chat.typeReply') : t('chat.clickReply')}
-                                  disabled={!replyingTo}
-                                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
                                 />
-                                <button
-                                  onClick={handleSendReply}
-                                  disabled={!replyText.trim() || !replyingTo}
-                                  className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                >
-                                  <Send className="w-5 h-5" />
-                                </button>
-                              </div>
-                            </div>
-                          )}
 
-                          {/* Products Tab */}
-                          {activeFullscreenTab === 'products' && (
-                            <div className="space-y-4 pb-8">
-                              <h4 className="font-semibold text-lg mb-4">{t('products.addProduct')}</h4>
-                              
-                              <select
-                                value={newProduct.type}
-                                onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              >
-                                <option value="product" className="bg-black">{t('products.product')}</option>
-                                <option value="ad" className="bg-black">{t('products.ad')}</option>
-                              </select>
-
-                              <input
-                                placeholder={t('products.name')}
-                                inputMode="text"
-                                autoComplete="off"
-                                value={newProduct.name}
-                                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
-
-                              <input
-                                placeholder={t('products.description')}
-                                inputMode="text"
-                                autoComplete="off"
-                                value={newProduct.description}
-                                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
-
-                              <input
-                                type="number"
-                                inputMode="decimal"
-                                placeholder={t('products.price')}
-                                value={newProduct.price}
-                                onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
-
-                              <div className="mb-2">
-                                <label className="block text-sm font-medium mb-1 text-white/80">{t('products.image')}</label>
                                 <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    setNewProduct({ ...newProduct, imageFile: file });
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
-                                    };
-                                    reader.readAsDataURL(file);
+                                  placeholder={t('products.description')}
+                                  inputMode="text"
+                                  autoComplete="off"
+                                  value={newProduct.description}
+                                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                                  onFocus={(e) => {
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
                                   }}
-                                  className="w-full text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-600 file:text-white"
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
                                 />
-                                {newProduct.imagePreview && (
-                                  <img
-                                    src={newProduct.imagePreview}
-                                    alt="Preview"
-                                    className="mt-2 w-full h-48 object-cover rounded-lg"
+
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  placeholder={t('products.price')}
+                                  value={newProduct.price}
+                                  onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
+                                  onFocus={(e) => {
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
+                                  }}
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                />
+
+                                <div className="mb-2">
+                                  <label className="block text-sm font-medium mb-1 text-white/80">{t('products.image')}</label>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      setNewProduct({ ...newProduct, imageFile: file });
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }}
+                                    className="w-full text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-600 file:text-white"
                                   />
-                                )}
-                              </div>
+                                  {newProduct.imagePreview && (
+                                    <img
+                                      src={newProduct.imagePreview}
+                                      alt="Preview"
+                                      className="mt-2 w-full h-48 object-cover rounded-lg"
+                                    />
+                                  )}
+                                </div>
 
-                              <input
-                                placeholder={`${t('products.link')} (${t('common.cancel')})`}
-                                inputMode="url"
-                                autoComplete="off"
-                                value={newProduct.link}
-                                onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
+                                <input
+                                  placeholder={`${t('products.link')} (${t('common.cancel')})`}
+                                  inputMode="url"
+                                  autoComplete="off"
+                                  value={newProduct.link}
+                                  onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
+                                  onFocus={(e) => {
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
+                                  }}
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                />
 
-                              <button
-                                onClick={async () => {
-                                  if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
-                                    setError("Name, price and image are required");
-                                    return;
-                                  }
-                                  const formData = new FormData();
-                                  formData.append("type", newProduct.type);
-                                  formData.append("name", newProduct.name);
-                                  formData.append("description", newProduct.description);
-                                  formData.append("price", newProduct.price.toString());
-                                  formData.append("file", newProduct.imageFile);
-                                  if (newProduct.link) formData.append("link", newProduct.link);
-                                  try {
-                                    const token = localStorage.getItem("token");
-                                    const response = await fetch(`${API_BASE_URL}/live/${streamData.streamId}/add-product`, {
-                                      method: "POST",
-                                      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-                                      body: formData,
-                                    });
-                                    const data = await response.json();
-                                    if (response.ok) {
-                                      setProducts([...products, data.product]);
-                                      setNewProduct({
-                                        type: "product",
-                                        name: "",
-                                        description: "",
-                                        price: 0,
-                                        imageFile: null,
-                                        imagePreview: "",
-                                        link: "",
-                                      });
-                                      setError("");
-                                    } else {
-                                      setError(data.msg || "Failed to add product");
+                                <button
+                                  onClick={async () => {
+                                    if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
+                                      setError("Name, price and image are required");
+                                      return;
                                     }
-                                  } catch {
-                                    setError("Failed to add product");
-                                  }
-                                }}
-                                className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
-                              >
-                                {t('products.addProductBtn')}
-                              </button>
+                                    const formData = new FormData();
+                                    formData.append("type", newProduct.type);
+                                    formData.append("name", newProduct.name);
+                                    formData.append("description", newProduct.description);
+                                    formData.append("price", newProduct.price.toString());
+                                    formData.append("file", newProduct.imageFile);
+                                    if (newProduct.link) formData.append("link", newProduct.link);
+                                    try {
+                                      const token = localStorage.getItem("token");
+                                      const response = await fetch(`${API_BASE_URL}/live/${streamData.streamId}/add-product`, {
+                                        method: "POST",
+                                        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+                                        body: formData,
+                                      });
+                                      const data = await response.json();
+                                      if (response.ok) {
+                                        setProducts([...products, data.product]);
+                                        setNewProduct({
+                                          type: "product",
+                                          name: "",
+                                          description: "",
+                                          price: 0,
+                                          imageFile: null,
+                                          imagePreview: "",
+                                          link: "",
+                                        });
+                                        setError("");
+                                      } else {
+                                        setError(data.msg || "Failed to add product");
+                                      }
+                                    } catch {
+                                      setError("Failed to add product");
+                                    }
+                                  }}
+                                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+                                >
+                                  {t('products.addProductBtn')}
+                                </button>
 
-                              <div className="mt-4">
-                                <h5 className="font-semibold mb-2 text-white/80">Added Items ({products.length})</h5>
-                                {products.length === 0 ? (
-                                  <p className="text-white/50 text-sm">No items added yet</p>
-                                ) : (
-                                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                                    {products.map((p, i) => (
-                                      <div key={i} className="bg-white/10 rounded-lg p-2 flex items-center gap-3">
-                                        {p.imageUrl && (
-                                          <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                                        )}
-                                        <div className="flex-1">
-                                          <p className="font-medium text-white">{p.name}</p>
-                                          <p className="text-sm text-white/70">${p.price}</p>
+                                <div className="mt-4">
+                                  <h5 className="font-semibold mb-2 text-white/80">Added Items ({products.length})</h5>
+                                  {products.length === 0 ? (
+                                    <p className="text-white/50 text-sm">No items added yet</p>
+                                  ) : (
+                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                      {products.map((p, i) => (
+                                        <div key={i} className="bg-white/10 rounded-lg p-2 flex items-center gap-3">
+                                          {p.imageUrl && (
+                                            <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                                          )}
+                                          <div className="flex-1">
+                                            <p className="font-medium text-white">{p.name}</p>
+                                            <p className="text-sm text-white/70">${p.price}</p>
+                                          </div>
                                         </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
-                          {/* Orders Tab - Keep as is */}
-                          {/* Gifts Tab - Keep as is */}
-                        </div>
+                            {/* Orders Tab - Keep as is */}
+                            {/* Gifts Tab - Keep as is */}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -4084,13 +4159,13 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             {error}
           </div>
         )}
-        {showShareModal && (
+        {/* {showShareModal && (
           <ShareModal
             isOpen={showShareModal}
             stream={streamData}
             onClose={() => setShowShareModal(false)}
           />
-        )}
+        )} */}
       </div>
     );
   }
@@ -4156,11 +4231,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             )}
 
             <div className="absolute top-4 right-4 flex space-x-2 z-10">
-                <button
-                  onClick={toggleCamera}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isCameraOn
-                    ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
-                    : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
+              <button
+                onClick={toggleCamera}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isCameraOn
+                  ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
+                  : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
                   }`}
               >
 
@@ -4178,11 +4253,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               </button>
               <button
                 onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${
-                  selectedBackground !== 'none'
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${selectedBackground !== 'none'
                     ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
                     : 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
-                }`}
+                  }`}
                 title={t('background.backgroundFilters')}
               >
                 <Sparkles className="w-5 h-5" />

@@ -805,6 +805,318 @@
     "live": "LIVE",
     "watching": "watching",
     "autoRefreshing": "Auto-refreshing"
+  },
+  "policies": {
+    "menu": {
+      "title": "Legal & Policies",
+      "privacyPolicy": "Privacy Policy",
+      "privacyDescription": "How we collect, use, and protect your data",
+      "refundPolicy": "Return & Refund Policy",
+      "refundDescription": "Our policies on returns and refunds",
+      "deliveryPolicy": "Service Delivery Policy",
+      "deliveryDescription": "How we deliver our digital services",
+      "termsConditions": "Terms & Conditions",
+      "termsDescription": "Rules and guidelines for using our platform"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "introduction": {
+        "title": "Introduction",
+        "content": "At ClipStream, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and services."
+      },
+      "informationWeCollect": {
+        "title": "Information We Collect",
+        "personalInformation": {
+          "title": "Personal Information",
+          "nameAndEmail": "Name and email address",
+          "phoneNumber": "Phone number (optional)",
+          "profilePicture": "Profile picture and bio",
+          "paymentInfo": "Payment information (processed securely through third-party providers)",
+          "deviceInfo": "Device information and IP address"
+        },
+        "contentAndUsageData": {
+          "title": "Content and Usage Data",
+          "videos": "Videos and content you upload or create",
+          "interactions": "Comments, likes, and interactions",
+          "searchHistory": "Search history and preferences",
+          "usagePatterns": "Usage patterns and analytics"
+        }
+      },
+      "howWeUse": {
+        "title": "How We Use Your Information",
+        "provideServices": "Provide and maintain our services",
+        "processTransactions": "Process transactions and send notifications",
+        "improveExperience": "Improve user experience and personalize content",
+        "communicate": "Communicate with you about updates and offers",
+        "ensureSafety": "Ensure platform safety and prevent fraud",
+        "complyLegal": "Comply with legal obligations"
+      },
+      "informationSharing": {
+        "title": "Information Sharing",
+        "intro": "We do not sell your personal information. We may share information with:",
+        "serviceProviders": "Service Providers: Payment processors, cloud storage, analytics",
+        "legalRequirements": "Legal Requirements: When required by law or to protect rights",
+        "businessTransfers": "Business Transfers: In case of merger or acquisition",
+        "withConsent": "With Your Consent: When you explicitly agree to sharing"
+      },
+      "dataSecurity": {
+        "title": "Data Security",
+        "content": "We implement industry-standard security measures to protect your data, including encryption, secure servers, and regular security audits. However, no method of transmission over the internet is 100% secure."
+      },
+      "yourRights": {
+        "title": "Your Rights",
+        "accessData": "Access and download your data",
+        "correctInfo": "Correct inaccurate information",
+        "deleteAccount": "Delete your account and data",
+        "optOut": "Opt-out of marketing communications",
+        "controlPrivacy": "Control privacy settings"
+      },
+      "childrensPrivacy": {
+        "title": "Children's Privacy",
+        "content": "Our service is not intended for users under 13 years of age. We do not knowingly collect personal information from children under 13."
+      }
+    },
+    "refund": {
+      "title": "Return & Refund Policy",
+      "digitalProductsPolicy": {
+        "title": "Digital Products Policy",
+        "content": "As a digital service platform, most purchases are final upon delivery of services or digital goods. However, we understand issues may arise."
+      },
+      "pointsAndVirtualCurrency": {
+        "title": "Points & Virtual Currency",
+        "refundEligibility": {
+          "title": "Refund Eligibility",
+          "paymentErrors": "Payment processing errors or duplicate charges",
+          "technicalIssues": "Technical issues preventing points delivery",
+          "unauthorizedTransactions": "Unauthorized transactions (with proof)"
+        },
+        "nonRefundable": {
+          "title": "Non-Refundable",
+          "pointsSpent": "Points already spent or used",
+          "changeOfMind": "Change of mind after successful purchase",
+          "accountDeletion": "Voluntary account deletion",
+          "virtualGifts": "Virtual gifts sent to creators"
+        }
+      },
+      "refundRequestProcess": {
+        "title": "Refund Request Process",
+        "step1Title": "Submit Request",
+        "step1Content": "Contact support within 7 days of purchase via email or in-app support",
+        "step2Title": "Provide Details",
+        "step2Content": "Include transaction ID, purchase date, and reason for refund",
+        "step3Title": "Review Process",
+        "step3Content": "We review requests within 3-5 business days",
+        "step4Title": "Refund Processing",
+        "step4Content": "Approved refunds processed within 7-10 business days"
+      },
+      "refundMethods": {
+        "title": "Refund Methods",
+        "usdtCrypto": "USDT/Crypto: Refunded to original wallet address",
+        "bankTransfer": "Bank Transfer: Refunded to original account",
+        "creditDebitCard": "Credit/Debit Card: Refunded to original card",
+        "note": "Processing time varies by payment method and financial institution."
+      },
+      "disputesAndChargebacks": {
+        "title": "Disputes & Chargebacks",
+        "content": "Initiating a chargeback without contacting us first may result in account suspension. Please reach out to resolve issues before disputing charges."
+      }
+    },
+    "delivery": {
+      "title": "Service Delivery Policy",
+      "digitalServiceDelivery": {
+        "title": "Digital Service Delivery",
+        "content": "ClipStream provides digital services and virtual products. There is no physical shipping involved. All services are delivered electronically."
+      },
+      "pointsAndVirtualCurrency": {
+        "title": "Points & Virtual Currency",
+        "instantDelivery": "Instant Delivery",
+        "instantDeliveryNote": "Points are credited to your account immediately upon successful payment verification.",
+        "deliveryTimeline": {
+          "title": "Delivery Timeline",
+          "usdtPayments": "USDT Payments: 1-5 minutes (blockchain confirmation required)",
+          "bankTransfer": "Bank Transfer: 1-2 business days (manual verification)",
+          "cardPayments": "Card Payments: Instant (automated processing)"
+        }
+      },
+      "virtualGiftsAndFeatures": {
+        "title": "Virtual Gifts & Features",
+        "deliveredInstantly": "Delivered instantly upon sending",
+        "visibleImmediately": "Visible to recipients immediately",
+        "cannotBeRecalled": "Cannot be recalled after delivery",
+        "permanentRecord": "Permanent record in transaction history"
+      },
+      "premiumFeatures": {
+        "title": "Premium Features",
+        "content": "Premium features and subscriptions are activated immediately upon successful payment. Access remains active for the purchased duration."
+      },
+      "deliveryIssues": {
+        "title": "Delivery Issues",
+        "intro": "If you experience delays in receiving points or services, please:",
+        "checkHistory": "Check your transaction history in the app",
+        "verifyPayment": "Verify payment was successfully processed",
+        "waitConfirmation": "Wait for blockchain confirmation (USDT payments)",
+        "contactSupport": "Contact support if issue persists beyond stated timeframe"
+      },
+      "failedDeliveries": {
+        "title": "Failed Deliveries",
+        "intro": "In rare cases where delivery fails due to technical issues:",
+        "retryDelivery": "We will retry delivery automatically",
+        "notified": "You'll be notified of any issues",
+        "refundProcessed": "Refund will be processed if delivery cannot be completed",
+        "noCharges": "No charges for failed delivery attempts"
+      },
+      "serviceAvailability": {
+        "title": "Service Availability",
+        "platformAccess": {
+          "title": "24/7 Platform Access",
+          "content": "Our platform operates continuously with occasional maintenance windows."
+        },
+        "scheduledMaintenance": {
+          "title": "Scheduled Maintenance",
+          "announced": "Announced in advance via app notifications",
+          "scheduled": "Typically scheduled during low-usage hours",
+          "completed": "Usually completed within 1-2 hours"
+        }
+      },
+      "geographicAvailability": {
+        "title": "Geographic Availability",
+        "content": "Our services are available globally, subject to local regulations. Some features may be restricted in certain regions due to legal requirements."
+      }
+    },
+    "terms": {
+      "title": "Terms & Conditions",
+      "agreementToTerms": {
+        "title": "Agreement to Terms",
+        "content": "By accessing or using ClipStream, you agree to be bound by these Terms and Conditions. If you disagree with any part of these terms, you may not access the service."
+      },
+      "userAccounts": {
+        "title": "User Accounts",
+        "accountCreation": {
+          "title": "Account Creation",
+          "ageRequirement": "You must be at least 13 years old to create an account",
+          "accurateInfo": "Provide accurate and complete information",
+          "maintainSecurity": "Maintain security of your account credentials",
+          "oneAccount": "One person, one account policy"
+        },
+        "accountResponsibilities": {
+          "title": "Account Responsibilities",
+          "responsibleForActivities": "You are responsible for all activities under your account",
+          "notifyUnauthorized": "Notify us immediately of unauthorized access",
+          "doNotShare": "Do not share your account with others",
+          "keepUpdated": "Keep your email and contact information updated"
+        }
+      },
+      "acceptableUse": {
+        "title": "Acceptable Use",
+        "warning": "Users must not engage in prohibited activities that violate our community guidelines.",
+        "prohibitedContent": {
+          "title": "Prohibited Content",
+          "illegalContent": "Illegal, harmful, or threatening content",
+          "harassment": "Harassment, bullying, or hate speech",
+          "explicitContent": "Sexually explicit or adult content",
+          "violence": "Violence or graphic content",
+          "copyright": "Copyright infringement",
+          "spam": "Spam or misleading information"
+        },
+        "prohibitedActivities": {
+          "title": "Prohibited Activities",
+          "impersonating": "Impersonating others or creating fake accounts",
+          "manipulatingMetrics": "Manipulating engagement metrics artificially",
+          "hacking": "Hacking or circumventing security measures",
+          "scraping": "Scraping or unauthorized data collection",
+          "interfering": "Interfering with platform operation"
+        }
+      },
+      "contentOwnership": {
+        "title": "Content Ownership & Rights",
+        "yourContent": {
+          "title": "Your Content",
+          "retainOwnership": "You retain ownership of content you upload",
+          "grantLicense": "You grant us license to use, display, and distribute your content",
+          "haveRights": "You represent that you have rights to all uploaded content",
+          "responsible": "You are responsible for your content and its consequences"
+        },
+        "ourRights": {
+          "title": "Our Rights",
+          "removeContent": "We may remove content that violates these terms",
+          "moderateContent": "We reserve right to moderate all content",
+          "ownFeatures": "We own all platform features and functionality",
+          "trademarks": "Our trademarks and branding are protected"
+        }
+      },
+      "pointsAndVirtualCurrency": {
+        "title": "Points & Virtual Currency",
+        "noCashValue": "Points have no real-world cash value",
+        "cannotTransfer": "Points cannot be transferred between users",
+        "cannotExchange": "Points cannot be exchanged for cash",
+        "mayExpire": "Unused points may expire per our policy",
+        "adjustValues": "We may adjust point values with notice"
+      },
+      "paymentsAndBilling": {
+        "title": "Payments & Billing",
+        "pricesInUSD": "All prices are in USD unless stated otherwise",
+        "secureProcessing": "Payments are processed securely through third parties",
+        "authorizeCharges": "You authorize charges for selected services",
+        "refundPolicy": "Refunds are subject to our refund policy",
+        "changePricing": "We reserve right to change pricing with notice"
+      },
+      "accountTermination": {
+        "title": "Account Termination",
+        "byYou": {
+          "title": "By You",
+          "content": "You may delete your account at any time through account settings."
+        },
+        "byUs": {
+          "title": "By Us",
+          "content": "We may suspend or terminate accounts for:",
+          "violation": "Violation of these terms",
+          "illegalActivities": "Illegal activities",
+          "inactivity": "Prolonged inactivity",
+          "paymentDisputes": "Payment disputes or fraud"
+        },
+        "effectsOfTermination": {
+          "title": "Effects of Termination",
+          "accessLost": "Access to account and content will be lost",
+          "pointsForfeited": "Unused points will be forfeited",
+          "contentRemoved": "Content may be removed from platform",
+          "provisionsSurvive": "Certain provisions of terms will survive termination"
+        }
+      },
+      "disclaimers": {
+        "title": "Disclaimers",
+        "serviceProvidedAsIs": "Service Provided \"As Is\"",
+        "content": "We provide the service without warranties of any kind. We don't guarantee uninterrupted, secure, or error-free service. Use at your own risk."
+      },
+      "limitationOfLiability": {
+        "title": "Limitation of Liability",
+        "content": "To the maximum extent permitted by law, ClipStream shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use or inability to use the service."
+      },
+      "indemnification": {
+        "title": "Indemnification",
+        "content": "You agree to indemnify and hold ClipStream harmless from any claims, damages, losses, or expenses arising from your use of the service or violation of these terms."
+      },
+      "changesToTerms": {
+        "title": "Changes to Terms",
+        "content": "We reserve the right to modify these terms at any time. We will notify users of significant changes. Continued use after changes constitutes acceptance of new terms."
+      },
+      "governingLaw": {
+        "title": "Governing Law",
+        "content": "These terms are governed by the laws of the jurisdiction where ClipStream is registered, without regard to conflict of law provisions."
+      },
+      "disputeResolution": {
+        "title": "Dispute Resolution",
+        "contactFirst": "Contact us first to resolve disputes informally",
+        "arbitration": "Arbitration may be required for unresolved disputes",
+        "classAction": "Class action lawsuits are waived",
+        "handledIndividually": "Disputes handled individually"
+      }
+    },
+    "common": {
+      "email": "Email",
+      "phone": "Phone",
+      "supportHours": "Support hours: Monday - Friday, 9:00 AM - 6:00 PM EST",
+      "lastUpdated": "Last Updated: December 3, 2025"
+    }
   }
 }
 
