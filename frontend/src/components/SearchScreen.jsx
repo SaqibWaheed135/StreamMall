@@ -3,6 +3,7 @@ import { Search, TrendingUp, Hash, User, Play, Heart, UserCheck, UserPlus, Messa
 import NotificationsScreen from './NotificationsScreen';
 import AddFriendsScreen from './AddFriendScreen';
 import GoogleAd from './GoogleAd';
+import LanguageSwitcher from './LanguageSwitcher';
 import { API_BASE_URL } from '../config/api';
 
 const SearchScreen = () => {
@@ -660,7 +661,10 @@ const SearchScreen = () => {
           {/* Top bar with title, friends button, and notifications */}
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold">Search</h1>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="light" className="!bg-white/20 !border-white/30" />
+              
               {/* Add Friends Button */}
               <button
                 onClick={() => setShowAddFriends(true)}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Send, ArrowLeft, Phone, Video, MoreVertical, Smile, Paperclip, Search, Trash2, Image, Play, X, Mic, Users, Plus, UserPlus, Settings, Crown, Shield, UserMinus, Check, Globe, Lock, Copy, LogOut } from 'lucide-react';
 import io from 'socket.io-client';
 import { API_BASE_URL } from '../config/api';
+import LanguageSwitcher from './LanguageSwitcher';
 
 // Group List Component
 const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoinGroup, searchQuery, setSearchQuery }) => {
@@ -1208,19 +1209,24 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       )}
       <div className={`w-full md:w-1/3 border-r border-[#ff99b3] flex flex-col ${selectedConversation || selectedGroup ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-[#ff99b3]">
-          <div className="flex space-x-2 mb-4">
-            <button
-              onClick={() => setActiveTab('dm')}
-              className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'dm' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
-            >
-              Direct Messages
-            </button>
-            <button
-              onClick={() => setActiveTab('groups')}
-              className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'groups' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
-            >
-              Groups
-            </button>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex space-x-2 flex-1">
+              <button
+                onClick={() => setActiveTab('dm')}
+                className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'dm' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
+              >
+                Direct Messages
+              </button>
+              <button
+                onClick={() => setActiveTab('groups')}
+                className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'groups' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
+              >
+                Groups
+              </button>
+            </div>
+            <div className="ml-2">
+              <LanguageSwitcher variant="light" className="!bg-white/20 !border-white/30" />
+            </div>
           </div>
         </div>
         {activeTab === 'dm' ? (
@@ -1358,7 +1364,10 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                   })()
                 )}
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
+                {/* Language Switcher */}
+                <LanguageSwitcher variant="light" className="!bg-white/20 !border-white/30" />
+                
                 {selectedGroup && (
                   <button onClick={() => setShowGroupInfoModal(true)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                     <Settings className="w-5 h-5" />

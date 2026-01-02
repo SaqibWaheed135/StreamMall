@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, DollarSign, Star, History, Clock, CheckCircle, XCircle, AlertCircle, Loader2, User, Mail, Phone, CreditCard, Building, RefreshCw, Wallet } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE_URL } from '../config/api';
 
 const PointsWithdrawalScreen = ({ onBack }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('withdraw');
   const [pointsBalance, setPointsBalance] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -195,38 +197,38 @@ const PointsWithdrawalScreen = ({ onBack }) => {
   const withdrawalMethods = [
     {
       id: 'paypal',
-      name: 'PayPal',
+      name: t('withdrawal.paypal'),
       icon: DollarSign,
-      description: 'Withdraw to your PayPal account',
+      description: t('withdrawal.paypalDescription'),
       minAmount: 10,
-      processingTime: '1-2 business days',
+      processingTime: `1-2 ${t('withdrawal.businessDays')}`,
       fees: '2% + $0.30'
     },
     {
       id: 'bank',
-      name: 'Bank Transfer',
+      name: t('withdrawal.bankTransfer'),
       icon: Building,
-      description: 'Direct deposit to your bank account',
+      description: t('withdrawal.bankDescription'),
       minAmount: 25,
-      processingTime: '3-5 business days',
+      processingTime: `3-5 ${t('withdrawal.businessDays')}`,
       fees: '$2.00 flat fee'
     },
     {
       id: 'card',
-      name: 'Debit Card',
+      name: t('withdrawal.debitCard'),
       icon: CreditCard,
-      description: 'Instant withdrawal to debit card',
+      description: t('withdrawal.cardDescription'),
       minAmount: 5,
-      processingTime: 'Instant',
+      processingTime: t('withdrawal.instant'),
       fees: '3% + $0.25'
     },
     {
       id: 'usdt',
-      name: 'USDT Wallet',
+      name: t('withdrawal.usdtWallet'),
       icon: Wallet,
-      description: 'Withdraw to your USDT (Tether) wallet',
+      description: t('withdrawal.usdtDescription'),
       minAmount: 20,
-      processingTime: '1-3 business days',
+      processingTime: `1-3 ${t('withdrawal.businessDays')}`,
       fees: '1% + $1.00'
     }
   ];
@@ -345,15 +347,15 @@ const PointsWithdrawalScreen = ({ onBack }) => {
       });
 
       if (response.ok) {
-        setSuccess('Withdrawal request cancelled successfully');
+        setSuccess(t('withdrawal.messages.cancelledSuccessfully'));
         await fetchWithdrawalHistory();
       } else {
         const data = await response.json();
-        setError(data.msg || 'Failed to cancel withdrawal request');
+        setError(data.msg || t('withdrawal.messages.cancelFailed'));
       }
     } catch (error) {
       console.error('Cancel withdrawal error:', error);
-      setError('Failed to cancel withdrawal request');
+      setError(t('withdrawal.messages.cancelFailed'));
     } finally {
       setProcessing(false);
     }
@@ -394,45 +396,45 @@ const PointsWithdrawalScreen = ({ onBack }) => {
     const errors = {};
 
     if (!withdrawalDetails.fullName.trim()) {
-      errors.fullName = 'Full name is required';
+      errors.fullName = t('withdrawal.validation.fullNameRequired');
     }
 
     if (!withdrawalDetails.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = t('withdrawal.validation.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(withdrawalDetails.email)) {
-      errors.email = 'Please enter a valid email';
+      errors.email = t('withdrawal.validation.validEmail');
     }
 
     if (!withdrawalDetails.phone.trim()) {
-      errors.phone = 'Phone number is required';
+      errors.phone = t('withdrawal.validation.phoneRequired');
     }
 
     if (selectedWithdrawalMethod === 'paypal') {
       if (!withdrawalDetails.paypalEmail.trim()) {
-        errors.paypalEmail = 'PayPal email is required';
+        errors.paypalEmail = t('withdrawal.validation.paypalEmailRequired');
       }
     } else if (selectedWithdrawalMethod === 'bank') {
       if (!withdrawalDetails.bankName.trim()) {
-        errors.bankName = 'Bank name is required';
+        errors.bankName = t('withdrawal.validation.bankNameRequired');
       }
       if (!withdrawalDetails.accountNumber.trim()) {
-        errors.accountNumber = 'Account number is required';
+        errors.accountNumber = t('withdrawal.validation.accountNumberRequired');
       }
       if (!withdrawalDetails.accountHolderName.trim()) {
-        errors.accountHolderName = 'Account holder name is required';
+        errors.accountHolderName = t('withdrawal.validation.accountHolderNameRequired');
       }
     } else if (selectedWithdrawalMethod === 'card') {
       if (!withdrawalDetails.accountNumber.trim()) {
-        errors.accountNumber = 'Card number is required';
+        errors.accountNumber = t('withdrawal.validation.cardNumberRequired');
       }
       if (!withdrawalDetails.accountHolderName.trim()) {
-        errors.accountHolderName = 'Cardholder name is required';
+        errors.accountHolderName = t('withdrawal.validation.cardholderNameRequired');
       }
     } else if (selectedWithdrawalMethod === 'usdt') {
       if (!withdrawalDetails.usdtWalletAddress.trim()) {
-        errors.usdtWalletAddress = 'USDT wallet address is required';
+        errors.usdtWalletAddress = t('withdrawal.validation.usdtWalletRequired');
       } else if (!/^0x[a-fA-F0-9]{40}$/.test(withdrawalDetails.usdtWalletAddress)) {
-        errors.usdtWalletAddress = 'Please enter a valid Ethereum wallet address (0x followed by 40 hexadecimal characters)';
+        errors.usdtWalletAddress = t('withdrawal.validation.validUsdtWallet');
       }
     }
 
@@ -456,22 +458,25 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
     // Validation
     if (!amount || amount <= 0) {
-      setError('Please enter a valid withdrawal amount');
+      setError(t('withdrawal.validation.enterValidAmount'));
       return;
     }
 
     if (amount < selectedMethod.minAmount) {
-      setError(`Minimum withdrawal amount for ${selectedMethod.name} is $${selectedMethod.minAmount}`);
+      setError(t('withdrawal.validation.minimumAmount', { method: selectedMethod.name, amount: selectedMethod.minAmount }));
       return;
     }
 
     if (pointsRequired > pointsBalance) {
-      setError(`Insufficient points. You need ${pointsRequired.toLocaleString()} points but only have ${pointsBalance.toLocaleString()}`);
+      setError(t('withdrawal.validation.insufficientPoints', { 
+        required: pointsRequired.toLocaleString(), 
+        available: pointsBalance.toLocaleString() 
+      }));
       return;
     }
 
     if (!validateForm()) {
-      setError('Please fill in all required fields correctly');
+      setError(t('withdrawal.validation.fillRequiredFields'));
       return;
     }
 
@@ -520,7 +525,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(`Withdrawal request submitted successfully! Request ID: ${data.withdrawal.requestId}`);
+        setSuccess(t('withdrawal.messages.requestSubmitted', { requestId: data.withdrawal.requestId }));
 
         // Reset form
         setWithdrawalAmount('');
@@ -552,11 +557,11 @@ const PointsWithdrawalScreen = ({ onBack }) => {
         // Switch to history tab
         setActiveTab('history');
       } else {
-        setError(data.msg || 'Withdrawal request failed');
+        setError(data.msg || t('withdrawal.messages.requestFailed'));
       }
     } catch (error) {
       console.error('Withdrawal request error:', error);
-      setError('Withdrawal request failed. Please try again.');
+      setError(t('withdrawal.messages.requestFailedTryAgain'));
     } finally {
       setProcessing(false);
     }
@@ -675,7 +680,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-bold">Withdraw Points</h1>
+            <h1 className="text-xl font-bold">{t('withdrawal.withdrawPoints')}</h1>
           </div>
           <div className="flex items-center space-x-3">
             <button
@@ -708,12 +713,12 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                 ${pointsToUSD(pointsBalance).toFixed(2)}
               </h2>
             </div>
-            <p className="text-sm text-pink-700 font-medium">Available for Withdrawal</p>
+            <p className="text-sm text-pink-700 font-medium">{t('withdrawal.availableForWithdrawal')}</p>
             <p className="text-sm text-gray-700 mt-1">
-              {pointsBalance.toLocaleString()} points
+              {pointsBalance.toLocaleString()} {t('profile.points').toLowerCase()}
             </p>
             <p className="text-xs text-gray-600 mt-2 italic">
-              Conversion Rate: 10 points = $1
+              {t('withdrawal.conversionRate')}
             </p>
           </div>
         </div>
@@ -742,7 +747,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
               }`}
           >
             <DollarSign className="w-4 h-4 inline mr-2" />
-            Withdraw
+            {t('withdrawal.withdraw')}
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -752,7 +757,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
               }`}
           >
             <History className="w-4 h-4 inline mr-2" />
-            History
+            {t('withdrawal.history')}
           </button>
         </div>
 
@@ -761,7 +766,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
           <div className="space-y-6">
             {/* Withdrawal Amount */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Withdrawal Amount</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('withdrawal.withdrawalAmount')}</h3>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
                 <input
@@ -776,14 +781,14 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                     setSuccess('');
                   }}
                   className="w-full pl-8 pr-4 py-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="Enter amount"
+                  placeholder={t('withdrawal.enterAmount')}
                 />
               </div>
               {withdrawalAmount && parseFloat(withdrawalAmount) > 0 && (
                 <div className="mt-2 flex items-center space-x-1 text-sm">
                   <Star className="w-4 h-4 text-pink-600" />
                   <span className="text-pink-700">
-                    {usdToPoints(parseFloat(withdrawalAmount)).toLocaleString()} points will be deducted
+                    {usdToPoints(parseFloat(withdrawalAmount)).toLocaleString()} {t('withdrawal.pointsWillBeDeducted')}
                   </span>
                 </div>
               )}
@@ -791,7 +796,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
             {/* Withdrawal Methods */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Withdrawal Method</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('withdrawal.withdrawalMethod')}</h3>
               <div className="grid grid-cols-1 gap-3">
                 {withdrawalMethods.map((method) => {
                   const IconComponent = method.icon;
@@ -823,7 +828,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           <div className="font-medium">{method.name}</div>
                           <div className="text-sm text-gray-600">{method.description}</div>
                           <div className="text-xs text-gray-500 mt-1">
-                            Min: ${method.minAmount} • {method.processingTime} • Fee: {method.fees}
+                            {t('withdrawal.min')}: ${method.minAmount} • {method.processingTime} • {t('withdrawal.fees')}: {method.fees}
                           </div>
                         </div>
                         {selectedWithdrawalMethod === method.id && !isDisabled && (
@@ -842,14 +847,14 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                 <div className="p-2 rounded-lg bg-pink-100 mr-2">
                   <User className="w-5 h-5 text-pink-700" />
                 </div>
-                Personal Information
+                {t('withdrawal.personalInformation')}
               </h3>
 
               <div className="space-y-4">
                 <div>
                   <input
                     type="text"
-                    placeholder="Full Name"
+                    placeholder={t('withdrawal.fullName')}
                     value={withdrawalDetails.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.fullName ? 'border-red-400' : 'border-[#ff99b3]'
@@ -863,7 +868,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                 <div>
                   <input
                     type="email"
-                    placeholder="Email Address"
+                    placeholder={t('withdrawal.emailAddress')}
                     value={withdrawalDetails.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.email ? 'border-red-400' : 'border-[#ff99b3]'
@@ -877,7 +882,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                 <div>
                   <input
                     type="tel"
-                    placeholder="Phone Number"
+                    placeholder={t('withdrawal.phoneNumber')}
                     value={withdrawalDetails.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.phone ? 'border-red-400' : 'border-[#ff99b3]'
@@ -897,13 +902,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div className="p-2 rounded-lg bg-pink-100 mr-2">
                     <DollarSign className="w-5 h-5 text-pink-700" />
                   </div>
-                  PayPal Information
+                  {t('withdrawal.paypalInformation')}
                 </h3>
 
                 <div>
                   <input
                     type="email"
-                    placeholder="PayPal Email Address"
+                    placeholder={t('withdrawal.paypalEmailAddress')}
                     value={withdrawalDetails.paypalEmail}
                     onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.paypalEmail ? 'border-red-400' : 'border-[#ff99b3]'
@@ -922,14 +927,14 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div className="p-2 rounded-lg bg-pink-100 mr-2">
                     <Building className="w-5 h-5 text-pink-700" />
                   </div>
-                  Bank Information
+                  {t('withdrawal.bankInformation')}
                 </h3>
 
                 <div className="space-y-4">
                   <div>
                     <input
                       type="text"
-                      placeholder="Bank Name"
+                      placeholder={t('withdrawal.bankName')}
                       value={withdrawalDetails.bankName}
                       onChange={(e) => handleInputChange('bankName', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.bankName ? 'border-red-400' : 'border-[#ff99b3]'
@@ -943,7 +948,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div>
                     <input
                       type="text"
-                      placeholder="Account Holder Name"
+                      placeholder={t('withdrawal.accountHolderName')}
                       value={withdrawalDetails.accountHolderName}
                       onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountHolderName ? 'border-red-400' : 'border-[#ff99b3]'
@@ -957,7 +962,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div>
                     <input
                       type="text"
-                      placeholder="Account Number"
+                      placeholder={t('withdrawal.accountNumber')}
                       value={withdrawalDetails.accountNumber}
                       onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountNumber ? 'border-red-400' : 'border-[#ff99b3]'
@@ -971,7 +976,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div>
                     <input
                       type="text"
-                      placeholder="Routing Number (Optional)"
+                      placeholder={t('withdrawal.routingNumber')}
                       value={withdrawalDetails.routingNumber}
                       onChange={(e) => handleInputChange('routingNumber', e.target.value)}
                       className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -987,14 +992,14 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div className="p-2 rounded-lg bg-pink-100 mr-2">
                     <CreditCard className="w-5 h-5 text-pink-700" />
                   </div>
-                  Debit Card Information
+                  {t('withdrawal.debitCardInformation')}
                 </h3>
 
                 <div className="space-y-4">
                   <div>
                     <input
                       type="text"
-                      placeholder="Cardholder Name"
+                      placeholder={t('withdrawal.cardholderName')}
                       value={withdrawalDetails.accountHolderName}
                       onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountHolderName ? 'border-red-400' : 'border-[#ff99b3]'
@@ -1008,7 +1013,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div>
                     <input
                       type="text"
-                      placeholder="Card Number"
+                      placeholder={t('withdrawal.cardNumber')}
                       value={withdrawalDetails.accountNumber}
                       onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.accountNumber ? 'border-red-400' : 'border-[#ff99b3]'
@@ -1028,13 +1033,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                   <div className="p-2 rounded-lg bg-pink-100 mr-2">
                     <Wallet className="w-5 h-5 text-pink-700" />
                   </div>
-                  USDT Wallet Information
+                  {t('withdrawal.usdtWalletInformation')}
                 </h3>
 
                 <div>
                   <input
                     type="text"
-                    placeholder="USDT Wallet Address (e.g., 0x1234567890abcdef1234567890abcdef12345678)"
+                    placeholder={t('withdrawal.usdtWalletAddress')}
                     value={withdrawalDetails.usdtWalletAddress}
                     onChange={(e) => handleInputChange('usdtWalletAddress', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.usdtWalletAddress ? 'border-red-400' : 'border-[#ff99b3]'
@@ -1056,12 +1061,12 @@ const PointsWithdrawalScreen = ({ onBack }) => {
               {processing ? (
                 <div className="flex items-center justify-center space-x-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Submitting Request...</span>
+                  <span>{t('withdrawal.submittingRequest')}</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center space-x-2">
                   <DollarSign className="w-5 h-5" />
-                  <span>Request Withdrawal - ${withdrawalAmount || '0'}</span>
+                  <span>{t('withdrawal.requestWithdrawal')} - ${withdrawalAmount || '0'}</span>
                 </div>
               )}
             </button>
@@ -1070,14 +1075,14 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             <div className="bg-pink-200/60 border border-[#ff99b3] rounded-xl p-4">
               <h4 className="font-semibold mb-2 text-pink-700 flex items-center">
                 <AlertCircle className="w-4 h-4 mr-2" />
-                Important Notice
+                {t('withdrawal.importantNotice')}
               </h4>
               <ul className="text-sm text-pink-800 space-y-1">
-                <li>• All withdrawal requests require admin approval</li>
-                <li>• Processing may take 1-5 business days depending on method</li>
-                <li>• Points will be deducted upon approval, not upon request</li>
-                <li>• Ensure all information is accurate to avoid delays</li>
-                <li>• Contact support if you need to cancel a pending request</li>
+                <li>• {t('withdrawal.adminApprovalRequired')}</li>
+                <li>• {t('withdrawal.processingTimeNotice')}</li>
+                <li>• {t('withdrawal.pointsDeductedOnApproval')}</li>
+                <li>• {t('withdrawal.ensureAccurateInfo')}</li>
+                <li>• {t('withdrawal.contactSupportToCancel')}</li>
               </ul>
             </div>
           </div>
@@ -1091,24 +1096,24 @@ const PointsWithdrawalScreen = ({ onBack }) => {
             ) : (
               <>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Withdrawal History</h3>
+                  <h3 className="text-lg font-semibold">{t('withdrawal.withdrawalHistory')}</h3>
                   <div className="text-sm text-gray-700">
-                    {withdrawalHistory.length} total requests
+                    {withdrawalHistory.length} {t('withdrawal.totalRequests')}
                   </div>
                 </div>
 
                 {withdrawalHistory.length === 0 ? (
                   <div className="text-center py-12">
                     <History className="w-12 h-12 text-pink-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-black mb-2">No Withdrawals Yet</h3>
+                    <h3 className="text-lg font-semibold text-black mb-2">{t('withdrawal.noWithdrawalsYet')}</h3>
                     <p className="text-gray-600 mb-4">
-                      You haven't made any withdrawal requests yet.
+                      {t('withdrawal.noWithdrawalRequests')}
                     </p>
                     <button
                       onClick={() => setActiveTab('withdraw')}
                       className="px-6 py-3 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
                     >
-                      Make Your First Withdrawal
+                      {t('withdrawal.makeFirstWithdrawal')}
                     </button>
                   </div>
                 ) : (
@@ -1132,19 +1137,19 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(withdrawal.status)}
                             <span className={`font-medium capitalize ${getStatusColor(withdrawal.status)}`}>
-                              {withdrawal.status}
+                              {t(`withdrawal.status.${withdrawal.status}`)}
                             </span>
                           </div>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Request ID:</span>
+                            <span className="text-gray-600">{t('withdrawal.requestId')}:</span>
                             <span className="font-mono text-gray-800">{withdrawal.requestId}</span>
                           </div>
 
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Points Deducted:</span>
+                            <span className="text-gray-600">{t('withdrawal.pointsDeducted')}:</span>
                             <span className="flex items-center space-x-1 text-gray-800">
                               <Star className="w-3 h-3 text-pink-600" />
                               <span>
@@ -1155,13 +1160,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           </div>
 
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Requested:</span>
+                            <span className="text-gray-600">{t('withdrawal.requested')}:</span>
                             <span className="text-gray-800">{formatDate(withdrawal.requestedAt)}</span>
                           </div>
 
                           {withdrawal.approvedAt && (
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Approved:</span>
+                              <span className="text-gray-600">{t('withdrawal.approved')}:</span>
                               <span className="text-green-600">
                                 {formatDate(withdrawal.approvedAt)}
                               </span>
@@ -1170,7 +1175,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
                           {withdrawal.completedAt && (
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Completed:</span>
+                              <span className="text-gray-600">{t('withdrawal.completed')}:</span>
                               <span className="text-green-600">
                                 {formatDate(withdrawal.completedAt)}
                               </span>
@@ -1179,7 +1184,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
 
                           {withdrawal.rejectedAt && (
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Rejected:</span>
+                              <span className="text-gray-600">{t('withdrawal.rejected')}:</span>
                               <span className="text-red-500">
                                 {formatDate(withdrawal.rejectedAt)}
                               </span>
@@ -1189,7 +1194,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           {withdrawal.rejectionReason && (
                             <div className="mt-2 p-3 bg-red-100 border border-red-300 rounded-lg">
                               <div className="text-sm text-red-700">
-                                <span className="font-medium">Rejection Reason: </span>
+                                <span className="font-medium">{t('withdrawal.rejectionReason')}: </span>
                                 {withdrawal.rejectionReason}
                               </div>
                             </div>
@@ -1198,7 +1203,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           {withdrawal.adminNotes && (
                             <div className="mt-2 p-3 bg-blue-100 border border-blue-300 rounded-lg">
                               <div className="text-sm text-blue-700">
-                                <span className="font-medium">Admin Notes: </span>
+                                <span className="font-medium">{t('withdrawal.adminNotes')}: </span>
                                 {withdrawal.adminNotes}
                               </div>
                             </div>
@@ -1208,13 +1213,13 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                           {withdrawal.details && (
                             <div className="mt-3 pt-3 border-t border-gray-700">
                               <div className="text-xs text-gray-500 mb-2">
-                                Payment Details:
+                                {t('withdrawal.paymentDetails')}:
                               </div>
 
                               <div className="space-y-1 text-sm">
                                 {withdrawal.details.fullName && (
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">Name:</span>
+                                    <span className="text-gray-600">{t('withdrawal.name')}:</span>
                                     <span className="text-gray-800">{withdrawal.details.fullName}</span>
                                   </div>
                                 )}
@@ -1222,7 +1227,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                                 {withdrawal.method === 'paypal' &&
                                   withdrawal.details.paypalEmail && (
                                     <div className="flex justify-between">
-                                      <span className="text-gray-600">PayPal:</span>
+                                      <span className="text-gray-600">{t('withdrawal.paypal')}:</span>
                                       <span className="text-gray-800">{withdrawal.details.paypalEmail}</span>
                                     </div>
                                   )}
@@ -1230,7 +1235,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                                 {withdrawal.method === 'bank' &&
                                   withdrawal.details.bankDetails && (
                                     <div className="flex justify-between">
-                                      <span className="text-gray-600">Bank:</span>
+                                      <span className="text-gray-600">{t('withdrawal.bankTransfer')}:</span>
                                       <span className="text-gray-800">
                                         {withdrawal.details.bankDetails.bankName ||
                                           withdrawal.details.bankName}
@@ -1241,7 +1246,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                                 {withdrawal.method === 'card' &&
                                   withdrawal.details.cardDetails && (
                                     <div className="flex justify-between">
-                                      <span className="text-gray-600">Card:</span>
+                                      <span className="text-gray-600">{t('withdrawal.debitCard')}:</span>
                                       <span className="text-gray-800">
                                         {withdrawal.details.cardDetails.cardholderName ||
                                           withdrawal.details.cardholderName}
@@ -1252,7 +1257,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                                 {withdrawal.method === 'usdt' &&
                                   withdrawal.details.usdtDetails && (
                                     <div className="flex justify-between">
-                                      <span className="text-gray-600">USDT Wallet:</span>
+                                      <span className="text-gray-600">{t('withdrawal.usdtWallet')}:</span>
                                       <span className="font-mono truncate w-40 text-gray-800">
                                         {withdrawal.details.usdtDetails.walletAddress}
                                       </span>
@@ -1273,10 +1278,10 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                                 {processing ? (
                                   <div className="flex items-center justify-center space-x-2">
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span>Cancelling...</span>
+                                    <span>{t('withdrawal.cancelling')}</span>
                                   </div>
                                 ) : (
-                                  'Cancel Request'
+                                  t('withdrawal.cancelRequest')
                                 )}
                               </button>
                             </div>
@@ -1299,7 +1304,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                             .reduce((sum, w) => sum + w.amount, 0)
                             .toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-600">Total Withdrawn</div>
+                        <div className="text-sm text-gray-600">{t('withdrawal.totalWithdrawn')}</div>
                       </div>
                     </div>
                     <div className="bg-white/80 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 shadow-sm">
@@ -1311,7 +1316,7 @@ const PointsWithdrawalScreen = ({ onBack }) => {
                             .reduce((sum, w) => sum + w.amount, 0)
                             .toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-600">Pending</div>
+                        <div className="text-sm text-gray-600">{t('withdrawal.pending')}</div>
                       </div>
                     </div>
                   </div>
