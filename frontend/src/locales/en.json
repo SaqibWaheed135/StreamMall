@@ -1,0 +1,85 @@
+{
+  "common": {
+    "live": "LIVE",
+    "viewers": "viewers",
+    "coins": "coins",
+    "entry": "Entry",
+    "share": "Share",
+    "close": "Close",
+    "cancel": "Cancel",
+    "send": "Send",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "stream": {
+    "endStream": "End Stream",
+    "shareStream": "Share Stream",
+    "shareLiveStream": "Share Live Stream",
+    "streamControls": "Stream Controls",
+    "totalCoinsEarned": "Total Coins Earned",
+    "totalEarnings": "Total Earnings",
+    "paidViewers": "Paid Viewers",
+    "tipsReceived": "Tips Received",
+    "recentTips": "Recent Tips",
+    "noTipsYet": "No tips yet",
+    "linkCopied": "Link copied to clipboard!"
+  },
+  "chat": {
+    "liveChat": "Live Chat",
+    "chat": "Chat",
+    "waitingForComments": "Waiting for comments...",
+    "typeMessage": "Type a message...",
+    "replyingTo": "Replying to",
+    "typeReply": "Type your reply...",
+    "clickReply": "Click reply button on a comment"
+  },
+  "products": {
+    "products": "Products",
+    "addProduct": "Add Product/Ad",
+    "addProductBtn": "Add Product",
+    "name": "Name",
+    "description": "Description",
+    "price": "Price",
+    "image": "Image",
+    "link": "Link",
+    "uploadImage": "Upload Image",
+    "product": "Product",
+    "ad": "Ad",
+    "viewAd": "View Ad",
+    "buyNow": "Buy Now"
+  },
+  "orders": {
+    "orders": "Orders",
+    "noOrders": "No orders yet"
+  },
+  "gifts": {
+    "gifts": "Gifts",
+    "sentGift": "sent",
+    "coinsReceived": "coins"
+  },
+  "background": {
+    "backgroundFilters": "Background Filters",
+    "none": "None",
+    "blur": "Blur",
+    "color": "Color",
+    "blurIntensity": "Blur Intensity",
+    "backgroundColor": "Background Color",
+    "backgroundTip": "💡 Tip: For color backgrounds, use a green screen behind you for best results."
+  },
+  "camera": {
+    "turnOffCamera": "Turn off camera",
+    "turnOnCamera": "Turn on camera",
+    "muteMicrophone": "Mute microphone",
+    "unmuteMicrophone": "Unmute microphone"
+  },
+  "language": {
+    "language": "Language",
+    "english": "English",
+    "urdu": "اردو"
+  }
+}
+

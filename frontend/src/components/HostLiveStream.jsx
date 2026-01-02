@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Camera,
   Radio,
@@ -24,6 +25,7 @@ import {
   Palette,
   Sparkles
 } from 'lucide-react';
+import LanguageSwitcher from './LanguageSwitcher';
 
 import {
   FaWhatsapp,
@@ -76,134 +78,8 @@ const getCameraConstraints = () => {
 // Key used to persist the host's active live session so they can return
 const ACTIVE_HOST_STREAM_KEY = 'activeHostStream';
 
-// Translations for English and Urdu
-const translations = {
-  en: {
-    liveChat: 'Live Chat',
-    waitingForComments: 'Waiting for comments...',
-    typeMessage: 'Type a message...',
-    endStream: 'End Stream',
-    shareStream: 'Share Stream',
-    shareLiveStream: 'Share Live Stream',
-    streamControls: 'Stream Controls',
-    chat: 'Chat',
-    products: 'Products',
-    orders: 'Orders',
-    gifts: 'Gifts',
-    backgroundFilters: 'Background Filters',
-    replyingTo: 'Replying to',
-    turnOffCamera: 'Turn off camera',
-    turnOnCamera: 'Turn on camera',
-    muteMicrophone: 'Mute microphone',
-    unmuteMicrophone: 'Unmute microphone',
-    addProduct: 'Add Product/Ad',
-    name: 'Name',
-    description: 'Description',
-    price: 'Price',
-    image: 'Image',
-    link: 'Link',
-    viewAd: 'View Ad',
-    buyNow: 'Buy Now',
-    totalCoins: 'Total Coins Earned',
-    coinsEarned: 'coins',
-    live: 'LIVE',
-    viewers: 'viewers',
-    entry: 'Entry',
-    coins: 'coins',
-    totalEarnings: 'Total Earnings',
-    paidViewers: 'Paid Viewers',
-    tipsReceived: 'Tips Received',
-    recentTips: 'Recent Tips',
-    noTipsYet: 'No tips yet',
-    linkCopied: 'Link copied to clipboard!',
-    none: 'None',
-    blur: 'Blur',
-    color: 'Color',
-    blurIntensity: 'Blur Intensity',
-    backgroundColor: 'Background Color',
-    backgroundTip: '💡 Tip: For color backgrounds, use a green screen behind you for best results.',
-    typeReply: 'Type your reply...',
-    clickReply: 'Click reply button on a comment',
-    product: 'Product',
-    ad: 'Ad',
-    uploadImage: 'Upload Image',
-    addProductBtn: 'Add Product',
-    cancel: 'Cancel',
-    close: 'Close',
-    send: 'Send',
-    language: 'Language',
-    english: 'English',
-    urdu: 'Urdu'
-  },
-  ur: {
-    liveChat: 'لائیو چیٹ',
-    waitingForComments: 'تبصرے کا انتظار...',
-    typeMessage: 'پیغام ٹائپ کریں...',
-    endStream: 'سٹریم ختم کریں',
-    shareStream: 'سٹریم شیئر کریں',
-    shareLiveStream: 'لائیو سٹریم شیئر کریں',
-    streamControls: 'سٹریم کنٹرولز',
-    chat: 'چیٹ',
-    products: 'مصنوعات',
-    orders: 'آرڈرز',
-    gifts: 'تحائف',
-    backgroundFilters: 'بیک گراؤنڈ فلٹرز',
-    replyingTo: 'جواب دے رہے ہیں',
-    turnOffCamera: 'کیمرہ بند کریں',
-    turnOnCamera: 'کیمرہ آن کریں',
-    muteMicrophone: 'مائیک بند کریں',
-    unmuteMicrophone: 'مائیک آن کریں',
-    addProduct: 'مصنوعات/اشتہار شامل کریں',
-    name: 'نام',
-    description: 'تفصیل',
-    price: 'قیمت',
-    image: 'تصویر',
-    link: 'لنک',
-    viewAd: 'اشتہار دیکھیں',
-    buyNow: 'ابھی خریدیں',
-    totalCoins: 'کل سکے کمائے',
-    coinsEarned: 'سکے',
-    live: 'لائیو',
-    viewers: 'ناظرین',
-    entry: 'داخلہ',
-    coins: 'سکے',
-    totalEarnings: 'کل آمدنی',
-    paidViewers: 'ادائیگی کرنے والے ناظرین',
-    tipsReceived: 'موصولہ ٹپس',
-    recentTips: 'حالیہ ٹپس',
-    noTipsYet: 'ابھی تک کوئی ٹپ نہیں',
-    linkCopied: 'لنک کلپ بورڈ میں کاپی ہو گیا!',
-    none: 'کچھ نہیں',
-    blur: 'دھندلاہٹ',
-    color: 'رنگ',
-    blurIntensity: 'دھندلاہٹ کی شدت',
-    backgroundColor: 'بیک گراؤنڈ رنگ',
-    backgroundTip: '💡 ٹپ: رنگ والے بیک گراؤنڈ کے لیے، بہترین نتائج کے لیے اپنے پیچھے گرین اسکرین استعمال کریں۔',
-    typeReply: 'اپنا جواب ٹائپ کریں...',
-    clickReply: 'تبصرے پر جواب بٹن پر کلک کریں',
-    product: 'مصنوعات',
-    ad: 'اشتہار',
-    uploadImage: 'تصویر اپ لوڈ کریں',
-    addProductBtn: 'مصنوعات شامل کریں',
-    cancel: 'منسوخ',
-    close: 'بند کریں',
-    send: 'بھیجیں',
-    language: 'زبان',
-    english: 'انگریزی',
-    urdu: 'اردو'
-  }
-};
-
 const HostLiveStream = ({ onBack }) => {
-  // Language state - default to English, or get from localStorage
-  const [language, setLanguage] = useState(() => {
-    const saved = localStorage.getItem('streamLanguage');
-    return saved === 'ur' ? 'ur' : 'en';
-  });
-  
-  // Get translations based on current language
-  const t = translations[language];
-  
+  const { t } = useTranslation();
   const [isLive, setIsLive] = useState(false);
   const [streamData, setStreamData] = useState(null);
   const [title, setTitle] = useState('');
@@ -609,7 +485,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
     const handleCopy = async () => {
       await navigator.clipboard.writeText(shareUrl);
-      alert("Link copied to clipboard!");
+      alert(t('stream.linkCopied'));
     };
 
     const handleShareClick = (platform) => {
@@ -630,7 +506,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             <FaTimes size={18} />
           </button>
 
-          <h2 className="text-lg sm:text-xl font-bold text-center mb-4 sm:mb-5 text-gray-900 pr-6 break-words">Share Live Stream</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-center mb-4 sm:mb-5 text-gray-900 pr-6 break-words">{t('stream.shareLiveStream')}</h2>
 
           <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
             <button className="share-btn bg-green-500" onClick={() => handleShareClick(shareLinks.whatsapp)}>
@@ -2724,7 +2600,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             <Gift className="w-6 h-6" />
             <div>
               <p className="font-bold">{showTipNotification.username} sent {getGiftIcon(showTipNotification.giftType)}!</p>
-              <p className="text-sm">+{showTipNotification.amount} coins</p>
+              <p className="text-sm">+{showTipNotification.amount} {t('common.coins')}</p>
             </div>
           </div>
         )}
@@ -2735,11 +2611,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2 pr-2 break-words">
                   <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-400 flex-shrink-0" />
-                  Stream Earnings
+                  {t('stream.totalEarnings')}
                 </h3>
                 <button
                   onClick={() => setShowEarningsModal(false)}
-                  className="text-gray-700 hover:text-black transition flex-shrink-0" aria-label="Close"
+                  className="text-gray-700 hover:text-black transition flex-shrink-0" aria-label={t('common.close')}
                 >
                   <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
@@ -2747,23 +2623,23 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
               <div className="space-y-3 sm:space-y-4">
                 <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-3 sm:p-4">
-                  <p className="text-xs sm:text-sm text-gray-700 mb-1">Total Earnings</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-yellow-600 break-words">{coinBalance} coins</p>
+                  <p className="text-xs sm:text-sm text-gray-700 mb-1">{t('stream.totalEarnings')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-yellow-600 break-words">{coinBalance} {t('common.coins')}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-2.5 sm:p-3">
-                    <p className="text-xs text-gray-700 mb-1">Paid Viewers</p>
+                    <p className="text-xs text-gray-700 mb-1">{t('stream.paidViewers')}</p>
                     <p className="text-lg sm:text-xl font-semibold">{paidViewersCount}</p>
                   </div>
                   <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-2.5 sm:p-3">
-                    <p className="text-xs text-gray-700 mb-1">Tips Received</p>
+                    <p className="text-xs text-gray-700 mb-1">{t('stream.tipsReceived')}</p>
                     <p className="text-lg sm:text-xl font-semibold">{tips.length}</p>
                   </div>
                 </div>
 
                 <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-3 max-h-40 overflow-y-auto">
-                  <p className="text-xs sm:text-sm font-semibold mb-2">Recent Tips</p>
+                  <p className="text-xs sm:text-sm font-semibold mb-2">{t('stream.recentTips')}</p>
                   {tips.slice(-5).reverse().map((tip) => (
                     <div key={tip.id} className="flex items-center justify-between py-1 text-xs sm:text-sm">
                       <span className="break-words pr-2">{tip.username}</span>
@@ -2771,7 +2647,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                     </div>
                   ))}
                   {tips.length === 0 && (
-                    <p className="text-gray-700 text-xs">No tips yet</p>
+                    <p className="text-gray-700 text-xs">{t('stream.noTipsYet')}</p>
                   )}
                 </div>
               </div>
@@ -2785,24 +2661,24 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-sm font-semibold text-white">LIVE</span>
+                  <span className="text-sm font-semibold text-white">{t('common.live')}</span>
                 </div>
 
                 <div className="flex items-center gap-2 text-gray-700">
                   <Users className="w-4 h-4" />
-                  <span className="text-sm">{viewerCount} viewers</span>
+                  <span className="text-sm">{viewerCount} {t('common.viewers')}</span>
                 </div>
 
                 <button
                   onClick={() => setShowEarningsModal(true)}
                   className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-300 hover:shadow-md px-3.5 py-1.5 rounded-full text-amber-900 font-semibold transition"
                 >
-                  <span className="text-sm font-semibold">{coinBalance} coins</span>
+                  <span className="text-sm font-semibold">{coinBalance} {t('common.coins')}</span>
                 </button>
 
                 {streamData?.stream?.entryFee > 0 && (
                   <div className="flex items-center gap-2 bg-blue-600 px-3 py-1 rounded-full">
-                    <span className="text-xs font-semibold">Entry: {streamData.stream.entryFee} coins</span>
+                    <span className="text-xs font-semibold">{t('common.entry')}: {streamData.stream.entryFee} {t('common.coins')}</span>
                   </div>
                 )}
               </div>
@@ -2813,7 +2689,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   className="flex-1 sm:flex-none bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-white text-sm"
                 >
                   <Share2 className="w-4 h-4" />
-                  Share
+                  {t('common.share')}
                 </button>
 
                 <button
@@ -2821,8 +2697,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-white text-sm"
                 >
                   <X className="w-4 h-4" />
-                  End Stream
+                  {t('stream.endStream')}
                 </button>
+                
+                <LanguageSwitcher />
               </div>
             </div>
 
@@ -2911,7 +2789,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-lg font-bold flex items-center gap-2">
                           <Sparkles className="w-5 h-5" />
-                          Background Filters
+                          {t('background.backgroundFilters')}
                         </h3>
                         <button
                           onClick={() => setShowBackgroundPanel(false)}
@@ -2925,7 +2803,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
                       {/* Background Options */}
                       <div>
-                        <label className="block text-sm font-medium mb-3 text-white/80">Background Type</label>
+                        <label className="block text-sm font-medium mb-3 text-white/80">{t('background.backgroundColor')}</label>
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => setSelectedBackground('none')}
@@ -2936,7 +2814,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             }`}
                           >
                             <X className="w-5 h-5 mx-auto mb-1" />
-                            <span className="text-xs">None</span>
+                            <span className="text-xs">{t('background.none')}</span>
                           </button>
                           <button
                             onClick={() => setSelectedBackground('blur')}
@@ -2947,7 +2825,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             }`}
                           >
                             <Sparkles className="w-5 h-5 mx-auto mb-1" />
-                            <span className="text-xs">Blur</span>
+                            <span className="text-xs">{t('background.blur')}</span>
                           </button>
                           <button
                             onClick={() => setSelectedBackground('color')}
@@ -2958,7 +2836,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             }`}
                           >
                             <Palette className="w-5 h-5 mx-auto mb-1" />
-                            <span className="text-xs">Color</span>
+                            <span className="text-xs">{t('background.color')}</span>
                           </button>
                         </div>
                       </div>
@@ -2967,7 +2845,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       {selectedBackground === 'blur' && (
                         <div>
                           <label className="block text-sm font-medium mb-2 text-white/80">
-                            Blur Intensity: {backgroundBlur}px
+                            {t('background.blurIntensity')}: {backgroundBlur}px
                           </label>
                           <input
                             type="range"
@@ -3021,7 +2899,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                 {overlayComments.length > 0 && (
                   <div className="absolute top-4 left-4 z-25 bg-gradient-to-r from-pink-600 to-pink-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-2">
                     <MessageCircle className="w-4 h-4" />
-                    <span>Live Chat</span>
+                    <span>{t('chat.liveChat')}</span>
                   </div>
                 )}
 
@@ -3066,85 +2944,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Persistent Live Chat Panel - Always Visible on iPhone */}
-                {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
-                  <div
-                    className="fixed right-0 top-0 bottom-0 w-72 max-w-[75%] bg-black/85 backdrop-blur-xl border-l border-white/20 z-50 flex flex-col"
-                    style={{
-                      zIndex: 2147483645,
-                      height: '100vh',
-                      height: 'calc(var(--vh, 1vh) * 100)',
-                      paddingTop: 'env(safe-area-inset-top, 0px)',
-                      paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)', // Space for input bar
-                      transform: 'translate3d(0,0,0)',
-                      WebkitTransform: 'translate3d(0,0,0)',
-                      display: showFullscreenControls ? 'none' : 'flex' // Hide when control panel is open
-                    }}
-                  >
-                    {/* Chat Header */}
-                    <div className="p-4 border-b border-white/20 flex items-center justify-between bg-black/50">
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <MessageCircle className="w-5 h-5 text-pink-400" />
-                        Live Chat
-                      </h3>
-                      {socket && (
-                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30">
-                          ● Live
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Chat Messages - Scrollable */}
-                    <div 
-                      className="flex-1 overflow-y-auto p-4 space-y-3"
-                      style={{
-                        WebkitOverflowScrolling: 'touch',
-                        scrollBehavior: 'smooth'
-                      }}
-                    >
-                      {comments.map((c) => (
-                        <div key={c.id} className="space-y-2">
-                          <div className="bg-white/10 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <span className="font-semibold text-pink-300 text-sm">@{c.username}: </span>
-                                <span className="text-white/90 text-sm break-words">{c.text}</span>
-                              </div>
-                            </div>
-                          </div>
-                          {c.replies && c.replies.length > 0 && (
-                            <div className="ml-4 space-y-2">
-                              {c.replies.map((reply) => (
-                                <div
-                                  key={reply._id || reply.id}
-                                  className={`text-sm rounded-xl px-3 py-2 ${
-                                    reply.isHost 
-                                      ? 'bg-pink-500/20 border border-pink-500/50' 
-                                      : 'bg-white/5 border border-white/10'
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-1">
-                                    {reply.isHost && <span className="text-pink-400">👑</span>}
-                                    <span className="font-semibold text-pink-300 text-xs">@{reply.username}:</span>
-                                    <span className="text-white/90 text-xs break-words">{reply.text}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {comments.length === 0 && (
-                        <div className="text-center text-white/50 py-8">
-                          <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p className="text-sm">Waiting for comments...</p>
-                        </div>
-                      )}
-                      <div ref={commentsEndRef} />
                     </div>
                   </div>
                 )}
@@ -3200,7 +2999,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           setFullscreenComment('');
         }
       }}
-      placeholder="Type a message..."
+      placeholder={t('chat.typeMessage')}
       className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
       // Remove autoFocus – it can interfere on iOS
     />
@@ -3259,7 +3058,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border-2 border-white/30 ${
                           isCameraOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
                         }`}
-                        title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
+                        title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
                       >
                         {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
                       </button>
@@ -3268,7 +3067,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border-2 border-white/30 ${
                           isMicOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
                         }`}
-                        title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
+                        title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
                       >
                         {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                       </button>
@@ -3288,7 +3087,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
         : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
     }`}
-    title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
+    title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
   >
     {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
   </button>
@@ -3300,7 +3099,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
         : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
     }`}
-    title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
+    title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
   >
     {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
   </button>
@@ -3312,7 +3111,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700' 
         : 'bg-white/90 border-white text-gray-900 hover:bg-white'
     }`}
-    title="Background Filters"
+    title={t('background.backgroundFilters')}
   >
     <Sparkles className="w-8 h-8" />
   </button>
@@ -3362,11 +3161,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         userSelect: 'none',
                         WebkitUserSelect: 'none'
                       }}
-                      title="End Stream"
-                      aria-label="End Stream"
+                      title={t('stream.endStream')}
+                      aria-label={t('stream.endStream')}
                     >
                       <X className="w-4 h-4" />
-                      <span className="text-sm">End Stream</span>
+                      <span className="text-sm">{t('stream.endStream')}</span>
                     </button>
 
                         {/* Background Filter Panel */}
@@ -3385,7 +3184,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-bold flex items-center gap-2">
                               <Sparkles className="w-5 h-5" />
-                              Background Filters
+                              {t('background.backgroundFilters')}
                             </h3>
                             <button
                               onClick={() => setShowBackgroundPanel(false)}
@@ -3399,7 +3198,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                         <div className="flex-1 overflow-y-auto p-4 space-y-4">
                           {/* Background Options */}
                           <div>
-                            <label className="block text-sm font-medium mb-3 text-white/80">Background Type</label>
+                            <label className="block text-sm font-medium mb-3 text-white/80">{t('background.backgroundColor')}</label>
                             <div className="grid grid-cols-2 gap-2">
                               <button
                                 onClick={() => setSelectedBackground('none')}
@@ -3410,7 +3209,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                                 }`}
                               >
                                 <X className="w-5 h-5 mx-auto mb-1" />
-                                <span className="text-xs">None</span>
+                                <span className="text-xs">{t('background.none')}</span>
                               </button>
                               <button
                                 onClick={() => setSelectedBackground('blur')}
@@ -3421,7 +3220,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                                 }`}
                               >
                                 <Sparkles className="w-5 h-5 mx-auto mb-1" />
-                                <span className="text-xs">Blur</span>
+                                <span className="text-xs">{t('background.blur')}</span>
                               </button>
                               <button
                                 onClick={() => setSelectedBackground('color')}
@@ -3432,7 +3231,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                                 }`}
                               >
                                 <Palette className="w-5 h-5 mx-auto mb-1" />
-                                <span className="text-xs">Color</span>
+                                <span className="text-xs">{t('background.color')}</span>
                               </button>
                             </div>
                           </div>
@@ -3441,7 +3240,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                           {selectedBackground === 'blur' && (
                             <div>
                               <label className="block text-sm font-medium mb-2 text-white/80">
-                                Blur Intensity: {backgroundBlur}px
+                                {t('background.blurIntensity')}: {backgroundBlur}px
                               </label>
                               <input
                                 type="range"
@@ -3457,7 +3256,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                           {/* Color Settings */}
                           {selectedBackground === 'color' && (
                             <div>
-                              <label className="block text-sm font-medium mb-2 text-white/80">Background Color</label>
+                              <label className="block text-sm font-medium mb-2 text-white/80">{t('background.backgroundColor')}</label>
                               <div className="grid grid-cols-4 gap-2 mb-3">
                                 {['#00ff00', '#0000ff', '#ff0000', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000'].map((color) => (
                                   <button
@@ -3484,7 +3283,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
                           <div className="pt-4 border-t border-white/20">
                             <p className="text-xs text-white/60 mb-2">
-                              💡 Tip: For color backgrounds, use a green screen behind you for best results.
+                              {t('background.backgroundTip')}
                             </p>
                           </div>
                         </div>
@@ -3506,7 +3305,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       >
                         <div className="p-4 border-b border-white/20">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-bold">Stream Controls</h3>
+                            <h3 className="text-lg font-bold">{t('stream.streamControls')}</h3>
                             <button
                               onClick={() => {
                                 // Clear auto-hide timeout when manually closing
@@ -3523,8 +3322,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                           </div>
                           {/* Coins Earned Display */}
                           <div className="bg-white/10 border border-white/20 rounded-lg p-2 mt-2">
-                            <p className="text-xs text-white/70">Total Coins Earned</p>
-                            <p className="text-lg font-semibold text-yellow-400">{coinBalance} coins</p>
+                            <p className="text-xs text-white/70">{t('stream.totalCoinsEarned')}</p>
+                            <p className="text-lg font-semibold text-yellow-400">{coinBalance} {t('common.coins')}</p>
                           </div>
                         </div>
 
@@ -3540,7 +3339,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all shadow-lg"
                           >
                             <Share2 className="w-5 h-5" />
-                            Share Stream
+                            {t('stream.shareStream')}
                           </button>
                         </div>
 
@@ -3553,7 +3352,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             }`}
                           >
                             <MessageCircle className="w-4 h-4 inline mr-2" />
-                            Chat
+                            {t('chat.chat')}
                           </button>
                           <button
                             onClick={() => setActiveFullscreenTab('products')}
@@ -3562,7 +3361,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                             }`}
                           >
                             <Gift className="w-4 h-4 inline mr-2" />
-                            Products
+                            {t('products.products')}
                           </button>
                           <button
                             onClick={() => setActiveFullscreenTab('orders')}
@@ -3570,7 +3369,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               activeFullscreenTab === 'orders' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
                             }`}
                           >
-                            📦 Orders
+                            📦 {t('orders.orders')}
                           </button>
                           <button
                             onClick={() => setActiveFullscreenTab('gifts')}
@@ -3578,7 +3377,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
                             }`}
                           >
-                            🎁 Gifts
+                            🎁 {t('gifts.gifts')}
                           </button>
                         </div>
 
@@ -3634,7 +3433,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                                 {comments.length === 0 && (
                                   <div className="text-center text-white/50 py-8">
                                     <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                    <p className="text-sm">Waiting for comments...</p>
+                                    <p className="text-sm">{t('chat.waitingForComments')}</p>
                                   </div>
                                 )}
                                 <div ref={commentsEndRef} />
@@ -3643,7 +3442,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               {replyingTo && (
                                 <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
                                   <span className="text-sm text-pink-300">
-                                    Replying to <span className="font-semibold">@{replyingTo.username}</span>
+                                    {t('chat.replyingTo')} <span className="font-semibold">@{replyingTo.username}</span>
                                   </span>
                                   <button
                                     onClick={() => {
@@ -3679,7 +3478,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                                       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     }, 300);
                                   }}
-                                  placeholder={replyingTo ? "Type your reply..." : "Click reply button on a comment"}
+                                  placeholder={replyingTo ? t('chat.typeReply') : t('chat.clickReply')}
                                   disabled={!replyingTo}
                                   className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
                                 />
@@ -3697,19 +3496,19 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                           {/* Products Tab */}
                           {activeFullscreenTab === 'products' && (
                             <div className="space-y-4 pb-8">
-                              <h4 className="font-semibold text-lg mb-4">Add Product/Ad</h4>
+                              <h4 className="font-semibold text-lg mb-4">{t('products.addProduct')}</h4>
                               
                               <select
                                 value={newProduct.type}
                                 onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
                                 className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
                               >
-                                <option value="product" className="bg-black">Product</option>
-                                <option value="ad" className="bg-black">Ad</option>
+                                <option value="product" className="bg-black">{t('products.product')}</option>
+                                <option value="ad" className="bg-black">{t('products.ad')}</option>
                               </select>
 
                               <input
-                                placeholder="Name"
+                                placeholder={t('products.name')}
                                 inputMode="text"
                                 autoComplete="off"
                                 value={newProduct.name}
@@ -3723,7 +3522,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               />
 
                               <input
-                                placeholder="Description"
+                                placeholder={t('products.description')}
                                 inputMode="text"
                                 autoComplete="off"
                                 value={newProduct.description}
@@ -3739,7 +3538,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               <input
                                 type="number"
                                 inputMode="decimal"
-                                placeholder="Price"
+                                placeholder={t('products.price')}
                                 value={newProduct.price}
                                 onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
                                 onFocus={(e) => {
@@ -3751,7 +3550,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               />
 
                               <div className="mb-2">
-                                <label className="block text-sm font-medium mb-1 text-white/80">Image</label>
+                                <label className="block text-sm font-medium mb-1 text-white/80">{t('products.image')}</label>
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -3777,7 +3576,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                               </div>
 
                               <input
-                                placeholder="Link (optional)"
+                                placeholder={`${t('products.link')} (${t('common.cancel')})`}
                                 inputMode="url"
                                 autoComplete="off"
                                 value={newProduct.link}
@@ -3832,7 +3631,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                                 }}
                                 className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
                               >
-                                Add Item
+                                {t('products.addProductBtn')}
                               </button>
 
                               <div className="mt-4">
@@ -3872,14 +3671,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                 <button
                   onClick={toggleCamera}
                   className={`p-4 rounded-full transition-colors ${isCameraOn ? 'bg-white border border-[#ff99b3] hover:bg-[#ffb3c6]' : 'bg-red-600 hover:bg-red-700 text-white'}`}
-                  title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
+                  title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
                 >
                   {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
                 </button>
                 <button
                   onClick={toggleMic}
                   className={`p-4 rounded-full transition-colors ${isMicOn ? 'bg-white border border-[#ff99b3] hover:bg-[#ffb3c6]' : 'bg-red-600 hover:bg-red-700 text-white'}`}
-                  title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
+                  title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
                 >
                   {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                 </button>
@@ -4058,7 +3857,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                 <h3 className="font-semibold text-pink-700 flex items-center gap-2 mb-4">
 
                   <Gift className="w-5 h-5 text-amber-500" />
-                  Recent Tips ({tips.length})
+                  {t('stream.recentTips')} ({tips.length})
                 </h3>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {tips.slice(-5).reverse().map((tip) => (
@@ -4384,7 +4183,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                     ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
                     : 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
                 }`}
-                title="Background Filters"
+                title={t('background.backgroundFilters')}
               >
                 <Sparkles className="w-5 h-5" />
               </button>
