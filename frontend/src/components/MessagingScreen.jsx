@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Send, ArrowLeft, Phone, Video, MoreVertical, Smile, Paperclip, Search, Trash2, Image, Play, X, Mic, Users, Plus, UserPlus, Settings, Crown, Shield, UserMinus, Check, Globe, Lock, Copy, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import io from 'socket.io-client';
 import { API_BASE_URL } from '../config/api';
 import LanguageSwitcher from './LanguageSwitcher';
 
 // Group List Component
 const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoinGroup, searchQuery, setSearchQuery }) => {
+  const { t } = useTranslation();
   const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -16,13 +18,13 @@ const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoin
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            Groups
+            {t('messaging.groups')}
           </h2>
           <div className="flex items-center space-x-2">
-            <button onClick={onJoinGroup} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors" title="Join Group">
+            <button onClick={onJoinGroup} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors" title={t('messaging.joinGroup')}>
               <UserPlus className="w-5 h-5" />
             </button>
-            <button onClick={onCreateGroup} className="p-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-full transition-colors text-white" title="Create Group">
+            <button onClick={onCreateGroup} className="p-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-full transition-colors text-white" title={t('messaging.createGroup')}>
               <Plus className="w-5 h-5" />
             </button>
           </div>
@@ -31,7 +33,7 @@ const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoin
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
             type="text"
-            placeholder="Search groups..."
+            placeholder={t('messaging.searchGroups')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white border border-[#ff99b3] rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 text-black placeholder-gray-500"
@@ -42,8 +44,8 @@ const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoin
         {filteredGroups.length === 0 ? (
           <div className="p-8 text-center text-gray-700">
             <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p className="text-lg">No groups yet</p>
-            <p className="text-sm">Create or join a group to get started!</p>
+            <p className="text-lg">{t('messaging.noGroupsYet')}</p>
+            <p className="text-sm">{t('messaging.createOrJoinGroup')}</p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -75,7 +77,7 @@ const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoin
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-400 truncate">{group.members.length} members</p>
+                    <p className="text-sm text-gray-400 truncate">{group.members.length} {t('messaging.members')}</p>
                   </div>
                 </div>
               </button>
@@ -89,6 +91,7 @@ const GroupList = ({ groups, selectedGroup, onSelectGroup, onCreateGroup, onJoin
 
 // Create Group Modal
 const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('private');
@@ -111,37 +114,37 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Create New Group</h3>
+          <h3 className="text-lg font-semibold">{t('messaging.createNewGroup')}</h3>
           <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Group Name</label>
+            <label className="block text-sm font-medium mb-2">{t('messaging.groupName')}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter group name"
+              placeholder={t('messaging.enterGroupName')}
               maxLength={100}
               className="w-full px-4 py-2 bg-white border border-[#ff99b3] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-black"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Description (Optional)</label>
+            <label className="block text-sm font-medium mb-2">{t('messaging.descriptionOptional')}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What's this group about?"
+              placeholder={t('messaging.whatsGroupAbout')}
               maxLength={500}
               rows={3}
               className="w-full px-4 py-2 bg-white border border-[#ff99b3] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-black resize-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Group Type</label>
+            <label className="block text-sm font-medium mb-2">{t('messaging.groupType')}</label>
             <div className="space-y-2">
               <button
                 type="button"
@@ -151,8 +154,8 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
                 <div className="flex items-center">
                   <Lock className="w-5 h-5 mr-3" />
                   <div>
-                    <div className="font-medium">Private</div>
-                    <div className="text-sm text-gray-700">Only invited members can join</div>
+                    <div className="font-medium">{t('messaging.private')}</div>
+                    <div className="text-sm text-gray-700">{t('messaging.onlyInvitedMembers')}</div>
                   </div>
                 </div>
               </button>
@@ -164,8 +167,8 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
                 <div className="flex items-center">
                   <Globe className="w-5 h-5 mr-3" />
                   <div>
-                    <div className="font-medium">Public</div>
-                    <div className="text-sm text-gray-700">Anyone can join with invite code</div>
+                    <div className="font-medium">{t('messaging.public')}</div>
+                    <div className="text-sm text-gray-700">{t('messaging.anyoneCanJoin')}</div>
                   </div>
                 </div>
               </button>
@@ -173,14 +176,14 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
           </div>
           <div className="flex justify-end space-x-3">
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:text-black transition-colors">
-              Cancel
+              {t('messaging.cancel')}
             </button>
             <button
               type="submit"
               disabled={!name.trim() || creating}
               className="px-6 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 disabled:bg-[#ffb3c6] disabled:cursor-not-allowed rounded-lg transition-colors text-white"
             >
-              {creating ? 'Creating...' : 'Create Group'}
+              {creating ? t('messaging.creating') : t('messaging.createGroup')}
             </button>
           </div>
         </form>
@@ -191,6 +194,7 @@ const CreateGroupModal = ({ show, onClose, onCreateGroup }) => {
 
 // Group Info Modal
 const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, onLeaveGroup, onDeleteGroup }) => {
+  const { t } = useTranslation();
   const [showMembers, setShowMembers] = useState(true);
   const [inviteCodeCopied, setInviteCodeCopied] = useState(false);
 
@@ -212,7 +216,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
       <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-[#FFC0CB] p-6 border-b border-[#ff99b3] z-10">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Group Info</h3>
+            <h3 className="text-lg font-semibold">{t('messaging.groupInfo')}</h3>
             <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full">
               <X className="w-5 h-5" />
             </button>
@@ -230,17 +234,17 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
             <div className="flex items-center justify-center space-x-4 mt-4 text-sm text-gray-700">
               <span className="flex items-center">
                 {group.type === 'public' ? <Globe className="w-4 h-4 mr-1" /> : <Lock className="w-4 h-4 mr-1" />}
-                {group.type === 'public' ? 'Public' : 'Private'}
+                {group.type === 'public' ? t('messaging.public') : t('messaging.private')}
               </span>
               <span>•</span>
-              <span>{group.members.length} members</span>
+              <span>{group.members.length} {t('messaging.members')}</span>
             </div>
           </div>
           {group.type === 'public' && group.inviteCode && (
             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium mb-1">Invite Code</p>
+                  <p className="text-sm font-medium mb-1">{t('messaging.inviteCode')}</p>
                   <p className="text-gray-700 text-sm font-mono">{group.inviteCode}</p>
                 </div>
                 <button
@@ -250,12 +254,12 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
                   {inviteCodeCopied ? (
                     <>
                       <Check className="w-4 h-4" />
-                      <span>Copied!</span>
+                      <span>{t('messaging.copied')}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4" />
-                      <span>Copy</span>
+                      <span>{t('messaging.copy')}</span>
                     </>
                   )}
                 </button>
@@ -264,7 +268,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
           )}
           <div>
             <button onClick={() => setShowMembers(!showMembers)} className="flex items-center justify-between w-full mb-3">
-              <h4 className="font-semibold">Members ({group.members.length})</h4>
+              <h4 className="font-semibold">{t('messaging.membersCount', { count: group.members.length })}</h4>
               <span className="text-gray-400">{showMembers ? '−' : '+'}</span>
             </button>
             {showMembers && (
@@ -283,13 +287,13 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
                           {member.role === 'admin' && (
                             <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full flex items-center">
                               <Crown className="w-3 h-3 mr-1" />
-                              Admin
+                              {t('messaging.admin')}
                             </span>
                           )}
                           {member.role === 'moderator' && (
                             <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full flex items-center">
                               <Shield className="w-3 h-3 mr-1" />
-                              Moderator
+                              {t('messaging.moderator')}
                             </span>
                           )}
                         </div>
@@ -310,7 +314,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
           </div>
           {group.pendingRequests?.length > 0 && isModerator && (
             <div>
-              <h4 className="font-semibold mb-3">Pending Requests ({group.pendingRequests.length})</h4>
+              <h4 className="font-semibold mb-3">{t('messaging.pendingRequests', { count: group.pendingRequests.length })}</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {group.pendingRequests.map((request) => (
                   <div key={request._id} className="flex items-center justify-between p-2 bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg">
@@ -351,7 +355,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
                 className="w-full p-3 text-left text-red-600 hover:bg-red-100 rounded-lg transition-colors flex items-center"
               >
                 <LogOut className="w-5 h-5 mr-3" />
-                Leave Group
+                {t('messaging.leaveGroup')}
               </button>
             )}
             {isAdmin && (
@@ -360,7 +364,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
                 className="w-full p-3 text-left text-red-600 hover:bg-red-100 rounded-lg transition-colors flex items-center"
               >
                 <Trash2 className="w-5 h-5 mr-3" />
-                Delete Group
+                {t('messaging.deleteGroup')}
               </button>
             )}
           </div>
@@ -372,6 +376,7 @@ const GroupInfoModal = ({ show, group, currentUserId, onClose, onUpdateGroup, on
 
 // Join Group Modal
 const JoinGroupModal = ({ show, onClose, onJoinGroup }) => {
+  const { t } = useTranslation();
   const [inviteCode, setInviteCode] = useState('');
   const [joining, setJoining] = useState(false);
 
@@ -390,32 +395,32 @@ const JoinGroupModal = ({ show, onClose, onJoinGroup }) => {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Join Group</h3>
+          <h3 className="text-lg font-semibold">{t('messaging.joinGroup')}</h3>
           <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Invite Code</label>
+            <label className="block text-sm font-medium mb-2">{t('messaging.inviteCode')}</label>
             <input
               type="text"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value)}
               className="w-full px-4 py-2 bg-white border border-[#ff99b3] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-black"
-              placeholder="Enter invite code"
+              placeholder={t('messaging.enterInviteCode')}
             />
           </div>
           <div className="flex justify-end space-x-3">
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:text-black transition-colors">
-              Cancel
+              {t('messaging.cancel')}
             </button>
             <button
               type="submit"
               disabled={!inviteCode.trim() || joining}
               className="px-6 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 disabled:bg-[#ffb3c6] disabled:cursor-not-allowed rounded-lg transition-colors text-white"
             >
-              {joining ? 'Joining...' : 'Join Group'}
+              {joining ? t('messaging.joining') : t('messaging.joinGroup')}
             </button>
           </div>
         </form>
@@ -426,6 +431,7 @@ const JoinGroupModal = ({ show, onClose, onJoinGroup }) => {
 
 // Main Component
 const MessagingScreen = ({ conversationId: propConversationId }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('dm');
   const [conversations, setConversations] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -726,11 +732,11 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         selectGroup(newGroup);
       } else {
         const error = await response.json();
-        alert(error.msg || 'Failed to create group');
+        alert(error.msg || t('messaging.errors.failedToCreateGroup'));
       }
     } catch (error) {
       console.error('Error creating group:', error);
-      alert('Failed to create group');
+      alert(t('messaging.errors.failedToCreateGroup'));
     }
   };
 
@@ -748,11 +754,11 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         selectGroup(joinedGroup);
       } else {
         const error = await response.json();
-        alert(error.msg || 'Failed to join group');
+        alert(error.msg || t('messaging.errors.failedToJoinGroup'));
       }
     } catch (error) {
       console.error('Error joining group:', error);
-      alert('Error joining group');
+      alert(t('messaging.errors.failedToJoinGroup'));
     }
   };
 
@@ -1194,7 +1200,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       <div className="min-h-screen bg-[#FFC0CB] text-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-4"></div>
-          <p>Loading messages...</p>
+          <p>{t('messaging.loadingMessages')}</p>
         </div>
       </div>
     );
@@ -1204,7 +1210,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
     <div className="min-h-screen bg-[#FFC0CB] text-black flex relative">
       {dragActive && (
         <div className="absolute inset-0 bg-pink-600/20 z-50 flex items-center justify-center">
-          <div className="bg-black/60 text-white px-4 py-2 rounded-lg">Drop files to upload</div>
+          <div className="bg-black/60 text-white px-4 py-2 rounded-lg">{t('messaging.dropFilesToUpload')}</div>
         </div>
       )}
       <div className={`w-full md:w-1/3 border-r border-[#ff99b3] flex flex-col ${selectedConversation || selectedGroup ? 'hidden md:flex' : 'flex'}`}>
@@ -1215,13 +1221,13 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                 onClick={() => setActiveTab('dm')}
                 className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'dm' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
               >
-                Direct Messages
+                {t('messaging.directMessages')}
               </button>
               <button
                 onClick={() => setActiveTab('groups')}
                 className={`flex-1 py-2 px-4 rounded-lg transition-colors ${activeTab === 'groups' ? 'bg-[#FF2B55] text-white' : 'bg-[#FFC0CB] text-gray-700 hover:bg-[#ffb3c6]'}`}
               >
-                Groups
+                {t('messaging.groups')}
               </button>
             </div>
             <div className="ml-2">
@@ -1236,7 +1242,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <input
                   type="text"
-                  placeholder="Search conversations..."
+                  placeholder={t('messaging.searchConversations')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-white border border-[#ff99b3] rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 text-black placeholder-gray-500"
@@ -1251,8 +1257,8 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
-                  <p className="text-lg">No conversations</p>
-                  <p className="text-sm">Start following people to send messages!</p>
+                  <p className="text-lg">{t('messaging.noConversations')}</p>
+                  <p className="text-sm">{t('messaging.startFollowingMessage')}</p>
                 </div>
               ) : (
                 <div className="space-y-1">
@@ -1282,7 +1288,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                             </div>
                             {conversation.lastMessage && (
                               <p className="text-sm text-gray-700 truncate">
-                                {conversation.lastMessage.sender === (currentUser?.id || currentUser?._id) ? 'You: ' : ''}
+                                {conversation.lastMessage.sender === (currentUser?.id || currentUser?._id) ? t('messaging.you') : ''}
                                 {conversation.lastMessage.type !== 'text' ? (
                                   <span className="flex items-center">
                                     {getFileIcon(conversation.lastMessage.type)}
@@ -1391,7 +1397,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 ? (
                 <div className="text-center py-8 text-gray-700">
-                  <p>Start your conversation!</p>
+                  <p>{t('messaging.startConversation')}</p>
                 </div>
               ) : (
                 messages.map((message, index) => {
@@ -1414,7 +1420,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                     <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                     <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
-                  <span>{typingUsers[0].username} is typing...</span>
+                  <span>{t('messaging.isTyping', { username: typingUsers[0].username })}</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -1444,7 +1450,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                         sendMessage(e);
                       }
                     }}
-                    placeholder="Type a message..."
+                    placeholder={t('messaging.typeMessage')}
                     disabled={sending || recording}
                     className="w-full px-4 py-2 pr-12 bg-white border border-[#ff99b3] rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 text-black placeholder-gray-500"
                   />
@@ -1492,8 +1498,8 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <p className="text-xl font-semibold mb-2">Select a conversation</p>
-              <p className="text-sm">Choose from your conversations or groups</p>
+              <p className="text-xl font-semibold mb-2">{t('messaging.selectConversation')}</p>
+              <p className="text-sm">{t('messaging.chooseFromConversations')}</p>
             </div>
           </div>
         )}
@@ -1501,17 +1507,17 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       {deleteModal.show && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">Delete Message</h3>
-            <p className="text-gray-700 mb-6">Choose how you'd like to delete this message:</p>
+            <h3 className="text-lg font-semibold mb-4">{t('messaging.deleteMessage')}</h3>
+            <p className="text-gray-700 mb-6">{t('messaging.chooseDeleteOption')}</p>
             <div className="space-y-3">
               <button onClick={() => deleteMessage('me')} className="w-full p-3 text-left hover:bg-[#ffb3c6] rounded-lg transition-colors">
-                <div className="font-medium">Delete for me</div>
-                <div className="text-sm text-gray-700">This message will only be deleted from your view</div>
+                <div className="font-medium">{t('messaging.deleteForMe')}</div>
+                <div className="text-sm text-gray-700">{t('messaging.deleteForMeDescription')}</div>
               </button>
               {deleteModal.canDeleteForEveryone && (
                 <button onClick={() => deleteMessage('everyone')} className="w-full p-3 text-left hover:bg-[#ffb3c6] rounded-lg transition-colors">
-                  <div className="font-medium">Delete for everyone</div>
-                  <div className="text-sm text-gray-700">This message will be deleted for all participants</div>
+                  <div className="font-medium">{t('messaging.deleteForEveryone')}</div>
+                  <div className="text-sm text-gray-700">{t('messaging.deleteForEveryoneDescription')}</div>
                 </button>
               )}
             </div>
@@ -1520,7 +1526,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                 onClick={() => setDeleteModal({ show: false, message: null, canDeleteForEveryone: false })}
                 className="px-4 py-2 text-gray-700 hover:text-black transition-colors"
               >
-                Cancel
+                {t('messaging.cancel')}
               </button>
             </div>
           </div>
@@ -1530,7 +1536,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#FFC0CB] border border-[#ff99b3] rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Send Media</h3>
+              <h3 className="text-lg font-semibold">{t('messaging.sendMedia')}</h3>
               <button onClick={() => setMediaModal({ show: false, files: [] })} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -1567,7 +1573,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
             </div>
             <div className="flex justify-end space-x-3">
               <button onClick={() => setMediaModal({ show: false, files: [] })} className="px-4 py-2 text-gray-700 hover:text-black transition-colors">
-                Cancel
+                {t('messaging.cancel')}
               </button>
               <button
                 onClick={uploadFiles}
@@ -1577,12 +1583,12 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                 {uploading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Uploading... {uploadProgress}%</span>
+                    <span>{t('messaging.uploading', { progress: uploadProgress })}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Send {mediaModal.files.length} file{mediaModal.files.length !== 1 ? 's' : ''}</span>
+                    <span>{mediaModal.files.length === 1 ? t('messaging.sendFiles', { count: mediaModal.files.length }) : t('messaging.sendFilesPlural', { count: mediaModal.files.length })}</span>
                   </>
                 )}
               </button>
@@ -1592,7 +1598,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
                 <div className="bg-white rounded-full h-2 border border-[#ff99b3]">
                   <div className="bg-pink-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
                 </div>
-                <p className="text-sm text-gray-700 mt-2 text-center">Uploading files... {uploadProgress}%</p>
+                <p className="text-sm text-gray-700 mt-2 text-center">{t('messaging.uploadingFiles', { progress: uploadProgress })}</p>
               </div>
             )}
           </div>
