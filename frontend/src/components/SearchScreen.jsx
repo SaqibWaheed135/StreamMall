@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, TrendingUp, Hash, User, Play, Heart, UserCheck, UserPlus, MessageCircle, Shield, Users, Bell, UserMinus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import NotificationsScreen from './NotificationsScreen';
 import AddFriendsScreen from './AddFriendScreen';
 import GoogleAd from './GoogleAd';
@@ -7,6 +8,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { API_BASE_URL } from '../config/api';
 
 const SearchScreen = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('Top');
   const [searchResults, setSearchResults] = useState([]);
@@ -20,7 +22,7 @@ const SearchScreen = () => {
   const [showAddFriends, setShowAddFriends] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
 
-  const filters = ['Top', 'Users'];
+  const filters = [t('search.top'), t('search.users')];
 
   const trendingHashtags = [
     { tag: '#fyp', videos: '15.2B', color: 'from-pink-500 to-red-500' },
@@ -375,7 +377,7 @@ const SearchScreen = () => {
         window.location.href = `/messages/${conversation._id}`;
       } else {
         const error = await response.json();
-        alert(error.msg || 'Cannot start conversation. Both users must follow each other to message.');
+        alert(error.msg || t('search.cannotStartConversation'));
       }
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -417,19 +419,25 @@ const SearchScreen = () => {
 
   // Handle filter change
   const handleFilterChange = (filter) => {
-    setActiveFilter(filter);
+    // Convert translated filter back to key for internal state
+    let filterKey = filter;
+    if (filter === t('search.top')) filterKey = 'Top';
+    else if (filter === t('search.users')) filterKey = 'Users';
+    else if (filter === t('search.hashtags')) filterKey = 'Hashtags';
+    
+    setActiveFilter(filterKey);
     setSearchResults([]);
     setHashtagResults([]);
     setVideoResults([]);
 
-    if (filter === 'Users') {
+    if (filterKey === 'Users') {
       if (searchTerm.trim()) {
         searchUsers(searchTerm);
       } else {
         // Show friends when Users tab is selected and no search term
         fetchUserFriends();
       }
-    } else if (filter === 'Hashtags' && searchTerm.trim()) {
+    } else if (filterKey === 'Hashtags' && searchTerm.trim()) {
       searchHashtags(searchTerm);
     }
   };
@@ -437,9 +445,9 @@ const SearchScreen = () => {
   // Get follow button text
   const getFollowButtonText = (userId) => {
     const status = userFollowStatus[userId] || {};
-    if (status.hasPendingRequest) return "Requested";
-    if (status.isFollowing) return "Following";
-    return "Follow";
+    if (status.hasPendingRequest) return t('search.requested');
+    if (status.isFollowing) return t('search.following');
+    return t('search.follow');
   };
 
   // Get follow button style
@@ -496,7 +504,7 @@ const SearchScreen = () => {
               <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${hashtag.color}`}></div>
               <div className="flex-1">
                 <p className="font-bold text-pink-700 text-lg">{hashtag.tag}</p>
-                <p className="text-gray-700 text-sm">{formatNumber(hashtag.videoCount)} videos</p>
+                <p className="text-gray-700 text-sm">{formatNumber(hashtag.videoCount)} {t('search.videos')}</p>
               </div>
             </div>
           </div>
@@ -504,7 +512,7 @@ const SearchScreen = () => {
 
         {videoResults.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-lg font-bold mb-3">Videos</h3>
+            <h3 className="text-lg font-bold mb-3">{t('search.videos')}</h3>
             <div className="grid grid-cols-3 gap-2">
               {videoResults.slice(0, 9).map((video) => (
                 <div key={video._id} className="relative aspect-[9/16] bg-white/70 border border-[#ff99b3] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform">
@@ -555,10 +563,10 @@ const SearchScreen = () => {
         <div className="text-center py-8 text-gray-700">
           <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
           <p className="text-lg">
-            {isShowingFriends ? 'No friends yet' : 'No users found'}
+            {isShowingFriends ? t('search.noFriendsYet') : t('search.noUsersFound')}
           </p>
           <p className="text-sm mt-2">
-            {isShowingFriends ? 'Start following people to build your friend network!' : 'Try a different search term'}
+            {isShowingFriends ? t('search.startFollowing') : t('search.tryDifferentSearch')}
           </p>
         </div>
       );
@@ -598,17 +606,17 @@ const SearchScreen = () => {
                       {isFriend && (
                         <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
                           <Users className="w-3 h-3 inline mr-1" />
-                          Friends
+                          {t('search.friendsLabel')}
                         </span>
                       )}
                       {followStatus.relationship === 'following' && (
                         <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
-                          Following
+                          {t('search.following')}
                         </span>
                       )}
                     </div>
                     <p className="text-gray-700 text-sm">
-                      {formatNumber(user.followersCount || 0)} followers
+                      {formatNumber(user.followersCount || 0)} {t('search.followers')}
                       {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
                     </p>
                   </div>
@@ -620,7 +628,7 @@ const SearchScreen = () => {
                     <button
                       onClick={() => startConversation(user)}
                       className="p-2 bg-pink-600 hover:bg-pink-700 rounded-full transition-colors"
-                      title="Send Message"
+                      title={t('search.sendMessage')}
                     >
                       <MessageCircle className="w-4 h-4 text-white" />
                     </button>
@@ -660,7 +668,7 @@ const SearchScreen = () => {
         <div className="p-4">
           {/* Top bar with title, friends button, and notifications */}
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold">Search</h1>
+            <h1 className="text-xl font-bold">{t('search.search')}</h1>
             <div className="flex items-center gap-2">
               {/* Language Switcher */}
               <LanguageSwitcher variant="light" className="!bg-white/20 !border-white/30" />
@@ -671,7 +679,7 @@ const SearchScreen = () => {
                 className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-full transition-colors text-white"
               >
                 <UserPlus className="w-5 h-5" />
-                <span className="text-sm font-medium">Add Friends</span>
+                <span className="text-sm font-medium">{t('search.addFriends')}</span>
               </button>
 
               {/* Notifications Button */}
@@ -695,8 +703,8 @@ const SearchScreen = () => {
             <input
               type="text"
               placeholder={
-                activeFilter === 'Users' ? 'Search users...' :
-                  activeFilter === 'Hashtags' ? 'Search hashtags...' : 'Search'
+                activeFilter === 'Users' ? t('search.searchUsers') :
+                  activeFilter === 'Hashtags' ? t('search.searchHashtags') : t('search.search')
               }
               value={searchTerm}
               onChange={handleSearchChange}
@@ -706,18 +714,25 @@ const SearchScreen = () => {
 
           {/* Filter Tabs */}
           <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                onClick={() => handleFilterChange(filter)}
-                className={`px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-colors ${activeFilter === filter
-                  ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-[#ffb3c6]'
-                  }`}
-              >
-                {filter}
-              </button>
-            ))}
+            {filters.map((filter) => {
+              // Determine the key for comparison
+              let filterKey = 'Top';
+              if (filter === t('search.users')) filterKey = 'Users';
+              else if (filter === t('search.top')) filterKey = 'Top';
+              
+              return (
+                <button
+                  key={filter}
+                  onClick={() => handleFilterChange(filter)}
+                  className={`px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-colors ${activeFilter === filterKey
+                    ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-[#ffb3c6]'
+                    }`}
+                >
+                  {filter}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -728,11 +743,11 @@ const SearchScreen = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">
-                {searchTerm.trim() ? 'Search Results' : 'Your Friends'}
+                {searchTerm.trim() ? t('search.searchResults') : t('search.yourFriends')}
               </h2>
               {!searchTerm.trim() && (
                 <span className="text-sm text-gray-700">
-                  {friendsList.length} friends
+                  {friendsList.length} {t('search.friends')}
                 </span>
               )}
             </div>
@@ -740,14 +755,14 @@ const SearchScreen = () => {
           </div>
         ) : activeFilter === 'Hashtags' && (searchTerm.trim() || hashtagResults.length > 0) ? (
           <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4">Hashtags</h2>
+            <h2 className="text-xl font-bold mb-4">{t('search.hashtags')}</h2>
             {renderHashtagResults()}
           </div>
         ) : (
           <>
             {/* Trending Section */}
             {/* <div className="mb-8">
-              <h2 className="text-xl font-bold mb-4">Trending Hashtags</h2>
+              <h2 className="text-xl font-bold mb-4">{t('search.trendingHashtags')}</h2>
               <div className="grid grid-cols-2 gap-3">
                 {trendingHashtags.map((item) => (
                   <div key={item.tag} className="bg-gray-900 rounded-xl p-4 hover:bg-gray-800 transition-colors cursor-pointer"
@@ -758,7 +773,7 @@ const SearchScreen = () => {
                        }}>
                     <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${item.color} mb-3`}></div>
                     <span className="text-white font-bold text-lg">{item.tag}</span>
-                    <p className="text-gray-400 text-sm mt-1">{item.videos} videos</p>
+                    <p className="text-gray-400 text-sm mt-1">{item.videos} {t('search.videos')}</p>
                   </div>
                 ))}
               </div>
@@ -766,7 +781,7 @@ const SearchScreen = () => {
 
             {/* Quick Actions */}
             <div className="mb-8">
-              <h2 className="text-xl font-bold mb-4">Discover</h2>
+              <h2 className="text-xl font-bold mb-4">{t('search.discover')}</h2>
               <div className="space-y-3">
                 <button
                   onClick={() => setActiveFilter('Users')}
@@ -775,8 +790,8 @@ const SearchScreen = () => {
                   <div className="flex items-center space-x-3">
                     <User className="w-6 h-6 text-pink-700" />
                     <div>
-                      <p className="font-bold">Find People & Friends</p>
-                      <p className="text-gray-700 text-sm">Discover new creators and see your friends</p>
+                      <p className="font-bold">{t('search.findPeopleFriends')}</p>
+                      <p className="text-gray-700 text-sm">{t('search.discoverNewCreators')}</p>
                     </div>
                   </div>
                 </button>
@@ -789,8 +804,8 @@ const SearchScreen = () => {
                     <div className="flex items-center space-x-3">
                       <Bell className="w-6 h-6 text-yellow-500" />
                       <div>
-                        <p className="font-bold">Notifications</p>
-                        <p className="text-gray-700 text-sm">Follow requests and updates</p>
+                        <p className="font-bold">{t('search.notifications')}</p>
+                        <p className="text-gray-700 text-sm">{t('search.followRequestsUpdates')}</p>
                       </div>
                     </div>
                     {notificationCount > 0 && (
