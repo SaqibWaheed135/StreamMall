@@ -482,6 +482,53 @@
       "checkPreviousOrder": "براہ کرم پہلے اپنے پچھلے آرڈر کی حیثیت چیک کریں۔",
       "createNewOrder": "نیا ادائیگی کا آرڈر بنائیں؟"
     }
+  },
+  "transfer": {
+    "transferPoints": "پوائنٹس منتقل کریں",
+    "currentBalance": "موجودہ بیلنس",
+    "pointsSent": "بھیجے گئے پوائنٹس",
+    "pointsReceived": "موصول پوائنٹس",
+    "transfers": "منتقل",
+    "sendPoints": "پوائنٹس بھیجیں",
+    "recipient": "وصول کنندہ (صارف نام یا ای میل)",
+    "enterUsernameOrEmail": "صارف نام یا ای میل درج کریں",
+    "searching": "تلاش ہو رہی ہے...",
+    "pointsToTransfer": "منتقل کرنے کے لیے پوائنٹس",
+    "enterPointsAmount": "پوائنٹس کی رقم درج کریں",
+    "messageOptional": "پیغام (اختیاری)",
+    "addMessage": "اپنی منتقلی کے ساتھ ایک پیغام شامل کریں",
+    "transferring": "منتقل ہو رہا ہے...",
+    "transferPointsButton": "پوائنٹس منتقل کریں",
+    "yourFriends": "آپ کے دوست",
+    "loadingFriends": "دوست لوڈ ہو رہے ہیں...",
+    "noFriendsFound": "کوئی دوست نہیں ملا۔",
+    "transferHistory": "منتقلی کی تاریخ",
+    "all": "سب",
+    "sent": "بھیجا گیا",
+    "received": "موصول",
+    "loadingHistory": "تاریخ لوڈ ہو رہی ہے...",
+    "noTransferHistory": "کوئی منتقلی کی تاریخ نہیں ملی۔",
+    "sentTo": "بھیجا گیا",
+    "receivedFrom": "موصول",
+    "unknownUser": "نامعلوم صارف",
+    "points": "پوائنٹس",
+    "previous": "پچھلا",
+    "next": "اگلا",
+    "page": "صفحہ",
+    "of": "کا",
+    "validation": {
+      "recipientAndPointsRequired": "وصول کنندہ اور پوائنٹس درکار ہیں",
+      "pointsMustBeValid": "پوائنٹس 0 سے زیادہ ایک درست نمبر ہونا چاہیے",
+      "insufficientBalance": "ناکافی پوائنٹس بیلنس",
+      "failedToFetchHistory": "منتقلی کی تاریخ حاصل کرنے میں ناکام",
+      "failedToFetchFriends": "دوست حاصل کرنے میں ناکام",
+      "failedToSearchUsers": "صارفین تلاش کرنے میں ناکام",
+      "failedToTransfer": "پوائنٹس منتقل کرنے میں ناکام"
+    },
+    "messages": {
+      "transferConfirm": "{{points}} پوائنٹس {{recipient}} کو منتقل کریں؟",
+      "transferSuccess": "{{points}} پوائنٹس {{recipient}} کو کامیابی سے منتقل کر دیے گئے"
+    }
   }
 }
 

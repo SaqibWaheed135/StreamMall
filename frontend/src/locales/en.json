@@ -482,6 +482,53 @@
       "checkPreviousOrder": "Please check your previous order status first.",
       "createNewOrder": "Create a new payment order?"
     }
+  },
+  "transfer": {
+    "transferPoints": "Transfer Points",
+    "currentBalance": "Current Balance",
+    "pointsSent": "Points Sent",
+    "pointsReceived": "Points Received",
+    "transfers": "transfers",
+    "sendPoints": "Send Points",
+    "recipient": "Recipient (Username or Email)",
+    "enterUsernameOrEmail": "Enter username or email",
+    "searching": "Searching...",
+    "pointsToTransfer": "Points to Transfer",
+    "enterPointsAmount": "Enter points amount",
+    "messageOptional": "Message (Optional)",
+    "addMessage": "Add a message with your transfer",
+    "transferring": "Transferring...",
+    "transferPointsButton": "Transfer Points",
+    "yourFriends": "Your Friends",
+    "loadingFriends": "Loading friends...",
+    "noFriendsFound": "No friends found.",
+    "transferHistory": "Transfer History",
+    "all": "All",
+    "sent": "Sent",
+    "received": "Received",
+    "loadingHistory": "Loading history...",
+    "noTransferHistory": "No transfer history found.",
+    "sentTo": "Sent to",
+    "receivedFrom": "Received from",
+    "unknownUser": "Unknown User",
+    "points": "pts",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of",
+    "validation": {
+      "recipientAndPointsRequired": "Recipient and points are required",
+      "pointsMustBeValid": "Points must be a valid number greater than 0",
+      "insufficientBalance": "Insufficient points balance",
+      "failedToFetchHistory": "Failed to fetch transfer history",
+      "failedToFetchFriends": "Failed to fetch friends",
+      "failedToSearchUsers": "Failed to search users",
+      "failedToTransfer": "Failed to transfer points"
+    },
+    "messages": {
+      "transferConfirm": "Transfer {{points}} points to {{recipient}}?",
+      "transferSuccess": "Successfully transferred {{points}} points to {{recipient}}"
+    }
   }
 }
 

@@ -12,9 +12,11 @@ import {
   TrendingUp,
   Search
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE_URL } from '../config/api';
 
 const PointsTransfer = () => {
+  const { t } = useTranslation();
   // Transfer form state
   const [recipient, setRecipient] = useState('');
   const [points, setPoints] = useState('');
@@ -111,7 +113,7 @@ const PointsTransfer = () => {
       }
     } catch (err) {
       console.error('Failed to fetch transfer history:', err);
-      setError('Failed to fetch transfer history');
+      setError(t('transfer.validation.failedToFetchHistory'));
     } finally {
       setHistoryLoading(false);
     }
@@ -135,7 +137,7 @@ const PointsTransfer = () => {
       setFriends(data.friends || []);
     } catch (err) {
       console.error('Failed to fetch friends:', err);
-      setError('Failed to fetch friends');
+      setError(t('transfer.validation.failedToFetchFriends'));
     } finally {
       setFriendsLoading(false);
     }
@@ -156,7 +158,7 @@ const PointsTransfer = () => {
       setShowSearchResults(true);
     } catch (err) {
       console.error('Failed to search users:', err);
-      setError('Failed to search users');
+      setError(t('transfer.validation.failedToSearchUsers'));
     } finally {
       setSearchLoading(false);
     }
@@ -209,25 +211,25 @@ const PointsTransfer = () => {
 
     // Validation
     if (!recipient.trim() || !points) {
-      setError('Recipient and points are required');
+      setError(t('transfer.validation.recipientAndPointsRequired'));
       setLoading(false);
       return;
     }
 
     const pointsNum = parseFloat(points);
     if (pointsNum <= 0 || Number.isNaN(pointsNum)) {
-      setError('Points must be a valid number greater than 0');
+      setError(t('transfer.validation.pointsMustBeValid'));
       setLoading(false);
       return;
     }
 
     if (pointsNum > currentBalance) {
-      setError('Insufficient points balance');
+      setError(t('transfer.validation.insufficientBalance'));
       setLoading(false);
       return;
     }
 
-    if (!window.confirm(`Transfer ${pointsNum} points to ${recipient}?`)) {
+    if (!window.confirm(t('transfer.messages.transferConfirm', { points: pointsNum, recipient }))) {
       setLoading(false);
       return;
     }
@@ -243,7 +245,7 @@ const PointsTransfer = () => {
       });
 
       if (data.msg) {
-        setSuccess(`Successfully transferred ${pointsNum} points to ${recipient}`);
+        setSuccess(t('transfer.messages.transferSuccess', { points: pointsNum, recipient }));
         setRecipient('');
         setPoints('');
         setMessage('');
@@ -255,7 +257,7 @@ const PointsTransfer = () => {
       }
     } catch (err) {
       console.error('Transfer error:', err);
-      setError(err.message || 'Failed to transfer points');
+      setError(err.message || t('transfer.validation.failedToTransfer'));
     } finally {
       setLoading(false);
     }
@@ -284,46 +286,46 @@ const PointsTransfer = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFC0CB] via-[#ffb3c6] to-[#ff99b3] text-gray-900 py-10 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/70 p-6 sm:p-10">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-pink-700">Transfer Points</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-pink-700">{t('transfer.transferPoints')}</h1>
 
         {/* Balance and Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-white/70 shadow-lg ring-1 ring-white/60">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-700">Current Balance</h3>
+              <h3 className="text-lg font-semibold text-gray-700">{t('transfer.currentBalance')}</h3>
               <TrendingUp className="w-5 h-5 text-pink-600" />
             </div>
-            <p className="text-2xl font-bold text-pink-600 mt-2">{currentBalance.toLocaleString()} points</p>
+            <p className="text-2xl font-bold text-pink-600 mt-2">{currentBalance.toLocaleString()} {t('recharge.pointsLabel')}</p>
           </div>
 
           <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-white/70 shadow-lg ring-1 ring-white/60">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-700">Points Sent</h3>
+              <h3 className="text-lg font-semibold text-gray-700">{t('transfer.pointsSent')}</h3>
               <ArrowUpRight className="w-5 h-5 text-[#e11d48]" />
             </div>
             <p className="text-2xl font-bold text-[#e11d48] mt-2">{stats.sent.amount.toLocaleString()}</p>
-            <p className="text-sm text-gray-600">{stats.sent.count} transfers</p>
+            <p className="text-sm text-gray-600">{stats.sent.count} {t('transfer.transfers')}</p>
           </div>
 
           <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-white/70 shadow-lg ring-1 ring-white/60">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-700">Points Received</h3>
+              <h3 className="text-lg font-semibold text-gray-700">{t('transfer.pointsReceived')}</h3>
               <ArrowDownLeft className="w-5 h-5 text-[#7c3aed]" />
             </div>
             <p className="text-2xl font-bold text-[#7c3aed] mt-2">{stats.received.amount.toLocaleString()}</p>
-            <p className="text-sm text-gray-600">{stats.received.count} transfers</p>
+            <p className="text-sm text-gray-600">{stats.received.count} {t('transfer.transfers')}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Transfer Form */}
           <div className="bg-white/85 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/60 shadow-xl">
-            <h2 className="text-xl font-semibold mb-4 text-pink-700">Send Points</h2>
+            <h2 className="text-xl font-semibold mb-4 text-pink-700">{t('transfer.sendPoints')}</h2>
 
             <div className="space-y-4" ref={searchRef}>
               <div className="relative">
                 <label className="block text-sm font-medium mb-2 text-gray-700">
-                  Recipient (Username or Email)
+                  {t('transfer.recipient')}
                 </label>
                 <div className="relative">
                   <input
@@ -332,7 +334,7 @@ const PointsTransfer = () => {
                     onChange={handleRecipientChange}
                     onFocus={() => setShowSearchResults(true)}
                     className="w-full p-3 bg-white/90 border border-[#ff99b3] rounded-xl text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 pl-10 transition"
-                    placeholder="Enter username or email"
+                    placeholder={t('transfer.enterUsernameOrEmail')}
                     disabled={loading}
                   />
                   <Search className="w-5 h-5 text-pink-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -344,7 +346,7 @@ const PointsTransfer = () => {
                     {searchLoading ? (
                       <div className="p-3 flex items-center space-x-2 text-pink-500">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Searching...</span>
+                        <span>{t('transfer.searching')}</span>
                       </div>
                     ) : (
                       searchResults.map((user) => (
@@ -370,13 +372,13 @@ const PointsTransfer = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Points to Transfer</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">{t('transfer.pointsToTransfer')}</label>
                 <input
                   type="number"
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}
                   className="w-full p-3 bg-white/90 border border-[#ff99b3] rounded-xl text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition"
-                  placeholder="Enter points amount"
+                  placeholder={t('transfer.enterPointsAmount')}
                   min="1"
                   max={currentBalance}
                   disabled={loading}
@@ -384,12 +386,12 @@ const PointsTransfer = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Message (Optional)</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">{t('transfer.messageOptional')}</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className="w-full p-3 bg-white/90 border border-[#ff99b3] rounded-xl text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition"
-                  placeholder="Add a message with your transfer"
+                  placeholder={t('transfer.addMessage')}
                   rows="3"
                   maxLength="200"
                   disabled={loading}
@@ -404,12 +406,12 @@ const PointsTransfer = () => {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Transferring...</span>
+                    <span>{t('transfer.transferring')}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Transfer Points</span>
+                    <span>{t('transfer.transferPointsButton')}</span>
                   </>
                 )}
               </button>
@@ -435,17 +437,17 @@ const PointsTransfer = () => {
             {/* Friends List */}
             <div className="bg-white/85 backdrop-blur-xl p-6 sm:px-8 sm:py-8 rounded-3xl border border-white/60 shadow-xl">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-pink-700">Your Friends</h2>
+                <h2 className="text-xl font-semibold text-pink-700">{t('transfer.yourFriends')}</h2>
                 <User className="w-5 h-5 text-pink-400" />
               </div>
 
               {friendsLoading ? (
                 <div className="flex items-center justify-center py-8 text-pink-500">
                   <Loader2 className="w-6 h-6 animate-spin" />
-                  <span className="ml-2">Loading friends...</span>
+                  <span className="ml-2">{t('transfer.loadingFriends')}</span>
                 </div>
               ) : friends.length === 0 ? (
-                <p className="text-pink-700/70 text-center py-8">No friends found.</p>
+                <p className="text-pink-700/70 text-center py-8">{t('transfer.noFriendsFound')}</p>
               ) : (
                 <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
                   {friends.map((friend) => (
@@ -472,7 +474,7 @@ const PointsTransfer = () => {
             {/* Transfer History */}
             <div className="bg-white/85 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/60 shadow-xl">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-pink-700">Transfer History</h2>
+                <h2 className="text-xl font-semibold text-pink-700">{t('transfer.transferHistory')}</h2>
                 <Filter className="w-5 h-5 text-pink-400" />
               </div>
 
@@ -488,7 +490,7 @@ const PointsTransfer = () => {
                         : 'bg-white/80 text-pink-600 border border-transparent hover:border-pink-200'
                     }`}
                   >
-                    {type === 'all' ? 'All' : type === 'debit' ? 'Sent' : 'Received'}
+                    {type === 'all' ? t('transfer.all') : type === 'debit' ? t('transfer.sent') : t('transfer.received')}
                   </button>
                 ))}
               </div>
@@ -496,10 +498,10 @@ const PointsTransfer = () => {
               {historyLoading ? (
                 <div className="flex items-center justify-center py-8 text-pink-500">
                   <Loader2 className="w-6 h-6 animate-spin" />
-                  <span className="ml-2">Loading history...</span>
+                  <span className="ml-2">{t('transfer.loadingHistory')}</span>
                 </div>
               ) : transfers.length === 0 ? (
-                <p className="text-pink-700/70 text-center py-8">No transfer history found.</p>
+                <p className="text-pink-700/70 text-center py-8">{t('transfer.noTransferHistory')}</p>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                   {transfers.map((transfer) => (
@@ -513,8 +515,8 @@ const PointsTransfer = () => {
                           )}
                           <div>
                             <p className="font-medium text-gray-800">
-                              {transfer.type === 'debit' ? 'Sent to' : 'Received from'}{' '}
-                              {transfer.counterparty?.username || 'Unknown User'}
+                              {transfer.type === 'debit' ? t('transfer.sentTo') : t('transfer.receivedFrom')}{' '}
+                              {transfer.counterparty?.username || t('transfer.unknownUser')}
                             </p>
                             <p className="text-sm text-gray-500">{formatDate(transfer.createdAt)}</p>
                           </div>
@@ -526,7 +528,7 @@ const PointsTransfer = () => {
                             }`}
                           >
                             {transfer.type === 'debit' ? '-' : '+'}
-                            {transfer.amount.toLocaleString()} pts
+                            {transfer.amount.toLocaleString()} {t('transfer.points')}
                           </p>
                           <p className="text-xs text-gray-500 capitalize">{transfer.status}</p>
                         </div>
@@ -547,17 +549,17 @@ const PointsTransfer = () => {
                     disabled={!pagination.hasPrev}
                     className="px-4 py-1.5 bg-white/85 border border-[#ffb3c6] rounded-full text-sm text-pink-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#ffe0ea] transition"
                   >
-                    Previous
+                    {t('transfer.previous')}
                   </button>
                   <span className="text-sm text-gray-600">
-                    Page {pagination.page} of {pagination.pages}
+                    {t('transfer.page')} {pagination.page} {t('transfer.of')} {pagination.pages}
                   </span>
                   <button
                     onClick={() => handlePageChange(pagination.page + 1)}
                     disabled={!pagination.hasNext}
                     className="px-4 py-1.5 bg-white/85 border border-[#ffb3c6] rounded-full text-sm text-pink-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#ffe0ea] transition"
                   >
-                    Next
+                    {t('transfer.next')}
                   </button>
                 </div>
               )}
