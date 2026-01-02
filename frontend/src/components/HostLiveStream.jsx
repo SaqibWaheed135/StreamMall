@@ -933,7 +933,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
 
     if (!liveKitReady) {
-      setError('LiveKit not loaded. Install: npm install livekit-client');
+      setError(t('stream.liveKitNotLoaded'));
       return;
     }
 
@@ -4102,14 +4102,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         className="inline-flex items-center gap-2 bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] px-4 py-2 rounded-xl font-semibold transition mb-6 shadow-sm"
       >
 
-        ← Back to Streams
+        ← {t('stream.backToStreams')}
       </button>
 
       <div className="max-w-3xl mx-auto">
         <div className="bg-white/80 border border-white/70 rounded-3xl shadow-2xl p-6 sm:p-8 backdrop-blur-xl">
           <h1 className="text-3xl font-bold text-pink-700 mb-6 flex items-center gap-3">
             <Radio className="w-8 h-8 text-pink-500" />
-            Start Live Stream
+            {t('stream.startLiveStream')}
           </h1>
 
           {error && (
@@ -4121,7 +4121,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
           {!liveKitReady && (
             <div className="bg-amber-100 border border-amber-300 text-amber-700 px-4 py-3 rounded-2xl text-sm font-medium mb-4">
-              ⚠️ LiveKit not loaded. Run: <code className="bg-white px-1 rounded">npm install livekit-client</code>
+              ⚠️ {t('stream.liveKitNotLoaded')}
             </div>
           )}
 
@@ -4151,7 +4151,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
             {isMobile() && (
               <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs z-10">
-                📱 Rotate to landscape for best view
+                {t('stream.rotateToLandscape')}
               </div>
             )}
 
@@ -4194,7 +4194,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
                 <div className="text-center text-white/80">
                   <Camera className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-                  <p className="font-medium text-sm">Requesting camera access...</p>
+                  <p className="font-medium text-sm">{t('stream.requestingCameraAccess')}</p>
                 </div>
               </div>
             )}
@@ -4202,12 +4202,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Stream Title *</label>
+              <label className="block text-sm font-medium mb-2">{t('stream.streamTitle')}</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="What's your stream about?"
+                placeholder={t('stream.streamTitlePlaceholder')}
                 className="w-full bg-white border border-[#ffb3c6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
                 maxLength={100}
               />
@@ -4215,11 +4215,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Description (optional)</label>
+              <label className="block text-sm font-medium mb-2">{t('stream.descriptionOptional')}</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add more details..."
+                placeholder={t('stream.addMoreDetails')}
                 className="w-full bg-white border border-[#ffb3c6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-400 transition resize-none"
 
                 rows={3}
@@ -4229,18 +4229,18 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Entry Fee (coins) *
+                {t('stream.entryFeeCoins')}
               </label>
               <input
                 type="number"
                 value={entryFee}
                 onChange={(e) => setEntryFee(Math.max(0, parseInt(e.target.value) || 0))}
-                placeholder="0 = Free to watch"
+                placeholder={t('stream.freeToWatch')}
                 className="w-full bg-white border border-[#ffb3c6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
                 min="0"
               />
               <p className="text-xs text-gray-400 mt-1">
-                {entryFee === 0 ? '✅ Free stream - anyone can watch' : `💰 Viewers need ${entryFee} coins to enter`}
+                {entryFee === 0 ? t('stream.freeStreamMessage') : t('stream.viewersNeedCoins', { coins: entryFee })}
               </p>
             </div>
 
@@ -4249,7 +4249,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               disabled={loading || !liveKitReady}
               className="w-full bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-xl hover:shadow-pink-200 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-semibold text-lg transition-all"
             >
-              {loading ? 'Starting…' : '🔴 Go LIVE'}
+              {loading ? t('stream.starting') : t('stream.goLive')}
             </button>
 
           </div>
@@ -4273,7 +4273,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       {showFullscreenToast && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 backdrop-blur-md">
           <Maximize className="w-4 h-4" />
-          <span className="text-sm font-medium">Opening in fullscreen...</span>
+          <span className="text-sm font-medium">{t('stream.openingInFullscreen')}</span>
         </div>
       )}
     </div>
