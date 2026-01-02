@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, CreditCard, DollarSign, Star, Gift, History, CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, Calendar, Lock, Upload, Copy, QrCode, ExternalLink, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CreditCard, DollarSign, Star, Gift, History, CheckCircle, XCircle, Clock, User, Mail, Phone, MapPin, Calendar, Lock, Upload, Copy, QrCode, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { QRCodeCanvas } from "qrcode.react";
 import { API_BASE_URL } from '../config/api';
 
 const PointsRechargeScreen = ({ onBack }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('recharge');
   const [pointsBalance, setPointsBalance] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -232,8 +234,8 @@ const PointsRechargeScreen = ({ onBack }) => {
   ];
 
   const paymentMethods = [
-    { id: 'usdt', name: 'USDT (TRC20)', icon: DollarSign, description: 'Fast & secure crypto payment' },
-    { id: 'bank', name: 'Bank Transfer', icon: Gift, description: 'Manual verification required' },
+    { id: 'usdt', name: t('recharge.usdtTrc20'), icon: DollarSign, description: t('recharge.usdtDescription') },
+    { id: 'bank', name: t('recharge.bankTransfer'), icon: Gift, description: t('recharge.bankDescription') },
   ];
 
   const getCategoryForIcon = (transaction) => {
@@ -345,9 +347,9 @@ const getTransactionIcon = (category) => {
   }
 };
   const formatDate = (dateString) => {
-    if (!dateString) return 'Invalid date';
+    if (!dateString) return t('recharge.invalidDate');
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Invalid date';
+    if (isNaN(date.getTime())) return t('recharge.invalidDate');
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -448,51 +450,51 @@ const getTransactionIcon = (category) => {
     const errors = {};
     if (selectedPaymentMethod !== 'usdt') {
       if (!paymentDetails.fullName.trim()) {
-        errors.fullName = 'Full name is required';
+        errors.fullName = t('recharge.validation.fullNameRequired');
       }
       if (!paymentDetails.email.trim()) {
-        errors.email = 'Email is required';
+        errors.email = t('recharge.validation.emailRequired');
       } else if (!/\S+@\S+\.\S+/.test(paymentDetails.email)) {
-        errors.email = 'Please enter a valid email';
+        errors.email = t('recharge.validation.validEmail');
       }
       if (!paymentDetails.phone.trim()) {
-        errors.phone = 'Phone number is required';
+        errors.phone = t('recharge.validation.phoneRequired');
       }
     }
     if (selectedPaymentMethod === 'card') {
       if (!paymentDetails.cardNumber.trim()) {
-        errors.cardNumber = 'Card number is required';
+        errors.cardNumber = t('recharge.validation.cardNumberRequired');
       }
       if (!paymentDetails.expiryDate.trim()) {
-        errors.expiryDate = 'Expiry date is required';
+        errors.expiryDate = t('recharge.validation.expiryDateRequired');
       }
       if (!paymentDetails.cvv.trim()) {
-        errors.cvv = 'CVV is required';
+        errors.cvv = t('recharge.validation.cvvRequired');
       }
       if (!paymentDetails.cardholderName.trim()) {
-        errors.cardholderName = 'Cardholder name is required';
+        errors.cardholderName = t('recharge.validation.cardholderNameRequired');
       }
       if (!paymentDetails.address.trim()) {
-        errors.address = 'Billing address is required';
+        errors.address = t('recharge.validation.addressRequired');
       }
       if (!paymentDetails.city.trim()) {
-        errors.city = 'City is required';
+        errors.city = t('recharge.validation.cityRequired');
       }
       if (!paymentDetails.zipCode.trim()) {
-        errors.zipCode = 'ZIP code is required';
+        errors.zipCode = t('recharge.validation.zipCodeRequired');
       }
     } else if (selectedPaymentMethod === 'paypal') {
       if (!paymentDetails.paypalEmail.trim()) {
-        errors.paypalEmail = 'PayPal email is required';
+        errors.paypalEmail = t('recharge.validation.paypalEmailRequired');
       } else if (!/\S+@\S+\.\S+/.test(paymentDetails.paypalEmail)) {
-        errors.paypalEmail = 'Please enter a valid PayPal email';
+        errors.paypalEmail = t('recharge.validation.validPaypalEmail');
       }
     } else if (selectedPaymentMethod === 'bank') {
       if (!paymentDetails.transactionId.trim()) {
-        errors.transactionId = 'Transaction ID/Reference is required';
+        errors.transactionId = t('recharge.validation.transactionIdRequired');
       }
       if (!paymentDetails.transactionScreenshot) {
-        errors.transactionScreenshot = 'Transaction screenshot is required';
+        errors.transactionScreenshot = t('recharge.validation.screenshotRequired');
       }
     }
     setValidationErrors(errors);
@@ -541,7 +543,7 @@ const getTransactionIcon = (category) => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-      setCopyMsg('Copied!');
+      setCopyMsg(t('recharge.copied'));
       setTimeout(() => setCopyMsg(''), 2000);
     }).catch(() => {
       const textArea = document.createElement('textarea');
@@ -550,7 +552,7 @@ const getTransactionIcon = (category) => {
       textArea.select();
       document.execCommand('copy');
       document.body.removeChild(textArea);
-      setCopyMsg('Copied!');
+      setCopyMsg(t('recharge.copied'));
       setTimeout(() => setCopyMsg(''), 2000);
     });
   };
@@ -640,23 +642,23 @@ const getTransactionIcon = (category) => {
         setTimerInterval(iv);
 
         startPaymentStatusCheck(data.data.orderId);
-      } else {
-        // Handle error - if there's a pending order, show option to continue
-        if (data.orderId) {
-          const continueExisting = window.confirm(
-            `${data.msg}\n\nDo you want to continue with the existing order?`
-          );
-          if (continueExisting) {
-            // Redirect to check existing order status
-            alert('Please check your previous order status first.');
-          }
         } else {
-          alert(data.errors?.[0]?.msg || data.msg || 'Failed to create USDT order');
+          // Handle error - if there's a pending order, show option to continue
+          if (data.orderId) {
+            const continueExisting = window.confirm(
+              `${data.msg}\n\n${t('recharge.messages.continueExistingOrder')}`
+            );
+            if (continueExisting) {
+              // Redirect to check existing order status
+              alert(t('recharge.messages.checkPreviousOrder'));
+            }
+          } else {
+            alert(data.errors?.[0]?.msg || data.msg || t('recharge.messages.failedToCreateOrder'));
+          }
         }
-      }
-    } catch (error) {
-      console.error('Error creating USDT order:', error);
-      alert('Failed to create USDT payment order');
+      } catch (error) {
+        console.error('Error creating USDT order:', error);
+        alert(t('recharge.messages.failedToCreateOrderTryAgain'));
     } finally {
       setRecharging(false);
     }
@@ -722,7 +724,7 @@ const getTransactionIcon = (category) => {
       if (data.success && data.status === 'approved') {
         setPaymentStatus('approved');
         if (!hasAlertedRef.current) {
-          alert('✅ Payment confirmed! Points have been added to your account.');
+          alert(`✅ ${t('recharge.messages.paymentConfirmedAlert')}`);
           hasAlertedRef.current = true;
         }
         if (pollingIntervalRef.current) {
@@ -752,7 +754,7 @@ const getTransactionIcon = (category) => {
           setTimerInterval(null);
         }
         if (!hasAlertedRef.current) {
-          alert('⏰ Payment window expired. You can create a new payment order.');
+          alert(`⏰ ${t('recharge.messages.orderExpiredAlert')}`);
           hasAlertedRef.current = true;
         }
       } else {
@@ -786,7 +788,7 @@ const getTransactionIcon = (category) => {
       if (paymentStatus !== 'approved') {
         setPaymentStatus('expired');
         if (!hasAlertedRef.current) {
-          alert('Order expired');
+          alert(t('recharge.messages.orderExpired'));
           hasAlertedRef.current = true;
         }
       }
@@ -797,15 +799,15 @@ const getTransactionIcon = (category) => {
     const amount = selectedAmount || parseFloat(customAmount);
 
     if (!amount || amount <= 0) {
-      alert('Please select or enter a valid amount');
+      alert(t('recharge.validation.selectValidAmount'));
       return;
     }
     if (amount < 1) {
-      alert('Minimum recharge amount is $1');
+      alert(t('recharge.validation.minimumAmount'));
       return;
     }
     if (amount > 500) {
-      alert('Maximum recharge amount is $500');
+      alert(t('recharge.validation.maximumAmount'));
       return;
     }
     if (selectedPaymentMethod === 'usdt') {
@@ -850,7 +852,7 @@ const getTransactionIcon = (category) => {
   };
   // Add a function to handle creating new order after expiry:
   const handleCreateNewOrder = () => {
-    if (window.confirm('Create a new payment order?')) {
+    if (window.confirm(t('recharge.messages.createNewOrder'))) {
       const amount = selectedAmount || parseFloat(customAmount);
       resetForm();
       setTimeout(() => {
@@ -866,7 +868,7 @@ const getTransactionIcon = (category) => {
     try {
       // Validate form first
       if (!validateForm()) {
-        alert('Please fill in all required fields');
+        alert(t('recharge.validation.fillRequiredFields'));
         return;
       }
 
@@ -916,7 +918,7 @@ const getTransactionIcon = (category) => {
 
         if (response.ok) {
           // Success - show success message
-          alert(`✅ Recharge request submitted successfully!\n\nRequest ID: ${data.recharge.requestId}\nAmount: $${data.recharge.amount}\nPoints: ${data.recharge.pointsToAdd.toLocaleString()}\n\nYour request is being reviewed. You'll receive points once approved by admin.`);
+          alert(`✅ ${t('recharge.messages.rechargeSubmitted')}\n\n${t('recharge.messages.requestId')}: ${data.recharge.requestId}\n${t('recharge.messages.amount')}: $${data.recharge.amount}\n${t('recharge.messages.points')}: ${data.recharge.pointsToAdd.toLocaleString()}\n\n${t('recharge.messages.requestBeingReviewed')}`);
 
           // Refresh data
           await fetchPointsBalance();
@@ -927,18 +929,18 @@ const getTransactionIcon = (category) => {
           setActiveTab('history');
         } else {
           // Handle errors
-          const errorMsg = data.errors?.[0]?.msg || data.msg || 'Failed to submit recharge request';
-          alert(`❌ Error: ${errorMsg}`);
+          const errorMsg = data.errors?.[0]?.msg || data.msg || t('recharge.messages.rechargeFailed');
+          alert(`❌ ${t('recharge.messages.error')}: ${errorMsg}`);
         }
       } else if (selectedPaymentMethod === 'card' || selectedPaymentMethod === 'paypal') {
         // For card/PayPal - these would integrate with payment gateways
-        alert('Card and PayPal payments are currently not available. Please use Bank Transfer or USDT.');
+        alert(t('recharge.messages.cardPaypalNotAvailable'));
       } else {
-        alert('Invalid payment method selected');
+        alert(t('recharge.messages.invalidPaymentMethod'));
       }
     } catch (error) {
       console.error('Error submitting recharge:', error);
-      alert('❌ Failed to submit recharge request. Please check your connection and try again.');
+      alert(`❌ ${t('recharge.messages.rechargeFailedTryAgain')}`);
     } finally {
       setRecharging(false);
     }
@@ -1148,7 +1150,7 @@ const getTransactionIcon = (category) => {
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <h1 className="text-xl font-bold">USDT Payment</h1>
+              <h1 className="text-xl font-bold">{t('recharge.usdtPayment')}</h1>
             </div>
             <div className="text-right">
               <div className="text-lg font-bold text-pink-700">
@@ -1173,21 +1175,21 @@ const getTransactionIcon = (category) => {
               {paymentStatus === 'approved' ? (
                 <>
                   <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-green-700">Payment Confirmed!</h3>
-                  <p className="text-green-700">Points have been added to your account</p>
-                  <p className="text-sm text-green-600 mt-2">Redirecting to history...</p>
+                  <h3 className="text-lg font-bold text-green-700">{t('recharge.paymentConfirmed')}</h3>
+                  <p className="text-green-700">{t('recharge.pointsAddedToAccount')}</p>
+                  <p className="text-sm text-green-600 mt-2">{t('recharge.redirectingToHistory')}</p>
                 </>
               ) : paymentStatus === 'expired' ? (
                 <>
                   <AlertCircle className="w-12 h-12 text-orange-600 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-orange-700">Payment Expired</h3>
-                  <p className="text-orange-700">Payment window has closed</p>
+                  <h3 className="text-lg font-bold text-orange-700">{t('recharge.paymentExpired')}</h3>
+                  <p className="text-orange-700">{t('recharge.paymentWindowClosed')}</p>
                 </>
               ) : (
                 <>
                   <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-yellow-700">Waiting for Payment</h3>
-                  <p className="text-yellow-700">Send USDT to the address below</p>
+                  <h3 className="text-lg font-bold text-yellow-700">{t('recharge.waitingForPayment')}</h3>
+                  <p className="text-yellow-700">{t('recharge.sendUsdtBelow')}</p>
                   <div className="mt-2 text-2xl font-bold text-yellow-800">
                     {formatTime(countdown)}
                   </div>
@@ -1200,19 +1202,19 @@ const getTransactionIcon = (category) => {
           {paymentStatus === 'approved' && (
             <div className="space-y-4">
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
-                <h3 className="text-lg font-semibold mb-3">Transaction Details</h3>
+                <h3 className="text-lg font-semibold mb-3">{t('recharge.transactionDetails')}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Amount:</span>
+                    <span className="text-gray-700">{t('recharge.amount')}:</span>
                     <span className="font-bold">{usdtPaymentData.amount} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Points Added:</span>
+                    <span className="text-gray-700">{t('recharge.pointsAdded')}:</span>
                     <span className="font-bold text-green-600">+{usdtPaymentData.pointsToAdd.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Status:</span>
-                    <span className="font-bold text-green-600">Completed</span>
+                    <span className="text-gray-700">{t('recharge.status')}:</span>
+                    <span className="font-bold text-green-600">{t('recharge.completed')}</span>
                   </div>
                 </div>
               </div>
@@ -1257,7 +1259,7 @@ const getTransactionIcon = (category) => {
             <div className="space-y-4">
               <div className="bg-orange-100 border border-orange-500 rounded-lg p-4">
                 <p className="text-orange-700 text-sm text-center">
-                  ⏰ This payment order has expired. No payment was detected within the time limit.
+                  ⏰ {t('recharge.orderExpiredMessage')}
                 </p>
               </div>
 
@@ -1266,7 +1268,7 @@ const getTransactionIcon = (category) => {
                 className="w-full py-3 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-lg font-semibold text-white flex items-center justify-center space-x-2"
               >
                 <RefreshCw className="w-5 h-5" />
-                <span>Create New Payment Order</span>
+                <span>{t('recharge.createNewPaymentOrder')}</span>
               </button>
 
               <button
@@ -1276,7 +1278,7 @@ const getTransactionIcon = (category) => {
                 }}
                 className="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold"
               >
-                Back to Recharge
+                {t('recharge.backToRecharge')}
               </button>
             </div>
           )}
@@ -1286,7 +1288,7 @@ const getTransactionIcon = (category) => {
             <>
               {/* QR Code */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6 text-center">
-                <h3 className="text-lg font-semibold mb-4">Scan QR Code</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('recharge.scanQrCode')}</h3>
                 <div className="bg-white p-4 rounded-lg inline-block">
                   <QRCodeCanvas
                     value={`tron:${usdtPaymentData.walletAddress}?amount=${usdtPaymentData.amount}`}
@@ -1294,12 +1296,12 @@ const getTransactionIcon = (category) => {
                     includeMargin={true}
                   />
                 </div>
-                <p className="text-gray-700 text-sm mt-2">Scan with your USDT wallet</p>
+                <p className="text-gray-700 text-sm mt-2">{t('recharge.scanWithWallet')}</p>
               </div>
 
               {/* Wallet Address */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
-                <h3 className="text-lg font-semibold mb-4">Wallet Address (TRC20)</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('recharge.walletAddressTrc20')}</h3>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-mono break-all text-gray-800 flex-1">
                     {usdtPaymentData.walletAddress}
@@ -1309,7 +1311,7 @@ const getTransactionIcon = (category) => {
                     className="bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white px-2 py-1 rounded text-sm flex items-center"
                   >
                     <Copy className="w-4 h-4 mr-1" />
-                    Copy
+                    {t('recharge.copy')}
                   </button>
                 </div>
                 {copyMsg && <p className="text-green-700 text-sm mt-1">{copyMsg}</p>}
@@ -1317,30 +1319,30 @@ const getTransactionIcon = (category) => {
 
               {/* Payment Details */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
-                <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('recharge.paymentDetails')}</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Requested Amount:</span>
+                    <span className="text-gray-700">{t('recharge.requestedAmount')}:</span>
                     <span className="font-bold">{usdtPaymentData.originalAmount} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Payable Amount:</span>
+                    <span className="text-gray-700">{t('recharge.payableAmount')}:</span>
                     <span className="font-bold text-red-600">{usdtPaymentData.amount} USDT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Network:</span>
-                    <span className="font-bold">TRC20 (Tron)</span>
+                    <span className="text-gray-700">{t('recharge.network')}:</span>
+                    <span className="font-bold">{t('recharge.trc20Tron')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Points:</span>
+                    <span className="text-gray-700">{t('recharge.pointsLabel')}:</span>
                     <span className="font-bold text-pink-700">{usdtPaymentData.pointsToAdd.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Order ID:</span>
+                    <span className="text-gray-700">{t('recharge.orderId')}:</span>
                     <span className="font-mono text-sm">{usdtPaymentData.orderId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Expires in:</span>
+                    <span className="text-gray-700">{t('recharge.expiresIn')}:</span>
                     <span className={`font-bold ${countdown < 300 ? 'text-red-600' : ''}`}>
                       {formatTime(countdown)}
                     </span>
@@ -1351,19 +1353,19 @@ const getTransactionIcon = (category) => {
               {/* Warning */}
               <div className="bg-red-100 border border-red-500 rounded-lg p-4 mb-6">
                 <p className="text-red-700 text-sm text-center">
-                  ⚠️ Send exactly {usdtPaymentData.amount} USDT (otherwise payment won't be detected)
+                  ⚠️ {t('recharge.sendExactly', { amount: usdtPaymentData.amount })}
                 </p>
               </div>
 
               {/* Instructions */}
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4 mb-6">
-                <h3 className="text-lg font-semibold mb-4">Instructions</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('recharge.instructions')}</h3>
                 <div className="space-y-2 text-sm text-gray-800">
-                  <p>1. Send exactly <strong>{usdtPaymentData.amount} USDT</strong> to the wallet address above</p>
-                  <p>2. Make sure to use the <strong>TRC20 network</strong></p>
-                  <p>3. Payment will be confirmed automatically within 1-5 minutes</p>
-                  <p>4. Points will be added to your account once confirmed</p>
-                  <p>5. Complete payment within <strong>{formatTime(countdown)}</strong></p>
+                  <p>1. {t('recharge.instruction1', { amount: usdtPaymentData.amount })}</p>
+                  <p>2. {t('recharge.instruction2')}</p>
+                  <p>3. {t('recharge.instruction3')}</p>
+                  <p>4. {t('recharge.instruction4')}</p>
+                  <p>5. {t('recharge.instruction5', { time: formatTime(countdown) })}</p>
                 </div>
               </div>
 
@@ -1376,12 +1378,12 @@ const getTransactionIcon = (category) => {
                 {checkingPayment ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Checking...</span>
+                    <span>{t('recharge.checking')}</span>
                   </>
                 ) : (
                   <>
                     <RefreshCw className="w-5 h-5" />
-                    <span>Check Payment Status</span>
+                    <span>{t('recharge.checkPaymentStatus')}</span>
                   </>
                 )}
               </button>
@@ -1389,7 +1391,7 @@ const getTransactionIcon = (category) => {
               {/* Safety Warning */}
               <div className="bg-red-100 border border-red-500 rounded-lg p-4">
                 <p className="text-red-700 text-sm text-center">
-                  ⚠️ Only send USDT on TRC20 network. Sending other tokens or using wrong network will result in loss of funds.
+                  ⚠️ {t('recharge.safetyWarning')}
                 </p>
               </div>
             </>
@@ -1412,14 +1414,14 @@ const getTransactionIcon = (category) => {
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <h1 className="text-xl font-bold">Payment Details</h1>
+              <h1 className="text-xl font-bold">{t('recharge.paymentDetailsHeader')}</h1>
             </div>
             <div className="text-right">
               <div className="text-lg font-bold text-pink-700">
                 ${selectedAmount || customAmount}
               </div>
               <p className="text-xs text-gray-700">
-                {calculatePoints(selectedAmount || parseFloat(customAmount)).toLocaleString()} points
+                {calculatePoints(selectedAmount || parseFloat(customAmount)).toLocaleString()} {t('recharge.pointsLabel')}
               </p>
             </div>
           </div>
@@ -1428,19 +1430,19 @@ const getTransactionIcon = (category) => {
         <div className="p-4 max-w-md mx-auto">
           <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-6 mb-6">
             <div className="text-center text-black">
-              <h3 className="text-lg font-bold mb-2">Order Summary</h3>
+              <h3 className="text-lg font-bold mb-2">{t('recharge.orderSummary')}</h3>
               <div className="flex justify-between items-center mb-2">
-                <span>Amount:</span>
+                <span>{t('recharge.amount')}:</span>
                 <span className="font-bold">${selectedAmount || customAmount}</span>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <span>Points:</span>
+                <span>{t('recharge.pointsLabel')}:</span>
                 <span className="font-bold text-pink-700">
                   {calculatePoints(selectedAmount || parseFloat(customAmount)).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Payment Method:</span>
+                <span>{t('recharge.paymentMethod')}:</span>
                 <span className="font-bold capitalize">{selectedPaymentMethod}</span>
               </div>
             </div>
@@ -1450,14 +1452,14 @@ const getTransactionIcon = (category) => {
             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2" />
-                Personal Information
+                {t('recharge.personalInformation')}
               </h3>
 
               <div className="space-y-4">
                 <div>
                   <input
                     type="text"
-                    placeholder="Full Name"
+                    placeholder={t('recharge.fullName')}
                     value={paymentDetails.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.fullName ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1471,7 +1473,7 @@ const getTransactionIcon = (category) => {
                 <div>
                   <input
                     type="email"
-                    placeholder="Email Address"
+                    placeholder={t('recharge.emailAddress')}
                     value={paymentDetails.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.email ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1485,7 +1487,7 @@ const getTransactionIcon = (category) => {
                 <div>
                   <input
                     type="tel"
-                    placeholder="Phone Number"
+                    placeholder={t('recharge.phoneNumber')}
                     value={paymentDetails.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.phone ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1502,14 +1504,14 @@ const getTransactionIcon = (category) => {
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <CreditCard className="w-5 h-5 mr-2" />
-                  Card Information
+                  {t('recharge.cardInformation')}
                 </h3>
 
                 <div className="space-y-4">
                   <div>
                     <input
                       type="text"
-                      placeholder="Cardholder Name"
+                      placeholder={t('recharge.cardholderName')}
                       value={paymentDetails.cardholderName}
                       onChange={(e) => handleInputChange('cardholderName', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cardholderName ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1523,7 +1525,7 @@ const getTransactionIcon = (category) => {
                   <div>
                     <input
                       type="text"
-                      placeholder="Card Number"
+                      placeholder={t('recharge.cardNumber')}
                       value={paymentDetails.cardNumber}
                       onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
                       maxLength="19"
@@ -1539,7 +1541,7 @@ const getTransactionIcon = (category) => {
                     <div>
                       <input
                         type="text"
-                        placeholder="MM/YY"
+                        placeholder={t('recharge.mmYy')}
                         value={paymentDetails.expiryDate}
                         onChange={(e) => handleInputChange('expiryDate', formatExpiryDate(e.target.value))}
                         maxLength="5"
@@ -1553,7 +1555,7 @@ const getTransactionIcon = (category) => {
                     <div>
                       <input
                         type="text"
-                        placeholder="CVV"
+                        placeholder={t('recharge.cvv')}
                         value={paymentDetails.cvv}
                         onChange={(e) => handleInputChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
                         className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.cvv ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1568,14 +1570,14 @@ const getTransactionIcon = (category) => {
 
                 <h4 className="text-md font-semibold mt-6 mb-4 flex items-center">
                   <MapPin className="w-4 h-4 mr-2" />
-                  Billing Address
+                  {t('recharge.billingAddress')}
                 </h4>
 
                 <div className="space-y-4">
                   <div>
                     <input
                       type="text"
-                      placeholder="Street Address"
+                      placeholder={t('recharge.streetAddress')}
                       value={paymentDetails.address}
                       onChange={(e) => handleInputChange('address', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.address ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1590,7 +1592,7 @@ const getTransactionIcon = (category) => {
                     <div>
                       <input
                         type="text"
-                        placeholder="City"
+                        placeholder={t('recharge.city')}
                         value={paymentDetails.city}
                         onChange={(e) => handleInputChange('city', e.target.value)}
                         className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.city ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1603,7 +1605,7 @@ const getTransactionIcon = (category) => {
                     <div>
                       <input
                         type="text"
-                        placeholder="ZIP Code"
+                        placeholder={t('recharge.zipCode')}
                         value={paymentDetails.zipCode}
                         onChange={(e) => handleInputChange('zipCode', e.target.value)}
                         className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.zipCode ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1618,14 +1620,14 @@ const getTransactionIcon = (category) => {
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="State/Province"
+                      placeholder={t('recharge.state')}
                       value={paymentDetails.state}
                       onChange={(e) => handleInputChange('state', e.target.value)}
                       className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                     <input
                       type="text"
-                      placeholder="Country"
+                      placeholder={t('recharge.country')}
                       value={paymentDetails.country}
                       onChange={(e) => handleInputChange('country', e.target.value)}
                       className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -1639,13 +1641,13 @@ const getTransactionIcon = (category) => {
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <DollarSign className="w-5 h-5 mr-2" />
-                  PayPal Information
+                  {t('withdrawal.paypalInformation')}
                 </h3>
 
                 <div>
                   <input
                     type="email"
-                    placeholder="PayPal Email Address"
+                    placeholder={t('withdrawal.paypalEmailAddress')}
                     value={paymentDetails.paypalEmail}
                     onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
                     className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.paypalEmail ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1662,18 +1664,18 @@ const getTransactionIcon = (category) => {
               <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-xl p-4">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <Gift className="w-5 h-5 mr-2" />
-                  Bank Transfer Information
+                  {t('recharge.bankInformation')}
                 </h3>
 
                 <div className="mb-6">
-                  <h4 className="text-md font-semibold mb-2">Transfer to this account:</h4>
+                  <h4 className="text-md font-semibold mb-2">{t('recharge.bankDetails')}:</h4>
                   <div className="space-y-2 text-sm text-gray-800">
-                    <p><strong>Bank Name:</strong> {appBankDetails.bankName}</p>
-                    <p><strong>Account Number:</strong> {appBankDetails.accountNumber}</p>
-                    <p><strong>Routing Number:</strong> {appBankDetails.routingNumber}</p>
-                    <p><strong>Account Holder:</strong> {appBankDetails.accountHolder}</p>
-                    <p><strong>SWIFT Code:</strong> {appBankDetails.swiftCode}</p>
-                    <p className="text-gray-700">{appBankDetails.instructions}</p>
+                    <p><strong>{t('recharge.bankName')}:</strong> {appBankDetails.bankName}</p>
+                    <p><strong>{t('recharge.accountNumber')}:</strong> {appBankDetails.accountNumber}</p>
+                    <p><strong>{t('recharge.routingNumber')}:</strong> {appBankDetails.routingNumber}</p>
+                    <p><strong>{t('recharge.accountHolder')}:</strong> {appBankDetails.accountHolder}</p>
+                    <p><strong>{t('recharge.swiftCode')}:</strong> {appBankDetails.swiftCode}</p>
+                    <p className="text-gray-700">{t('recharge.transferInstructions')}</p>
                   </div>
                 </div>
 
@@ -1681,7 +1683,7 @@ const getTransactionIcon = (category) => {
                   <div>
                     <input
                       type="text"
-                      placeholder="Transaction ID/Reference"
+                      placeholder={t('recharge.transactionIdReference')}
                       value={paymentDetails.transactionId}
                       onChange={(e) => handleInputChange('transactionId', e.target.value)}
                       className={`w-full p-3 bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 ${validationErrors.transactionId ? 'border-red-500' : 'border-[#ff99b3]'
@@ -1693,7 +1695,7 @@ const getTransactionIcon = (category) => {
                   </div>
 
                   <div>
-                    <label className="block mb-2 text-sm font-medium">Upload Transaction Screenshot</label>
+                    <label className="block mb-2 text-sm font-medium">{t('recharge.uploadScreenshot')}</label>
                     <div className="flex items-center space-x-2">
                       <input
                         type="file"
@@ -1707,7 +1709,7 @@ const getTransactionIcon = (category) => {
                         className="cursor-pointer flex items-center space-x-2 p-3 bg-white border rounded-lg w-full text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
                       >
                         <Upload className="w-5 h-5" />
-                        <span>{paymentDetails.transactionScreenshot ? paymentDetails.transactionScreenshot.name : 'Choose file'}</span>
+                        <span>{paymentDetails.transactionScreenshot ? paymentDetails.transactionScreenshot.name : t('common.chooseFile')}</span>
                       </label>
                     </div>
                     {validationErrors.transactionScreenshot && (
@@ -1726,15 +1728,15 @@ const getTransactionIcon = (category) => {
               {recharging ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>{selectedPaymentMethod === 'bank' ? 'Submitting Request...' : 'Processing Payment...'}</span>
+                  <span>{selectedPaymentMethod === 'bank' ? t('recharge.submitting') : t('common.processing')}</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center space-x-2">
                   <Lock className="w-5 h-5" />
                   <span>
                     {selectedPaymentMethod === 'bank'
-                      ? 'Submit Recharge Request'
-                      : `Complete Payment - $${selectedAmount || customAmount}`}
+                      ? t('recharge.submitRecharge')
+                      : `${t('common.completePayment')} - $${selectedAmount || customAmount}`}
                   </span>
                 </div>
               )}
@@ -1742,10 +1744,10 @@ const getTransactionIcon = (category) => {
             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4 text-center">
               <div className="flex items-center justify-center space-x-2 mb-2">
                 <Lock className="w-4 h-4 text-green-700" />
-                <span className="text-sm text-green-700 font-medium">Secure Payment</span>
+                <span className="text-sm text-green-700 font-medium">{t('common.securePayment')}</span>
               </div>
               <p className="text-xs text-gray-700">
-                Your payment information is encrypted and secure. We never store your card details.
+                {t('common.paymentSecureMessage')}
               </p>
             </div>
           </div>
@@ -1788,14 +1790,14 @@ const getTransactionIcon = (category) => {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-bold">Points</h1>
+            <h1 className="text-xl font-bold">{t('recharge.points')}</h1>
           </div>
           <div className="text-right">
             <div className="flex items-center space-x-2">
               <Star className="w-5 h-5 text-pink-700" />
               <span className="text-lg font-bold text-pink-700">{pointsBalance.toLocaleString()}</span>
             </div>
-            <p className="text-xs text-gray-700">Current Balance</p>
+            <p className="text-xs text-gray-700">{t('recharge.currentBalance')}</p>
           </div>
         </div>
       </div>
@@ -1807,7 +1809,7 @@ const getTransactionIcon = (category) => {
               <Star className="w-8 h-8 text-white" />
               <h2 className="text-3xl font-bold text-white">{pointsBalance.toLocaleString()}</h2>
             </div>
-            <p className="text-white/80">Available Points</p>
+            <p className="text-white/80">{t('recharge.availablePoints')}</p>
           </div>
         </div>
 
@@ -1820,7 +1822,7 @@ const getTransactionIcon = (category) => {
               }`}
           >
             <CreditCard className="w-4 h-4 inline mr-2" />
-            Recharge
+            {t('recharge.recharge')}
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -1830,14 +1832,14 @@ const getTransactionIcon = (category) => {
               }`}
           >
             <History className="w-4 h-4 inline mr-2" />
-            History
+            {t('recharge.history')}
           </button>
         </div>
 
         {activeTab === 'recharge' && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Select Amount</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('recharge.selectAmount')}</h3>
               <div className="grid grid-cols-1 gap-3">
                 {rechargeOptions.map((option) => (
                   <button
@@ -1857,18 +1859,18 @@ const getTransactionIcon = (category) => {
                           <span className="text-xl font-bold">${option.amount}</span>
                           {option.popular && (
                             <span className="bg-pink-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                              Popular
+                              {t('recharge.popular')}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center space-x-1 mt-1">
                           <Star className="w-4 h-4 text-pink-700" />
                           <span className="text-pink-700 font-medium">
-                            {(option.points + option.bonus).toLocaleString()} points
+                            {(option.points + option.bonus).toLocaleString()} {t('recharge.pointsLabel')}
                           </span>
                           {option.bonus > 0 && (
                             <span className="text-green-700 text-sm">
-                              (+{option.bonus} bonus)
+                              (+{option.bonus} {t('recharge.bonus')})
                             </span>
                           )}
                         </div>
@@ -1883,7 +1885,7 @@ const getTransactionIcon = (category) => {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Or Enter Custom Amount</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('recharge.orEnterCustomAmount')}</h3>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700">$</span>
                 <input
@@ -1896,21 +1898,21 @@ const getTransactionIcon = (category) => {
                     setSelectedAmount(null);
                   }}
                   className="w-full pl-8 pr-4 py-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="Enter amount (1-500)"
+                  placeholder={t('recharge.enterAmount')}
                 />
               </div>
               {customAmount && (
                 <div className="mt-2 flex items-center space-x-1 text-sm">
                   <Star className="w-4 h-4 text-pink-700" />
                   <span className="text-pink-700">
-                    You'll get {calculatePoints(parseFloat(customAmount)).toLocaleString()} points
+                    {t('recharge.youllGet')} {calculatePoints(parseFloat(customAmount)).toLocaleString()} {t('recharge.pointsWillBeAdded')}
                   </span>
                 </div>
               )}
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('recharge.paymentMethod')}</h3>
               <div className="space-y-3">
                 {paymentMethods.map((method) => {
                   const IconComponent = method.icon;
@@ -1950,13 +1952,13 @@ const getTransactionIcon = (category) => {
                 {recharging ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Creating Order...</span>
+                    <span>{t('recharge.creatingOrder')}</span>
                   </>
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
                     <span>
-                      {selectedPaymentMethod === 'usdt' ? 'Pay with USDT' : 'Proceed to Checkout'} - ${selectedAmount || customAmount || '0'}
+                      {selectedPaymentMethod === 'usdt' ? t('recharge.payWithUsdt') : t('recharge.proceedToCheckout')} - ${selectedAmount || customAmount || '0'}
                     </span>
                   </>
                 )}
@@ -1964,12 +1966,12 @@ const getTransactionIcon = (category) => {
             </button>
 
             <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-lg p-4">
-              <h4 className="font-semibold mb-2">Points Usage</h4>
+              <h4 className="font-semibold mb-2">{t('recharge.pointsUsage')}</h4>
               <ul className="text-sm text-gray-700 space-y-1">
-                <li>• Send virtual gifts to creators</li>
-                <li>• Boost your videos for more visibility</li>
-                <li>• Access premium features and filters</li>
-                <li>• Support your favorite content creators</li>
+                <li>• {t('recharge.sendVirtualGifts')}</li>
+                <li>• {t('recharge.boostVideos')}</li>
+                <li>• {t('recharge.accessPremium')}</li>
+                <li>• {t('recharge.supportCreators')}</li>
               </ul>
             </div>
           </div>
@@ -1980,8 +1982,8 @@ const getTransactionIcon = (category) => {
             {(!history || history.length === 0) ? (
               <div className="text-center py-12">
                 <History className="w-16 h-16 mx-auto mb-4 text-gray-700" />
-                <p className="text-gray-700 text-lg mb-2">No transaction history</p>
-                <p className="text-gray-600">Your points transactions will appear here</p>
+                <p className="text-gray-700 text-lg mb-2">{t('recharge.noTransactionHistory')}</p>
+                <p className="text-gray-600">{t('recharge.transactionsWillAppear')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1994,7 +1996,7 @@ const getTransactionIcon = (category) => {
                       <div className="flex items-center space-x-3">
                         {getTransactionIcon(getCategoryForIcon(transaction))}
                         <div>
-                          <p className="font-medium">{transaction.description || transaction.categoryDisplay || 'Transaction'}</p>
+                          <p className="font-medium">{transaction.description || transaction.categoryDisplay || t('recharge.transaction')}</p>
                           <p className="text-sm text-gray-700">
                             {formatDate(transaction.createdAt || transaction.requestedAt)}
                           </p>
