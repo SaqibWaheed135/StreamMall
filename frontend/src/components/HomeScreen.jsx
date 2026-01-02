@@ -275,7 +275,7 @@ const LiveRoomCard = ({ room }) => {
           <img
             src={Logo}
             alt="StreamMall Logo"
-            className="w-20 sm:w-28 rounded-xl drop-shadow-[0_0_30px_rgba(255,43,85,0.4)]"
+            className="w-20 sm:w-18 rounded-xl drop-shadow-[0_0_30px_rgba(255,43,85,0.4)]"
           />
 
           <div className="flex items-center gap-4">

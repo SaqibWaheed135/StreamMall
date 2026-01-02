@@ -151,6 +151,7 @@ const HostLiveStream = ({ onBack }) => {
   const isBlockingNavigationRef = useRef(false);
   const fullscreenControlsTimeoutRef = useRef(null); // For auto-hiding fullscreen controls
   const isFullscreenRef = useRef(isFullscreen); // Ref to track current fullscreen state
+  const iPhoneChatPanelRef = useRef(null); // Ref for iPhone chat panel auto-scroll
 
   // Handle iOS viewport height changes
   useEffect(() => {
@@ -710,10 +711,16 @@ const HostLiveStream = ({ onBack }) => {
   }, [isLive]);
 
   useEffect(() => {
-    if (commentsEndRef.current) {
+    // Scroll to bottom for regular chat
+    if (commentsEndRef.current && !isFullscreen) {
       commentsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [comments]);
+    // Scroll to bottom for iPhone chat panel
+    if (iPhoneChatPanelRef.current && isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) {
+      const container = iPhoneChatPanelRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [comments, isFullscreen]);
 
   useEffect(() => {
     if (replyingTo && replyInputRef.current) {
@@ -2984,8 +2991,68 @@ const HostLiveStream = ({ onBack }) => {
                   </div>
                 )}
 
-                {/* Comments Overlay - Instagram style - Show for iPhone fullscreen too */}
-                {isFullscreen && !showFullscreenControls && (
+                {/* Persistent Chat Panel - Instagram style - Always visible in iPhone mode */}
+                {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <div
+                    className="fixed left-0 bottom-0 z-50 flex flex-col"
+                    style={{
+                      width: '280px',
+                      maxWidth: '75%',
+                      maxHeight: '60%',
+                      height: 'auto',
+                      bottom: '80px', // Above the input bar
+                      zIndex: 2147483646,
+                      pointerEvents: 'auto',
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)'
+                    }}
+                  >
+                    {/* Chat Messages Container - Scrollable */}
+                    <div
+                      ref={iPhoneChatPanelRef}
+                      className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
+                      style={{
+                        maxHeight: 'calc(60vh - 60px)',
+                        WebkitOverflowScrolling: 'touch',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                      }}
+                    >
+                      {comments.length === 0 ? (
+                        <div className="text-white/60 text-xs text-center py-4">
+                          {t('chat.noCommentsYet')}
+                        </div>
+                      ) : (
+                        comments.map((comment) => (
+                          <div
+                            key={comment.id || comment._id}
+                            className="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border border-white/10"
+                            style={{
+                              fontSize: '0.85rem',
+                              transform: 'translate3d(0,0,0)',
+                              WebkitTransform: 'translate3d(0,0,0)'
+                            }}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="font-semibold text-pink-300 text-xs">{comment.username}</span>
+                                <span className="text-white/90 text-xs ml-1 break-words">{comment.text}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      {/* Invisible element at the end for scrolling */}
+                      <div ref={commentsEndRef} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Comments Overlay - Instagram style - Show for non-iPhone fullscreen */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && !showFullscreenControls && (
                   <div
                     className="comment-overlay"
                     style={{
@@ -3036,7 +3103,7 @@ const HostLiveStream = ({ onBack }) => {
                     {/* Floating Comment Input - Always Visible with Keyboard */}
                     <div
                       ref={fullscreenInputContainerRef}
-                      className="absolute left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
+                      className="absolute left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/10 p-3 z-50"
                       style={{
                         zIndex: 2147483647,
                         bottom: 'env(safe-area-inset-bottom, 0px)',
