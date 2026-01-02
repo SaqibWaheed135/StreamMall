@@ -3030,716 +3030,91 @@ const HostLiveStream = ({ onBack }) => {
                 )}
 
                 {/* iPhone Fullscreen Controls Panel */}
-                {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
-                  <>
-
-                    {/* Floating Comment Input - Always Visible with Keyboard */}
-                    {/* Floating Comment Input - Always Visible with Keyboard */}
+               {/* Comments Overlay - Instagram style - iPhone Fullscreen - Always Visible */}
+{isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+  <div
+    className="comment-overlay"
+    style={{
+      position: 'absolute',
+      bottom: '80px', // Above the input bar
+      left: '12px',
+      width: '85%',
+      maxWidth: '320px',
+      maxHeight: '50vh', // Take up to half the screen
+      zIndex: 2147483645,
+      pointerEvents: 'none',
+      transform: 'translate3d(0,0,0)',
+      WebkitTransform: 'translate3d(0,0,0)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      overflow: 'hidden'
+    }}
+  >
+    {/* Scrollable comment container */}
+    <div 
+      className="flex flex-col gap-2"
+      style={{
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: '8px',
+        maxHeight: '100%'
+      }}
+    >
+      {comments.slice(-10).map((comment) => (
+        <div
+          key={comment.id}
+          className="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border border-white/10"
+          style={{
+            animation: 'slideInLeft 0.3s ease-out',
+            maxWidth: '100%',
+            fontSize: '0.85rem',
+            transform: 'translate3d(0,0,0)',
+            WebkitTransform: 'translate3d(0,0,0)'
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="font-semibold text-pink-300 text-sm">
+                {comment.username}
+              </span>
+              <p className="text-white/95 text-sm break-words mt-0.5">
+                {comment.text}
+              </p>
+              {/* Show replies if any */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="mt-2 space-y-1 ml-2 border-l-2 border-white/20 pl-2">
+                  {comment.replies.slice(-3).map((reply) => (
                     <div
-                      ref={fullscreenInputContainerRef}
-                      className="absolute left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/20 p-3 z-50"
-                      style={{
-                        zIndex: 2147483647,
-                        bottom: 'env(safe-area-inset-bottom, 0px)',
-                        position: 'fixed',
-                        width: '100%',
-                        maxWidth: '100dvw',
-                        left: '0',
-                        right: '0',
-                        willChange: 'bottom',
-                        transform: 'translateZ(0)',
-                        WebkitTransform: 'translateZ(0)'
-                      }}
-                      // Make whole bar tappable → focuses input → opens keyboard
-                      onClick={(e) => {
-                        if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
-                          fullscreenInputRef.current.focus();
-                          fullscreenInputRef.current.click();
-                        }
-                      }}
+                      key={reply._id || reply.id}
+                      className={`text-xs ${
+                        reply.isHost ? 'text-yellow-300' : 'text-white/80'
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <input
-                          ref={fullscreenInputRef}
-                          type="text"
-                          inputMode="text"
-                          enterKeyHint="send"
-                          autoComplete="off"
-                          autoCapitalize="off"
-                          autoCorrect="off"
-                          spellCheck="false"
-                          value={fullscreenComment}
-                          onChange={(e) => setFullscreenComment(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
-                              e.preventDefault();
-                              socket.emit('send-comment', {
-                                streamId: streamData.streamId,
-                                text: fullscreenComment.trim()
-                              });
-                              setFullscreenComment('');
-                            }
-                          }}
-                          placeholder={t('chat.typeMessage')}
-                          className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                        // Remove autoFocus – it can interfere on iOS
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent parent onClick from re-focusing
-                            if (fullscreenComment.trim() && socket) {
-                              socket.emit('send-comment', {
-                                streamId: streamData.streamId,
-                                text: fullscreenComment.trim()
-                              });
-                              setFullscreenComment('');
-                              // Refocus after sending
-                              setTimeout(() => fullscreenInputRef.current?.focus(), 100);
-                            }
-                          }}
-                          disabled={!fullscreenComment.trim()}
-                          className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
-                        >
-                          <Send className="w-5 h-5" />
-                        </button>
-                      </div>
+                      {reply.isHost && <span>👑 </span>}
+                      <span className="font-semibold">{reply.username}:</span>{' '}
+                      <span>{reply.text}</span>
                     </div>
-
-                    {/* Rest of iPhone controls continue here... */}
-                    {/* Floating Menu Button */}
-                    <button
-                      onClick={() => {
-                        const willShow = !showFullscreenControls;
-                        setShowFullscreenControls(willShow);
-
-                        // Clear timeout when manually closing
-                        if (!willShow && fullscreenControlsTimeoutRef.current) {
-                          clearTimeout(fullscreenControlsTimeoutRef.current);
-                          fullscreenControlsTimeoutRef.current = null;
-                        }
-
-                        // When opening chat, immediately focus the input to trigger keyboard
-                        if (willShow && fullscreenInputRef.current) {
-                          setTimeout(() => {
-                            fullscreenInputRef.current?.focus();
-                            fullscreenInputRef.current?.click(); // Extra trigger for iOS
-                          }, 100);
-                        }
-                      }}
-                      className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
-                      style={{ zIndex: 2147483646 }}
-                    >
-                      {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
-                    </button>
-
-                    {/* Camera/Mic Controls - Always Visible */}
-                    {/* <div className="absolute top-10 left-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483647 }}>
-                      <button
-                        onClick={toggleCamera}
-                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border-2 border-white/30 ${
-                          isCameraOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
-                        }`}
-                        title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
-                      >
-                        {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-                      </button>
-                      <button
-                        onClick={toggleMic}
-                        className={`p-3 rounded-full transition-colors backdrop-blur-md shadow-lg border-2 border-white/30 ${
-                          isMicOn ? 'bg-black/70 hover:bg-black/90 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
-                        }`}
-                        title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
-                      >
-                        {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                      </button>
-                    </div> */}
-
-                    {/* Camera/Mic Controls - Prominent & Always Visible on iPhone Fullscreen */}
-                    <div
-                      className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4"
-                      style={{
-                        zIndex: 2147483648  // Higher than input bar (2147483647)
-                      }}
-                    >
-                      <button
-                        onClick={toggleCamera}
-                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isCameraOn
-                            ? 'bg-white/90 border-white text-gray-900 hover:bg-white'
-                            : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
-                          }`}
-                        title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
-                      >
-                        {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
-                      </button>
-
-                      <button
-                        onClick={toggleMic}
-                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isMicOn
-                            ? 'bg-white/90 border-white text-gray-900 hover:bg-white'
-                            : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
-                          }`}
-                        title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
-                      >
-                        {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
-                      </button>
-
-                      <button
-                        onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
-                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${selectedBackground !== 'none'
-                            ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700'
-                            : 'bg-white/90 border-white text-gray-900 hover:bg-white'
-                          }`}
-                        title={t('background.backgroundFilters')}
-                      >
-                        <Sparkles className="w-8 h-8" />
-                      </button>
-                    </div>
-
-                    {/* End Stream Button - More Prominent */}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('End Stream button clicked');
-                        // On iPhone, directly end stream without confirmation modal (modal might not show in fullscreen)
-                        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                        if (isIPhone && isFullscreen) {
-                          console.log('iPhone fullscreen detected - ending stream directly');
-                          endStream();
-                        } else {
-                          console.log('Setting showConfirmEnd to true');
-                          setShowConfirmEnd(true);
-                        }
-                      }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('End Stream button touched');
-                        // On iPhone, directly end stream without confirmation modal
-                        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                        if (isIPhone && isFullscreen) {
-                          console.log('iPhone fullscreen detected - ending stream directly');
-                          endStream();
-                        } else {
-                          console.log('Setting showConfirmEnd to true');
-                          setShowConfirmEnd(true);
-                        }
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
-                      style={{
-                        zIndex: 2147483647,
-                        pointerEvents: 'auto',
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        WebkitUserSelect: 'none'
-                      }}
-                      title={t('stream.endStream')}
-                      aria-label={t('stream.endStream')}
-                    >
-                      <X className="w-4 h-4" />
-                      <span className="text-sm">{t('stream.endStream')}</span>
-                    </button>
-
-                    {/* Background Filter Panel */}
-                    {showBackgroundPanel && (
-                      <div
-                        className="absolute top-0 right-0 h-full w-full max-w-sm bg-black/95 backdrop-blur-xl text-white z-50 flex flex-col"
-                        style={{
-                          zIndex: 2147483648,
-                          animation: 'slideInRight 0.3s ease-out',
-                          transform: 'translate3d(0,0,0)',
-                          WebkitTransform: 'translate3d(0,0,0)',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        <div className="p-4 border-b border-white/20">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                              <Sparkles className="w-5 h-5" />
-                              {t('background.backgroundFilters')}
-                            </h3>
-                            <button
-                              onClick={() => setShowBackgroundPanel(false)}
-                              className="p-2 hover:bg-white/10 rounded-full transition"
-                            >
-                              <X className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                          {/* Background Options */}
-                          <div>
-                            <label className="block text-sm font-medium mb-3 text-white/80">{t('background.backgroundColor')}</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <button
-                                onClick={() => setSelectedBackground('none')}
-                                className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'none'
-                                    ? 'border-pink-500 bg-pink-500/20'
-                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                  }`}
-                              >
-                                <X className="w-5 h-5 mx-auto mb-1" />
-                                <span className="text-xs">{t('background.none')}</span>
-                              </button>
-                              <button
-                                onClick={() => setSelectedBackground('blur')}
-                                className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'blur'
-                                    ? 'border-pink-500 bg-pink-500/20'
-                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                  }`}
-                              >
-                                <Sparkles className="w-5 h-5 mx-auto mb-1" />
-                                <span className="text-xs">{t('background.blur')}</span>
-                              </button>
-                              <button
-                                onClick={() => setSelectedBackground('color')}
-                                className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'color'
-                                    ? 'border-pink-500 bg-pink-500/20'
-                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                  }`}
-                              >
-                                <Palette className="w-5 h-5 mx-auto mb-1" />
-                                <span className="text-xs">{t('background.color')}</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Blur Settings */}
-                          {selectedBackground === 'blur' && (
-                            <div>
-                              <label className="block text-sm font-medium mb-2 text-white/80">
-                                {t('background.blurIntensity')}: {backgroundBlur}px
-                              </label>
-                              <input
-                                type="range"
-                                min="5"
-                                max="50"
-                                value={backgroundBlur}
-                                onChange={(e) => setBackgroundBlur(parseInt(e.target.value))}
-                                className="w-full"
-                              />
-                            </div>
-                          )}
-
-                          {/* Color Settings */}
-                          {selectedBackground === 'color' && (
-                            <div>
-                              <label className="block text-sm font-medium mb-2 text-white/80">{t('background.backgroundColor')}</label>
-                              <div className="grid grid-cols-4 gap-2 mb-3">
-                                {['#00ff00', '#0000ff', '#ff0000', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000'].map((color) => (
-                                  <button
-                                    key={color}
-                                    onClick={() => setBackgroundColor(color)}
-                                    className={`w-full h-12 rounded-lg border-2 transition-all ${backgroundColor === color
-                                        ? 'border-pink-500 scale-110'
-                                        : 'border-white/20'
-                                      }`}
-                                    style={{ backgroundColor: color }}
-                                    title={color}
-                                  />
-                                ))}
-                              </div>
-                              <input
-                                type="color"
-                                value={backgroundColor}
-                                onChange={(e) => setBackgroundColor(e.target.value)}
-                                className="w-full h-12 rounded-lg cursor-pointer"
-                              />
-                            </div>
-                          )}
-
-                          <div className="pt-4 border-t border-white/20">
-                            <p className="text-xs text-white/60 mb-2">
-                              {t('background.backgroundTip')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Control Panel - Slides in from right */}
-                    {/* Control Panel - Slides in from right */}
-                    {showFullscreenControls && (
-                      <div
-                        className="absolute top-0 right-0 h-full w-full max-w-md bg-black/95 backdrop-blur-xl text-white z-50 flex flex-col"
-                        style={{
-                          zIndex: 2147483647,
-                          animation: 'slideInRight 0.3s ease-out',
-                          transform: 'translate3d(0,0,0)',
-                          WebkitTransform: 'translate3d(0,0,0)',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        <div className="p-4 border-b border-white/20">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-bold">{t('stream.streamControls')}</h3>
-                            <button
-                              onClick={() => {
-                                // Clear auto-hide timeout when manually closing
-                                if (fullscreenControlsTimeoutRef.current) {
-                                  clearTimeout(fullscreenControlsTimeoutRef.current);
-                                  fullscreenControlsTimeoutRef.current = null;
-                                }
-                                setShowFullscreenControls(false);
-                              }}
-                              className="p-2 hover:bg-white/10 rounded-full transition"
-                            >
-                              <X className="w-5 h-5" />
-                            </button>
-                          </div>
-                          {/* Coins Earned Display */}
-                          <div className="bg-white/10 border border-white/20 rounded-lg p-2 mt-2">
-                            <p className="text-xs text-white/70">{t('stream.totalCoinsEarned')}</p>
-                            <p className="text-lg font-semibold text-yellow-400">{coinBalance} {t('common.coins')}</p>
-                          </div>
-                        </div>
-
-                        {/* Share Button */}
-                        <div className="px-4 py-3 border-b border-white/20">
-                          <button
-                            // onClick={(e) => {
-                            //   e.preventDefault();
-                            //   e.stopPropagation();
-                            //   console.log('Share button clicked');
-                            //   setShowShareModal(true);
-                            // }}
-                            // To this:
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleShareClick(); // USE THIS INSTEAD
-                            }}
-                            className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all shadow-lg"
-                          >
-                            <Share2 className="w-5 h-5" />
-                            {t('stream.shareStream')}
-                          </button>
-                        </div>
-
-                        {/* Tabs */}
-                        <div className="flex border-b border-white/20">
-                          <button
-                            onClick={() => setActiveFullscreenTab('chat')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'chat' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                              }`}
-                          >
-                            <MessageCircle className="w-4 h-4 inline mr-2" />
-                            {t('chat.chat')}
-                          </button>
-                          <button
-                            onClick={() => setActiveFullscreenTab('products')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'products' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                              }`}
-                          >
-                            <Gift className="w-4 h-4 inline mr-2" />
-                            {t('products.products')}
-                          </button>
-                          <button
-                            onClick={() => setActiveFullscreenTab('orders')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'orders' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                              }`}
-                          >
-                            📦 {t('orders.orders')}
-                          </button>
-                          <button
-                            onClick={() => setActiveFullscreenTab('gifts')}
-                            className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                              }`}
-                          >
-                            🎁 {t('gifts.gifts')}
-                          </button>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="flex-1 overflow-y-auto" style={{
-                          WebkitOverflowScrolling: 'touch',
-                          paddingBottom: 'env(safe-area-inset-bottom)'
-                        }}>
-                          <div className="p-4">
-                            {/* Chat Tab */}
-                            {activeFullscreenTab === 'chat' && (
-                              <div className="space-y-4 h-full flex flex-col">
-                                <div className="flex-1 overflow-y-auto space-y-3" style={{
-                                  maxHeight: 'calc(100vh - 350px)',
-                                  WebkitOverflowScrolling: 'touch'
-                                }}>
-                                  {comments.map((c) => (
-                                    <div key={c.id} className="space-y-2">
-                                      <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
-                                        <div className="flex items-start justify-between gap-2">
-                                          <div className="flex-1">
-                                            <span className="font-semibold text-pink-300">@{c.username}: </span>
-                                            <span className="text-white/90 text-sm">{c.text}</span>
-                                          </div>
-                                          <button
-                                            onClick={() => setReplyingTo(c)}
-                                            className="flex-shrink-0 text-pink-400 hover:text-pink-300 p-1 rounded transition"
-                                          >
-                                            <Reply className="w-4 h-4" />
-                                          </button>
-                                        </div>
-                                      </div>
-                                      {c.replies && c.replies.length > 0 && (
-                                        <div className="ml-6 space-y-2">
-                                          {c.replies.map((reply) => (
-                                            <div
-                                              key={reply._id || reply.id}
-                                              className={`text-sm rounded-xl px-3 py-2 ${reply.isHost ? 'bg-pink-500/20 border border-pink-500/50' : 'bg-white/5'
-                                                }`}
-                                            >
-                                              <div className="flex items-start gap-1">
-                                                {reply.isHost && <span>👑</span>}
-                                                <span className="font-semibold text-pink-300">@{reply.username}:</span>
-                                                <span className="text-white/90">{reply.text}</span>
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                  {comments.length === 0 && (
-                                    <div className="text-center text-white/50 py-8">
-                                      <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                      <p className="text-sm">{t('chat.waitingForComments')}</p>
-                                    </div>
-                                  )}
-                                  <div ref={commentsEndRef} />
-                                </div>
-
-                                {replyingTo && (
-                                  <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
-                                    <span className="text-sm text-pink-300">
-                                      {t('chat.replyingTo')} <span className="font-semibold">@{replyingTo.username}</span>
-                                    </span>
-                                    <button
-                                      onClick={() => {
-                                        setReplyingTo(null);
-                                        setReplyText('');
-                                      }}
-                                      className="text-pink-300 hover:text-pink-200"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                )}
-
-                                <div className="flex items-center gap-2 sticky bottom-0 bg-black/95 py-3 px-4 -mx-4">
-                                  <input
-                                    ref={replyInputRef}
-                                    type="text"
-                                    inputMode="text"
-                                    autoComplete="off"
-                                    autoCapitalize="off"
-                                    autoCorrect="off"
-                                    spellCheck="false"
-                                    value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
-                                    onKeyPress={(e) => {
-                                      if (e.key === 'Enter' && replyingTo) {
-                                        handleSendReply();
-                                      }
-                                    }}
-                                    onFocus={(e) => {
-                                      // Scroll input into view when focused on iPhone
-                                      setTimeout(() => {
-                                        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                      }, 300);
-                                    }}
-                                    placeholder={replyingTo ? t('chat.typeReply') : t('chat.clickReply')}
-                                    disabled={!replyingTo}
-                                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
-                                  />
-                                  <button
-                                    onClick={handleSendReply}
-                                    disabled={!replyText.trim() || !replyingTo}
-                                    className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                  >
-                                    <Send className="w-5 h-5" />
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Products Tab */}
-                            {activeFullscreenTab === 'products' && (
-                              <div className="space-y-4 pb-8">
-                                <h4 className="font-semibold text-lg mb-4">{t('products.addProduct')}</h4>
-
-                                <select
-                                  value={newProduct.type}
-                                  onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
-                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                >
-                                  <option value="product" className="bg-black">{t('products.product')}</option>
-                                  <option value="ad" className="bg-black">{t('products.ad')}</option>
-                                </select>
-
-                                <input
-                                  placeholder={t('products.name')}
-                                  inputMode="text"
-                                  autoComplete="off"
-                                  value={newProduct.name}
-                                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                                  onFocus={(e) => {
-                                    setTimeout(() => {
-                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    }, 300);
-                                  }}
-                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                />
-
-                                <input
-                                  placeholder={t('products.description')}
-                                  inputMode="text"
-                                  autoComplete="off"
-                                  value={newProduct.description}
-                                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                                  onFocus={(e) => {
-                                    setTimeout(() => {
-                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    }, 300);
-                                  }}
-                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                />
-
-                                <input
-                                  type="number"
-                                  inputMode="decimal"
-                                  placeholder={t('products.price')}
-                                  value={newProduct.price}
-                                  onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
-                                  onFocus={(e) => {
-                                    setTimeout(() => {
-                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    }, 300);
-                                  }}
-                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                />
-
-                                <div className="mb-2">
-                                  <label className="block text-sm font-medium mb-1 text-white/80">{t('products.image')}</label>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (!file) return;
-                                      setNewProduct({ ...newProduct, imageFile: file });
-                                      const reader = new FileReader();
-                                      reader.onloadend = () => {
-                                        setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
-                                      };
-                                      reader.readAsDataURL(file);
-                                    }}
-                                    className="w-full text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-600 file:text-white"
-                                  />
-                                  {newProduct.imagePreview && (
-                                    <img
-                                      src={newProduct.imagePreview}
-                                      alt="Preview"
-                                      className="mt-2 w-full h-48 object-cover rounded-lg"
-                                    />
-                                  )}
-                                </div>
-
-                                <input
-                                  placeholder={`${t('products.link')} (${t('common.cancel')})`}
-                                  inputMode="url"
-                                  autoComplete="off"
-                                  value={newProduct.link}
-                                  onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
-                                  onFocus={(e) => {
-                                    setTimeout(() => {
-                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    }, 300);
-                                  }}
-                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                />
-
-                                <button
-                                  onClick={async () => {
-                                    if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
-                                      setError("Name, price and image are required");
-                                      return;
-                                    }
-                                    const formData = new FormData();
-                                    formData.append("type", newProduct.type);
-                                    formData.append("name", newProduct.name);
-                                    formData.append("description", newProduct.description);
-                                    formData.append("price", newProduct.price.toString());
-                                    formData.append("file", newProduct.imageFile);
-                                    if (newProduct.link) formData.append("link", newProduct.link);
-                                    try {
-                                      const token = localStorage.getItem("token");
-                                      const response = await fetch(`${API_BASE_URL}/live/${streamData.streamId}/add-product`, {
-                                        method: "POST",
-                                        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-                                        body: formData,
-                                      });
-                                      const data = await response.json();
-                                      if (response.ok) {
-                                        setProducts([...products, data.product]);
-                                        setNewProduct({
-                                          type: "product",
-                                          name: "",
-                                          description: "",
-                                          price: 0,
-                                          imageFile: null,
-                                          imagePreview: "",
-                                          link: "",
-                                        });
-                                        setError("");
-                                      } else {
-                                        setError(data.msg || "Failed to add product");
-                                      }
-                                    } catch {
-                                      setError("Failed to add product");
-                                    }
-                                  }}
-                                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
-                                >
-                                  {t('products.addProductBtn')}
-                                </button>
-
-                                <div className="mt-4">
-                                  <h5 className="font-semibold mb-2 text-white/80">Added Items ({products.length})</h5>
-                                  {products.length === 0 ? (
-                                    <p className="text-white/50 text-sm">No items added yet</p>
-                                  ) : (
-                                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                                      {products.map((p, i) => (
-                                        <div key={i} className="bg-white/10 rounded-lg p-2 flex items-center gap-3">
-                                          {p.imageUrl && (
-                                            <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                                          )}
-                                          <div className="flex-1">
-                                            <p className="font-medium text-white">{p.name}</p>
-                                            <p className="text-sm text-white/70">${p.price}</p>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Orders Tab - Keep as is */}
-                            {/* Gifts Tab - Keep as is */}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+      
+      {comments.length === 0 && (
+        <div className="bg-black/20 backdrop-blur-sm text-white/60 px-4 py-3 rounded-2xl text-center text-sm">
+          <MessageCircle className="w-5 h-5 mx-auto mb-1 opacity-50" />
+          <p>{t('chat.waitingForComments')}</p>
+        </div>
+      )}
+    </div>
+  </div>
+)}
               </div>
 
               <div className="bg-white/70 border border-[#ff99b3] rounded-lg p-4 mb-4 flex items-center justify-center gap-4">

@@ -1117,6 +1117,59 @@
       "supportHours": "سپورٹ کے اوقات: پیر - جمعہ، صبح 9:00 - شام 6:00 EST",
       "lastUpdated": "آخری اپ ڈیٹ: 3 دسمبر 2025"
     }
+  },
+  "login": {
+    "welcomeToClipStream": "TheClipStream میں خوش آمدید",
+    "tagline": "سب سے جدید لائیو پلیٹ فارم میں سٹریم، خریداری، اور جڑیں۔",
+    "welcomeBack": "خوش آمدید",
+    "signInToStreamMall": "StreamMall میں سائن ان کریں",
+    "emailAddress": "ای میل ایڈریس",
+    "emailPlaceholder": "you@example.com",
+    "password": "پاس ورڈ",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "پاس ورڈ بھول گئے؟",
+    "signIn": "سائن ان کریں",
+    "signingIn": "سائن ان ہو رہا ہے...",
+    "or": "یا",
+    "signingInWithGoogle": "Google کے ساتھ سائن ان ہو رہا ہے...",
+    "googleSignInUnavailable": "Google سائن ان دستیاب نہیں",
+    "dontHaveAccount": "اکاؤنٹ نہیں ہے؟",
+    "createOne": "ایک بنائیں",
+    "errors": {
+      "loginFailed": "لاگ ان ناکام",
+      "googleLoginFailed": "Google لاگ ان ناکام"
+    }
+  },
+  "signup": {
+    "welcomeToClipStream": "TheClipStream میں خوش آمدید",
+    "tagline": "سب سے جدید لائیو پلیٹ فارم میں سٹریم، خریداری، اور جڑیں۔",
+    "createAccount": "اکاؤنٹ بنائیں",
+    "joinClipStream": "آج TheClipStream میں شامل ہوں",
+    "username": "صارف نام",
+    "usernamePlaceholder": "johndoe",
+    "emailAddress": "ای میل ایڈریس",
+    "emailPlaceholder": "you@example.com",
+    "password": "پاس ورڈ",
+    "passwordPlaceholder": "••••••••",
+    "confirmPassword": "پاس ورڈ کی تصدیق کریں",
+    "signUp": "سائن اپ کریں",
+    "creatingAccount": "اکاؤنٹ بنایا جا رہا ہے...",
+    "signingUpWithGoogle": "Google کے ساتھ سائن اپ ہو رہا ہے...",
+    "or": "یا",
+    "byCreatingAccount": "اکاؤنٹ بنانے سے، آپ ہماری",
+    "terms": "شرائط",
+    "and": "اور",
+    "privacyPolicy": "رازداری کی پالیسی",
+    "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟",
+    "logIn": "لاگ ان کریں",
+    "errors": {
+      "passwordsDontMatch": "پاس ورڈز میچ نہیں کرتے",
+      "passwordMinLength": "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے",
+      "usernameMinLength": "صارف نام کم از کم 3 حروف کا ہونا چاہیے",
+      "signupFailed": "سائن اپ ناکام",
+      "googleSignupFailed": "Google سائن اپ ناکام",
+      "googleSignInUnavailable": "Google سائن ان دستیاب نہیں"
+    }
   }
 }
 
