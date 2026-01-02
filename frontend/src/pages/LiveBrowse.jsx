@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Play, Users, Clock, Search, Filter } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
 const LiveBrowse = () => {
+  const { t } = useTranslation();
   const [liveStreams, setLiveStreams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,7 +131,7 @@ const LiveBrowse = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch live streams');
+          throw new Error(t('liveBrowse.errorLoading'));
         }
 
         const streams = await response.json();
@@ -211,7 +213,7 @@ const LiveBrowse = () => {
               <div className="w-16 h-16 bg-red-500 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <span className="text-2xl">⚠️</span>
               </div>
-              <p className="text-lg mb-2">Error loading live streams</p>
+              <p className="text-lg mb-2">{t('liveBrowse.errorLoading')}</p>
               <p className="text-gray-400">{error}</p>
             </div>
           </div>
@@ -251,14 +253,14 @@ const LiveBrowse = () => {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold flex items-center space-x-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span>Live Now</span>
+              <span>{t('liveBrowse.liveNow')}</span>
               <span className="text-lg text-gray-400">({liveStreams.length})</span>
             </h1>
             <button
               onClick={() => window.location.href = '/live'}
               className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-full font-semibold transition-colors"
             >
-              Go Live
+              {t('liveBrowse.goLive')}
             </button>
           </div>
 
@@ -268,7 +270,7 @@ const LiveBrowse = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search live streams..."
+                placeholder={t('liveBrowse.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 text-white placeholder-gray-400"
@@ -281,9 +283,9 @@ const LiveBrowse = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="pl-10 pr-8 py-2 bg-gray-900 border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 text-white appearance-none cursor-pointer"
               >
-                <option value="viewers">Most Viewers</option>
-                <option value="recent">Recently Started</option>
-                <option value="duration">Longest Running</option>
+                <option value="viewers">{t('liveBrowse.mostViewers')}</option>
+                <option value="recent">{t('liveBrowse.recentlyStarted')}</option>
+                <option value="duration">{t('liveBrowse.longestRunning')}</option>
               </select>
             </div>
           </div>
@@ -298,19 +300,19 @@ const LiveBrowse = () => {
               <Play className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2">
-              {searchTerm ? 'No streams found' : 'No live streams right now'}
+              {searchTerm ? t('liveBrowse.noStreamsFound') : t('liveBrowse.noLiveStreamsRightNow')}
             </h3>
             <p className="text-gray-400 mb-6">
               {searchTerm 
-                ? `No streams match "${searchTerm}"`
-                : 'Be the first to go live and connect with your audience!'
+                ? t('liveBrowse.noStreamsMatch', { term: searchTerm })
+                : t('liveBrowse.beFirstToGoLive')
               }
             </p>
             <button
               onClick={() => window.location.href = '/live/create'}
               className="inline-block bg-red-500 hover:bg-red-600 px-8 py-3 rounded-full font-semibold transition-colors"
             >
-              Start Streaming
+              {t('liveBrowse.startStreaming')}
             </button>
           </div>
         ) : (
@@ -334,7 +336,7 @@ const LiveBrowse = () => {
                     {/* Live Badge */}
                     <div className="absolute top-3 left-3 bg-red-500 px-2 py-1 rounded-full flex items-center space-x-1">
                       <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                      <span className="text-white text-xs font-bold">LIVE</span>
+                      <span className="text-white text-xs font-bold">{t('liveBrowse.live')}</span>
                     </div>
                     
                     {/* Viewer Count */}
@@ -372,7 +374,7 @@ const LiveBrowse = () => {
                         <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                           <span className="flex items-center space-x-1">
                             <Users className="w-3 h-3" />
-                            <span>{(stream.currentViewers || 0).toLocaleString()} watching</span>
+                            <span>{(stream.currentViewers || 0).toLocaleString()} {t('liveBrowse.watching')}</span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <Clock className="w-3 h-3" />
@@ -392,7 +394,7 @@ const LiveBrowse = () => {
       {/* Refresh Indicator */}
       <div className="fixed bottom-4 right-4 bg-gray-800 rounded-full px-4 py-2 flex items-center space-x-2">
         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-        <span className="text-sm text-gray-300">Auto-refreshing</span>
+        <span className="text-sm text-gray-300">{t('liveBrowse.autoRefreshing')}</span>
       </div>
     </div>
   );

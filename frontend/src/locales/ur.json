@@ -765,6 +765,46 @@
       "pleaseLoginToPurchase": "خریداری کے لیے براہ کرم لاگ ان کریں",
       "redirectingToPurchase": "سکے خریدنے کے لیے ری ڈائریکٹ ہو رہا ہے..."
     }
+  },
+  "liveStreams": {
+    "title": "لائیو سٹریمز",
+    "loading": "لائیو سٹریمز لوڈ ہو رہی ہیں...",
+    "liveNow": "ابھی لائیو",
+    "stream": "سٹریم",
+    "streams": "سٹریمز",
+    "goLive": "لائیو جائیں",
+    "searchPlaceholder": "سٹریمز یا تخلیق کار تلاش کریں...",
+    "all": "سب",
+    "popular": "مقبول",
+    "new": "نیا",
+    "failedToFetch": "سٹریمز حاصل کرنے میں ناکام",
+    "couldNotLoad": "لائیو سٹریمز لوڈ نہیں ہو سکیں",
+    "noLiveStreams": "کوئی لائیو سٹریمز نہیں",
+    "noStreamsMatch": "آپ کی تلاش سے کوئی سٹریمز میچ نہیں کرتے",
+    "beFirstToGoLive": "لائیو جانے والے پہلے بنیں!",
+    "startStreaming": "سٹریمنگ شروع کریں",
+    "liveStream": "لائیو سٹریم",
+    "live": "لائیو",
+    "views": "ویوز",
+    "hosts": "میزبان",
+    "loadMore": "مزید لوڈ کریں"
+  },
+  "liveBrowse": {
+    "liveNow": "ابھی لائیو",
+    "goLive": "لائیو جائیں",
+    "searchPlaceholder": "لائیو سٹریمز تلاش کریں...",
+    "mostViewers": "زیادہ ناظرین",
+    "recentlyStarted": "حال ہی میں شروع",
+    "longestRunning": "سب سے طویل چلنے والا",
+    "errorLoading": "لائیو سٹریمز لوڈ کرنے میں خرابی",
+    "noStreamsFound": "کوئی سٹریمز نہیں ملیں",
+    "noLiveStreamsRightNow": "ابھی کوئی لائیو سٹریمز نہیں",
+    "noStreamsMatch": "کوئی سٹریمز \"{{term}}\" سے میچ نہیں کرتے",
+    "beFirstToGoLive": "لائیو جانے والے پہلے بنیں اور اپنے سامعین سے جڑیں!",
+    "startStreaming": "سٹریمنگ شروع کریں",
+    "live": "لائیو",
+    "watching": "دیکھ رہے ہیں",
+    "autoRefreshing": "خودکار تازہ کاری"
   }
 }
 
