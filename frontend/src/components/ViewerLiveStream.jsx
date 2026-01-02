@@ -306,7 +306,7 @@
 //       console.log('Heart emitted via socket');
 //     } else {
 //       console.warn('Socket not connected, cannot send heart');
-//       setError('Chat not connected. Please wait...');
+//       setError(t('viewerStream.errors.chatNotConnected'));
 //       return;
 //     }
 
@@ -329,7 +329,7 @@
 //       console.log('Comment emitted via socket:', comment);
 //     } else {
 //       console.warn('Socket not connected');
-//       setError('Chat not connected. Please wait...');
+//       setError(t('viewerStream.errors.chatNotConnected'));
 //       return;
 //     }
 
@@ -593,6 +593,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Camera,
   Users,
@@ -614,6 +615,7 @@ import { API_BASE_URL, SOCKET_URL } from '../config/api';
 import { Room, RoomEvent, Track } from 'livekit-client';
 
 const ViewerLiveStream = ({ streamId, onBack }) => {
+  const { t } = useTranslation();
   const [stream, setStream] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -742,7 +744,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
 
     newSocket.on('tip-sent', (data) => {
       setUserCoinBalance(data.remainingBalance);
-      setError('Gift sent successfully! 🎁');
+      setError(t('viewerStream.errors.giftSent'));
       setTimeout(() => setError(''), 3000);
     });
 
@@ -974,7 +976,7 @@ newSocket.on('product-added', (data) => {
     });
 
     newSocket.on('error', (socketError) => {
-      setError(`Connection error: ${socketError.message || 'Unknown error'}`);
+      setError(t('viewerStream.errors.connectionError', { message: socketError.message || 'Unknown error' }));
     });
 
     newSocket.on('disconnect', () => {
@@ -1058,7 +1060,7 @@ newSocket.on('product-added', (data) => {
     if (!stream?.entryFee) return;
 
     if (userCoinBalance < stream.entryFee) {
-      setError('Insufficient coins! Please purchase more coins.');
+      setError(t('viewerStream.errors.insufficientCoins'));
       return;
     }
 
@@ -1086,13 +1088,13 @@ newSocket.on('product-added', (data) => {
         }
         initializeSocket();
 
-        setError('Payment successful! Welcome to the stream 🎉');
+        setError(t('viewerStream.errors.paymentSuccessful'));
         setTimeout(() => setError(''), 3000);
       } else {
-        setError(data.msg || 'Payment failed');
+        setError(data.msg || t('viewerStream.errors.paymentFailed'));
       }
     } catch (err) {
-      setError('Payment failed. Please try again.');
+      setError(t('viewerStream.errors.paymentFailedTryAgain'));
     } finally {
       setPaymentProcessing(false);
     }
@@ -1100,7 +1102,7 @@ newSocket.on('product-added', (data) => {
 
   const handleSendGift = async (gift) => {
     if (userCoinBalance < gift.cost) {
-      setError('Insufficient coins! Please purchase more coins.');
+      setError(t('viewerStream.errors.insufficientCoins'));
       setTimeout(() => setError(''), 3000);
       return;
     }
@@ -1124,14 +1126,14 @@ newSocket.on('product-added', (data) => {
       if (response.ok) {
         setUserCoinBalance(data.remainingBalance || data.balance || (userCoinBalance - gift.cost));
         setShowTipModal(false);
-        setError(`You sent a ${gift.label}! 🎁`);
+        setError(t('viewerStream.errors.youSentGift', { gift: gift.label }));
         setTimeout(() => setError(''), 3000);
         console.log('✅ Gift sent successfully, new balance:', data.remainingBalance || data.balance);
       } else {
-        setError(data.msg || 'Failed to send gift');
+        setError(data.msg || t('viewerStream.errors.failedToSendGift'));
       }
     } catch (err) {
-      setError('Failed to send gift. Please try again.');
+      setError(t('viewerStream.errors.failedToSendGiftTryAgain'));
     }
   };
 
@@ -1172,7 +1174,7 @@ newSocket.on('product-added', (data) => {
         setViewerCount(room.remoteParticipants.size);
       });
     } catch (err) {
-      setError(`Failed to connect: ${err.message}`);
+      setError(t('viewerStream.errors.failedToConnect', { message: err.message }));
     }
   };
 
@@ -1233,7 +1235,7 @@ newSocket.on('product-added', (data) => {
     if (socket && socketConnected) {
       socket.emit('send-heart', { streamId });
     } else {
-      setError('Chat not connected. Please wait...');
+      setError(t('viewerStream.errors.chatNotConnected'));
       return;
     }
 
@@ -1249,13 +1251,13 @@ newSocket.on('product-added', (data) => {
     if (!comment.trim()) return;
 
     if (!socket || !socketConnected) {
-      setError('Chat not connected. Please wait...');
+      setError(t('viewerStream.errors.chatNotConnected'));
       setTimeout(() => setError(''), 3000);
       return;
     }
 
     if (!hasAccess) {
-      setError('Please join the stream to send comments');
+      setError(t('viewerStream.errors.pleaseJoinStream'));
       setTimeout(() => setError(''), 3000);
       return;
     }
@@ -1462,7 +1464,7 @@ newSocket.on('product-added', (data) => {
       <div className="min-h-screen bg-gradient-to-br from-[#FFC0CB] via-[#ffb3c6] to-[#ff99b3] text-gray-900 flex items-center justify-center">
         <div className="text-center bg-white/80 backdrop-blur-2xl px-10 py-8 rounded-3xl shadow-2xl border border-white/70">
           <div className="animate-spin w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-pink-700 font-semibold">Connecting to live stream...</p>
+          <p className="text-pink-700 font-semibold">{t('viewerStream.connectingToStream')}</p>
         </div>
       </div>
     );
@@ -1475,13 +1477,13 @@ newSocket.on('product-added', (data) => {
           <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
             <X className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-pink-700 mb-3">Stream Not Available</h2>
+          <h2 className="text-2xl font-bold text-pink-700 mb-3">{t('viewerStream.streamNotAvailable')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={onBack}
             className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 px-6 py-3 rounded-xl text-white font-semibold transition-all"
           >
-            Go Back
+            {t('viewerStream.goBack')}
           </button>
         </div>
       </div>
@@ -1497,16 +1499,16 @@ newSocket.on('product-added', (data) => {
               <Lock className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-pink-700 mb-2 break-words px-2">{stream?.title}</h2>
-            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 break-words">by @{stream?.streamer?.username}</p>
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 break-words">{t('viewerStream.by')} @{stream?.streamer?.username}</p>
 
             <div className="bg-white/80 border border-[#ffb3c6] rounded-xl sm:rounded-2xl p-4 sm:p-5 mb-4 sm:mb-5 shadow-inner">
-              <p className="text-xs sm:text-sm text-gray-600 mb-2 uppercase tracking-wide">Entry Fee</p>
-              <p className="text-3xl sm:text-4xl font-extrabold text-pink-600 break-words">{stream?.entryFee} coins</p>
+              <p className="text-xs sm:text-sm text-gray-600 mb-2 uppercase tracking-wide">{t('viewerStream.entryFee')}</p>
+              <p className="text-3xl sm:text-4xl font-extrabold text-pink-600 break-words">{stream?.entryFee} {t('common.coins')}</p>
             </div>
 
             <div className="bg-white/70 border border-[#ffb3c6] rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
-              <p className="text-xs sm:text-sm text-gray-600">Your Balance</p>
-              <p className="text-xl sm:text-2xl font-semibold text-pink-600 break-words">{userCoinBalance} coins</p>
+              <p className="text-xs sm:text-sm text-gray-600">{t('viewerStream.yourBalance')}</p>
+              <p className="text-xl sm:text-2xl font-semibold text-pink-600 break-words">{userCoinBalance} {t('common.coins')}</p>
             </div>
           </div>
 
@@ -1517,32 +1519,32 @@ newSocket.on('product-added', (data) => {
                 disabled={paymentProcessing}
                 className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 disabled:opacity-70 disabled:cursor-not-allowed py-3 sm:py-3.5 rounded-xl font-semibold text-white transition-all mb-2 sm:mb-3 text-sm sm:text-base min-h-[44px]"
               >
-                {paymentProcessing ? 'Processing...' : 'Pay & Enter Stream'}
+                {paymentProcessing ? t('viewerStream.processing') : t('viewerStream.payEnterStream')}
               </button>
               <button
                 onClick={onBack}
                 disabled={paymentProcessing}
                 className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
-                Cancel
+                {t('viewerStream.cancel')}
               </button>
             </>
           ) : (
             <>
               <div className="bg-[#ffe4e6] border border-[#fb7185] text-[#be123c] rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 text-xs sm:text-sm break-words">
-                ⚠️ Insufficient coins. You need {stream?.entryFee - userCoinBalance} more coins.
+                {t('viewerStream.insufficientCoins', { coins: stream?.entryFee - userCoinBalance })}
               </div>
               <button
-                onClick={() => alert('Redirecting to purchase coins...')}
+                onClick={() => alert(t('viewerStream.errors.redirectingToPurchase'))}
                 className="w-full bg-gradient-to-r from-amber-400 to-amber-300 hover:shadow-lg hover:shadow-amber-200 py-3 sm:py-3.5 rounded-xl font-semibold text-amber-900 mb-2 sm:mb-3 transition-all text-sm sm:text-base min-h-[44px]"
               >
-                Purchase Coins
+                {t('viewerStream.purchaseCoins')}
               </button>
               <button
                 onClick={onBack}
                 className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
-                Go Back
+                {t('viewerStream.goBack')}
               </button>
             </>
           )}
@@ -1785,18 +1787,18 @@ newSocket.on('product-added', (data) => {
         >
           <div className="bg-white/90 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-[#ffb3c6] shadow-2xl p-4 sm:p-6 md:p-8 max-w-lg w-full my-auto">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h3 className="text-xl sm:text-2xl font-bold text-pink-700 pr-2 break-words">Send a Gift 🎁</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-pink-700 pr-2 break-words">{t('viewerStream.sendGift')}</h3>
               <button
                 onClick={() => setShowTipModal(false)}
-                className="text-pink-400 hover:text-pink-600 transition-colors flex-shrink-0" aria-label="Close"
+                className="text-pink-400 hover:text-pink-600 transition-colors flex-shrink-0" aria-label={t('common.close')}
               >
                 <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             <div className="bg-white/80 border border-[#ffb3c6] rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-5">
-              <p className="text-xs sm:text-sm text-gray-600">Your Balance</p>
-              <p className="text-xl sm:text-2xl font-semibold text-pink-600 break-words">{userCoinBalance} coins</p>
+              <p className="text-xs sm:text-sm text-gray-600">{t('viewerStream.yourBalance')}</p>
+              <p className="text-xl sm:text-2xl font-semibold text-pink-600 break-words">{userCoinBalance} {t('common.coins')}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -1856,7 +1858,7 @@ newSocket.on('product-added', (data) => {
       {showFullscreenToast && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 backdrop-blur-md">
           <Maximize className="w-4 h-4" />
-          <span className="text-sm font-medium">Opening in fullscreen...</span>
+          <span className="text-sm font-medium">{t('viewerStream.openingInFullscreen')}</span>
         </div>
       )}
 
@@ -1870,17 +1872,17 @@ newSocket.on('product-added', (data) => {
               </div>
               <div className="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full border border-[#ffb3c6] text-pink-700">
                 <Users className="w-4 h-4" />
-                <span className="text-sm font-semibold">{viewerCount} watching</span>
+                <span className="text-sm font-semibold">{viewerCount} {t('viewerStream.watching')}</span>
               </div>
               <div className="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full border border-[#ffb3c6] text-pink-700">
-                <span className="text-sm font-semibold">Your Balance: {userCoinBalance}</span>
+                <span className="text-sm font-semibold">{t('viewerStream.yourBalance')}: {userCoinBalance}</span>
               </div>
             </div>
             <button
               onClick={onBack}
               className="bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
             >
-              Exit
+              {t('viewerStream.exit')}
             </button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-pink-700 mb-2">{stream?.title}</h1>
@@ -1901,7 +1903,7 @@ newSocket.on('product-added', (data) => {
                     <div className="animate-pulse mb-4">
                       <Camera className="w-16 h-16 mx-auto text-pink-400" />
                     </div>
-                    <p className="text-pink-600 text-lg font-medium">Waiting for host...</p>
+                    <p className="text-pink-600 text-lg font-medium">{t('viewerStream.waitingForHost')}</p>
                   </div>
                 </div>
               ) : (
@@ -1926,7 +1928,7 @@ newSocket.on('product-added', (data) => {
                 onClick={toggleFullscreen}
                 className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
                 style={{ zIndex: 50 }}
-                title={isFullscreen ? 'Exit Fullscreen (Press ESC)' : 'Enter Fullscreen'}
+                title={isFullscreen ? t('viewerStream.exitFullscreen') : t('viewerStream.enterFullscreen')}
               >
                 {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
               </button>
@@ -1988,7 +1990,7 @@ newSocket.on('product-added', (data) => {
                       type="text"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      placeholder={!socketConnected ? 'Connecting...' : !hasAccess ? 'Join stream to comment...' : 'Comment...'}
+                      placeholder={!socketConnected ? t('viewerStream.connecting') : !hasAccess ? t('viewerStream.joinStreamToComment') : t('viewerStream.commentPlaceholder')}
                       maxLength={200}
                       disabled={!socketConnected || !hasAccess}
                       className="flex-1 bg-white/90 border border-white/30 rounded-full px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-400 disabled:opacity-60"
@@ -2050,11 +2052,11 @@ newSocket.on('product-added', (data) => {
                       userSelect: 'none',
                       WebkitUserSelect: 'none'
                     }}
-                    title="Exit Stream"
-                    aria-label="Exit Stream"
+                    title={t('viewerStream.exitStream')}
+                    aria-label={t('viewerStream.exitStream')}
                   >
                     <X className="w-4 h-4" />
-                    <span className="text-sm">Exit</span>
+                    <span className="text-sm">{t('viewerStream.exit')}</span>
                   </button>
 
                   {/* Control Panel - Slides in from right */}
@@ -2070,7 +2072,7 @@ newSocket.on('product-added', (data) => {
                     >
                       <div className="p-4 border-b border-white/20">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-bold">Stream Options</h3>
+                          <h3 className="text-lg font-bold">{t('viewerStream.streamOptions')}</h3>
                           <button
                             onClick={() => setShowFullscreenControls(false)}
                             className="p-2 hover:bg-white/10 rounded-full transition"
@@ -2080,8 +2082,8 @@ newSocket.on('product-added', (data) => {
                         </div>
                         {/* Coin Balance Display */}
                         <div className="bg-white/10 border border-white/20 rounded-lg p-2 mt-2">
-                          <p className="text-xs text-white/70">Your Balance</p>
-                          <p className="text-lg font-semibold text-pink-400">{userCoinBalance} coins</p>
+                          <p className="text-xs text-white/70">{t('viewerStream.yourBalance')}</p>
+                          <p className="text-lg font-semibold text-pink-400">{userCoinBalance} {t('common.coins')}</p>
                         </div>
                       </div>
 
@@ -2094,7 +2096,7 @@ newSocket.on('product-added', (data) => {
                           }`}
                         >
                           <MessageCircle className="w-4 h-4 inline mr-2" />
-                          Comment
+                          {t('viewerStream.comment')}
                         </button>
                         <button
                           onClick={() => setActiveFullscreenTab('products')}
@@ -2103,7 +2105,7 @@ newSocket.on('product-added', (data) => {
                           }`}
                         >
                           <Gift className="w-4 h-4 inline mr-2" />
-                          Products
+                          {t('viewerStream.products')}
                         </button>
                         <button
                           onClick={() => setActiveFullscreenTab('gifts')}
@@ -2111,7 +2113,7 @@ newSocket.on('product-added', (data) => {
                             activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
                           }`}
                         >
-                          🎁 Gifts
+                          {t('viewerStream.gifts')}
                         </button>
                       </div>
 
@@ -2130,7 +2132,7 @@ newSocket.on('product-added', (data) => {
                               {comments.length === 0 && (
                                 <div className="text-center text-white/50 py-8">
                                   <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                  <p className="text-sm">Be the first to comment!</p>
+                                  <p className="text-sm">{t('viewerStream.beFirstToComment')}</p>
                                 </div>
                               )}
                               <div ref={commentsEndRef} />
@@ -2144,7 +2146,7 @@ newSocket.on('product-added', (data) => {
                                 type="text"
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
-                                placeholder={!socketConnected ? 'Connecting...' : !hasAccess ? 'Join stream to comment...' : 'Comment...'}
+                                placeholder={!socketConnected ? t('viewerStream.connecting') : !hasAccess ? t('viewerStream.joinStreamToComment') : t('viewerStream.commentPlaceholder')}
                                 maxLength={200}
                                 disabled={!socketConnected || !hasAccess}
                                 className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
@@ -2170,10 +2172,10 @@ newSocket.on('product-added', (data) => {
                         {/* Products Tab */}
                         {activeFullscreenTab === 'products' && (
                           <div className="space-y-4">
-                            <h4 className="font-semibold text-lg mb-4">Featured Products</h4>
+                            <h4 className="font-semibold text-lg mb-4">{t('viewerStream.featuredProducts')}</h4>
                             {products.length === 0 ? (
                               <div className="text-center text-white/50 py-8">
-                                <p className="text-sm">No products available yet</p>
+                                <p className="text-sm">{t('viewerStream.noProductsAvailable')}</p>
                               </div>
                             ) : (
                               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
@@ -2207,7 +2209,7 @@ newSocket.on('product-added', (data) => {
                                         }}
                                         className="w-full bg-pink-600 hover:bg-pink-700 py-2.5 rounded-xl text-sm font-semibold text-white transition"
                                       >
-                                        Buy Now
+                                        {t('viewerStream.buyNow')}
                                       </button>
                                     ) : (
                                       <a
@@ -2216,7 +2218,7 @@ newSocket.on('product-added', (data) => {
                                         rel="noopener noreferrer"
                                         className="w-full bg-white/10 text-white border border-white/20 hover:bg-white/20 py-2.5 rounded-xl text-sm font-semibold transition block text-center"
                                       >
-                                        View Ad
+                                        {t('viewerStream.viewAd')}
                                       </a>
                                     )}
                                   </div>
@@ -2230,8 +2232,8 @@ newSocket.on('product-added', (data) => {
                         {activeFullscreenTab === 'gifts' && (
                           <div className="space-y-4">
                             <div className="bg-white/10 border border-white/20 rounded-lg p-3 mb-4">
-                              <p className="text-xs text-white/70">Your Balance</p>
-                              <p className="text-xl font-semibold text-pink-400">{userCoinBalance} coins</p>
+                              <p className="text-xs text-white/70">{t('viewerStream.yourBalance')}</p>
+                              <p className="text-xl font-semibold text-pink-400">{userCoinBalance} {t('common.coins')}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                               {gifts.map((gift) => (
@@ -2267,14 +2269,14 @@ newSocket.on('product-added', (data) => {
               className="w-full bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 hover:shadow-lg hover:shadow-pink-200 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-semibold text-white transition-all transform hover:scale-[1.01]"
             >
               <Gift className="w-5 h-5" />
-              Send a Gift
+              {t('viewerStream.sendGift')}
             </button>
 
             <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-3xl shadow-2xl p-5 sm:p-6">
-              <h3 className="font-semibold text-pink-700 text-lg mb-4">Featured Items</h3>
+              <h3 className="font-semibold text-pink-700 text-lg mb-4">{t('viewerStream.featuredItems')}</h3>
               <div className="flex overflow-x-auto gap-4 pb-2">
                 {products.length === 0 ? (
-                  <p className="text-gray-600 text-sm">No items available yet</p>
+                  <p className="text-gray-600 text-sm">{t('viewerStream.noItemsAvailable')}</p>
                 ) : (
                   products.map((p, i) => (
                     <div
@@ -2296,7 +2298,7 @@ newSocket.on('product-added', (data) => {
                           onClick={() => {
                             const token = localStorage.getItem('token');
                             if (!token) {
-                              setError('Please log in to purchase');
+                              setError(t('viewerStream.errors.pleaseLoginToPurchase'));
                               setTimeout(() => setError(''), 3000);
                               return;
                             }
@@ -2329,14 +2331,14 @@ newSocket.on('product-added', (data) => {
               <div className="p-5 border-b border-[#ffb3c6]/70 bg-white/70">
                 <h3 className="font-semibold text-pink-700 flex items-center gap-2">
                   <MessageCircle className="w-5 h-5" />
-                  Live Chat
+                  {t('viewerStream.liveChat')}
                   {socketConnected ? (
                     <span className="ml-auto text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
-                      Connected
+                      {t('viewerStream.connected')}
                     </span>
                   ) : (
                     <span className="ml-auto text-xs bg-amber-100 text-amber-600 px-2 py-1 rounded-full">
-                      Connecting...
+                      {t('viewerStream.connecting')}
                     </span>
                   )}
                 </h3>
@@ -2407,7 +2409,7 @@ newSocket.on('product-added', (data) => {
                     type="text"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder={!socketConnected ? 'Connecting...' : !hasAccess ? 'Join stream to comment...' : 'Say something...'}
+                    placeholder={!socketConnected ? t('viewerStream.connecting') : !hasAccess ? t('viewerStream.joinStreamToComment') : t('viewerStream.saySomething')}
                     maxLength={200}
                     disabled={!socketConnected || !hasAccess}
                     className="flex-1 bg-white/90 border border-[#ffb3c6] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 disabled:opacity-60"
@@ -2426,7 +2428,7 @@ newSocket.on('product-added', (data) => {
                   className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed font-semibold"
                 >
                   <Heart className="w-4 h-4" />
-                  Send Heart
+                  {t('viewerStream.sendHeart')}
                 </button>
               </div>
             </div>
