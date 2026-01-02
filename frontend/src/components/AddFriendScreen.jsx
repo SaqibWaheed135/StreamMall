@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, User, UserPlus, UserCheck, Shield, MessageCircle, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE_URL } from '../config/api';
 
 const AddFriendsScreen = ({ onBack }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
@@ -212,11 +214,11 @@ const AddFriendsScreen = ({ onBack }) => {
         window.location.href = `/messages/${conversation._id}`;
       } else {
         const error = await response.json();
-        alert(error.msg || 'Cannot start conversation. Both users must follow each other to message.');
+        alert(error.msg || t('addFriends.cannotStartConversation'));
       }
     } catch (error) {
       console.error('Error starting conversation:', error);
-      alert('Failed to start conversation');
+      alert(t('addFriends.failedToStartConversation'));
     }
   };
 
@@ -244,9 +246,9 @@ const AddFriendsScreen = ({ onBack }) => {
   // Get follow button text
   const getFollowButtonText = (userId) => {
     const status = userFollowStatus[userId] || {};
-    if (status.hasPendingRequest) return "Requested";
-    if (status.isFollowing) return "Following";
-    return "Follow";
+    if (status.hasPendingRequest) return t('addFriends.requested');
+    if (status.isFollowing) return t('addFriends.following');
+    return t('addFriends.follow');
   };
 
   // Get follow button style
@@ -304,22 +306,22 @@ const AddFriendsScreen = ({ onBack }) => {
                 {isFriend && (
                   <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
                     <Users className="w-3 h-3 inline mr-1" />
-                    Friends
+                    {t('addFriends.friendsLabel')}
                   </span>
                 )}
                 {followStatus.relationship === 'following' && (
                   <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
-                    Following
+                    {t('addFriends.following')}
                   </span>
                 )}
                 {followStatus.relationship === 'follower' && (
                   <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">
-                    Follows you
+                    {t('addFriends.followsYou')}
                   </span>
                 )}
               </div>
               <p className="text-gray-700 text-sm">
-                {formatNumber(user.followersCount || 0)} followers
+                {formatNumber(user.followersCount || 0)} {t('addFriends.followers')}
                 {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
               </p>
             </div>
@@ -331,7 +333,7 @@ const AddFriendsScreen = ({ onBack }) => {
               <button
                 onClick={() => startConversation(user)}
                 className="p-2 bg-pink-600 hover:bg-pink-700 rounded-full transition-colors"
-                title="Send Message"
+                title={t('addFriends.sendMessage')}
               >
                 <MessageCircle className="w-4 h-4 text-white" />
               </button>
@@ -368,7 +370,7 @@ const AddFriendsScreen = ({ onBack }) => {
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-xl font-bold">Add Friends</h1>
+            <h1 className="text-xl font-bold">{t('addFriends.addFriends')}</h1>
           </div>
 
           {/* Search Bar */}
@@ -376,7 +378,7 @@ const AddFriendsScreen = ({ onBack }) => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600" />
             <input
               type="text"
-              placeholder="Search for people to follow..."
+              placeholder={t('addFriends.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearchChange}
               className="w-full bg-white border border-[#ff99b3] text-black pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -389,7 +391,7 @@ const AddFriendsScreen = ({ onBack }) => {
         {/* Search Results */}
         {searchTerm.trim() ? (
           <div className="mb-8">
-            <h2 className="text-lg font-bold mb-4">Search Results</h2>
+            <h2 className="text-lg font-bold mb-4">{t('addFriends.searchResults')}</h2>
             {loading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }, (_, i) => (
@@ -408,8 +410,8 @@ const AddFriendsScreen = ({ onBack }) => {
             ) : searchResults.length === 0 ? (
               <div className="text-center py-8 text-gray-700">
                 <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">No users found</p>
-                <p className="text-sm">Try a different search term</p>
+                <p className="text-lg">{t('addFriends.noUsersFound')}</p>
+                <p className="text-sm">{t('addFriends.tryDifferentSearch')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -420,7 +422,7 @@ const AddFriendsScreen = ({ onBack }) => {
         ) : (
           /* Suggested Users */
           <div className="mb-8">
-            <h2 className="text-lg font-bold mb-4">Suggested for you</h2>
+            <h2 className="text-lg font-bold mb-4">{t('addFriends.suggestedForYou')}</h2>
             {loading ? (
               <div className="space-y-4">
                 {Array.from({ length: 10 }, (_, i) => (
@@ -439,8 +441,8 @@ const AddFriendsScreen = ({ onBack }) => {
             ) : suggestedUsers.length === 0 ? (
               <div className="text-center py-8 text-gray-700">
                 <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">No suggestions available</p>
-                <p className="text-sm">Try searching for specific users</p>
+                <p className="text-lg">{t('addFriends.noSuggestionsAvailable')}</p>
+                <p className="text-sm">{t('addFriends.trySearchingUsers')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -452,12 +454,12 @@ const AddFriendsScreen = ({ onBack }) => {
 
         {/* Quick Tips */}
         <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-4 mt-8">
-          <h3 className="font-bold mb-2">💡 Tips for making friends</h3>
+          <h3 className="font-bold mb-2">{t('addFriends.tipsTitle')}</h3>
           <ul className="text-sm text-gray-700 space-y-1">
-            <li>• Follow users you find interesting</li>
-            <li>• When they follow you back, you become friends</li>
-            <li>• Friends can send direct messages to each other</li>
-            <li>• You can see your friends in the "Users" tab on the search page</li>
+            <li>• {t('addFriends.tips.tip1')}</li>
+            <li>• {t('addFriends.tips.tip2')}</li>
+            <li>• {t('addFriends.tips.tip3')}</li>
+            <li>• {t('addFriends.tips.tip4')}</li>
           </ul>
         </div>
       </div>

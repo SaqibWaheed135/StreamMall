@@ -581,6 +581,56 @@
       "updateFailed": "Failed to update profile",
       "updateFailedTryAgain": "Failed to update profile. Please try again."
     }
+  },
+  "notifications": {
+    "notifications": "Notifications",
+    "noNotificationsYet": "No notifications yet",
+    "emptyStateMessage": "Follow requests and other notifications will appear here",
+    "followRequests": "Follow Requests",
+    "wantsToFollowYou": "wants to follow you",
+    "accept": "Accept",
+    "reject": "Reject",
+    "withdrawalNotifications": "Withdrawal Notifications",
+    "withdrawalApproved": "Withdrawal Approved",
+    "withdrawalApprovedMessage": "Your withdrawal request of ${{amount}} via {{method}} has been approved!",
+    "otherNotifications": "Other notifications will appear here",
+    "comingSoon": "Likes, comments, mentions, and more coming soon!",
+    "timeAgo": {
+      "justNow": "Just now",
+      "minutesAgo": "{{minutes}}m ago",
+      "hoursAgo": "{{hours}}h ago",
+      "daysAgo": "{{days}}d ago"
+    },
+    "errors": {
+      "failedToAccept": "Failed to accept request",
+      "failedToReject": "Failed to reject request"
+    }
+  },
+  "addFriends": {
+    "addFriends": "Add Friends",
+    "searchPlaceholder": "Search for people to follow...",
+    "searchResults": "Search Results",
+    "noUsersFound": "No users found",
+    "tryDifferentSearch": "Try a different search term",
+    "suggestedForYou": "Suggested for you",
+    "noSuggestionsAvailable": "No suggestions available",
+    "trySearchingUsers": "Try searching for specific users",
+    "requested": "Requested",
+    "following": "Following",
+    "follow": "Follow",
+    "friendsLabel": "Friends",
+    "followsYou": "Follows you",
+    "followers": "followers",
+    "sendMessage": "Send Message",
+    "cannotStartConversation": "Cannot start conversation. Both users must follow each other to message.",
+    "failedToStartConversation": "Failed to start conversation",
+    "tipsTitle": "💡 Tips for making friends",
+    "tips": {
+      "tip1": "Follow users you find interesting",
+      "tip2": "When they follow you back, you become friends",
+      "tip3": "Friends can send direct messages to each other",
+      "tip4": "You can see your friends in the \"Users\" tab on the search page"
+    }
   }
 }
 
