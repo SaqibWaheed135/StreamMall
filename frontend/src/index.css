@@ -65,3 +65,126 @@
   right: auto;
   left: 1rem;
 }
+
+/* RTL spacing adjustments for Tailwind space-x and space-y */
+/* Note: space-x uses margin-left, which needs to be reversed in RTL */
+[dir="rtl"] .space-x-1 > * + * {
+  margin-left: 0 !important;
+  margin-right: 0.25rem !important;
+}
+
+[dir="rtl"] .space-x-2 > * + * {
+  margin-left: 0 !important;
+  margin-right: 0.5rem !important;
+}
+
+[dir="rtl"] .space-x-3 > * + * {
+  margin-left: 0 !important;
+  margin-right: 0.75rem !important;
+}
+
+[dir="rtl"] .space-x-4 > * + * {
+  margin-left: 0 !important;
+  margin-right: 1rem !important;
+}
+
+[dir="rtl"] .space-x-6 > * + * {
+  margin-left: 0 !important;
+  margin-right: 1.5rem !important;
+}
+
+/* RTL flex gap adjustments */
+[dir="rtl"] .gap-2 {
+  gap: 0.5rem;
+}
+
+[dir="rtl"] .gap-3 {
+  gap: 0.75rem;
+}
+
+[dir="rtl"] .gap-4 {
+  gap: 1rem;
+}
+
+/* RTL padding adjustments */
+[dir="rtl"] .pl-2 {
+  padding-left: 0;
+  padding-right: 0.5rem;
+}
+
+[dir="rtl"] .pr-2 {
+  padding-right: 0;
+  padding-left: 0.5rem;
+}
+
+[dir="rtl"] .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* RTL margin adjustments */
+[dir="rtl"] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .ml-4 {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+[dir="rtl"] .mr-4 {
+  margin-right: 0;
+  margin-left: 1rem;
+}
+
+/* RTL justify adjustments */
+[dir="rtl"] .justify-start {
+  justify-content: flex-end;
+}
+
+[dir="rtl"] .justify-end {
+  justify-content: flex-start;
+}
+
+/* RTL items alignment */
+[dir="rtl"] .items-start {
+  align-items: flex-end;
+}
+
+[dir="rtl"] .items-end {
+  align-items: flex-start;
+}
+
+/* Navbar RTL fixes */
+[dir="rtl"] .flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
+/* Prevent navbar from shrinking */
+.fixed.bottom-0 {
+  min-width: 100%;
+}
+
+/* Ensure navbar items don't shrink */
+.fixed.bottom-0 button {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* Better text wrapping for long labels */
+.fixed.bottom-0 span {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}

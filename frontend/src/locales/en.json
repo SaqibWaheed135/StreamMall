@@ -80,6 +80,46 @@
     "language": "Language",
     "english": "English",
     "urdu": "اردو"
+  },
+  "navbar": {
+    "home": "Home",
+    "live": "LIVE",
+    "discover": "Discover",
+    "messages": "Messages",
+    "profile": "Profile",
+    "policies": "Policies"
+  },
+  "profile": {
+    "points": "Points",
+    "followers": "Followers",
+    "following": "Following",
+    "transfer": "Transfer",
+    "editProfile": "Edit Profile",
+    "logout": "Logout",
+    "withdraw": "Withdraw",
+    "public": "Public",
+    "private": "Private",
+    "profileStatus": "Profile Status",
+    "legalPolicies": "Legal & Policies",
+    "rechargePoints": "Recharge Points",
+    "inviteEarn": "Invite & Earn",
+    "inviteFriends": "Invite Friends",
+    "earnCoinsReferral": "Earn coins for each referral",
+    "earnRewards": "Earn Rewards!",
+    "getCoinsForFriend": "Get {{amount}} coins for each friend who signs up",
+    "totalInvites": "Total Invites",
+    "coinsEarned": "Coins Earned",
+    "yourInviteLink": "Your Invite Link",
+    "shareInviteLink": "Share Invite Link",
+    "howItWorks": "How it works:",
+    "shareUniqueLink": "Share your unique invite link",
+    "theySignUp": "They sign up using your link",
+    "bothEarnCoins": "You both earn coins instantly",
+    "joined": "Joined",
+    "recentlyJoined": "Recently joined",
+    "following": "Following",
+    "follow": "Follow",
+    "unfollow": "Unfollow"
   }
 }
 
