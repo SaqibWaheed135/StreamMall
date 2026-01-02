@@ -529,6 +529,58 @@
       "transferConfirm": "{{points}} پوائنٹس {{recipient}} کو منتقل کریں؟",
       "transferSuccess": "{{points}} پوائنٹس {{recipient}} کو کامیابی سے منتقل کر دیے گئے"
     }
+  },
+  "editProfile": {
+    "editProfile": "پروفائل میں ترمیم کریں",
+    "saving": "محفوظ ہو رہا ہے...",
+    "save": "محفوظ کریں",
+    "loadingProfile": "پروفائل لوڈ ہو رہا ہے...",
+    "profilePicture": "پروفائل تصویر",
+    "changePhoto": "تصویر تبدیل کریں",
+    "remove": "ہٹائیں",
+    "fileInfo": "JPEG، PNG، GIF، یا WebP۔ زیادہ سے زیادہ 5MB۔",
+    "personalInformation": "ذاتی معلومات",
+    "username": "صارف نام",
+    "email": "ای میل",
+    "firstName": "پہلا نام",
+    "lastName": "آخری نام",
+    "dateOfBirth": "تاریخ پیدائش",
+    "location": "مقام",
+    "website": "ویب سائٹ",
+    "bio": "بائیو",
+    "privacySettings": "پرائیویسی کی ترتیبات",
+    "privateAccount": "نجی اکاؤنٹ",
+    "privateAccountDescription": "صرف منظور شدہ فالوورز آپ کی پوسٹس، ویڈیوز اور پروفائل کی تفصیلات دیکھ سکتے ہیں",
+    "dangerZone": "خطرے کا زون",
+    "deactivateAccount": "اکاؤنٹ غیر فعال کریں",
+    "deactivateAccountDescription": "اپنے اکاؤنٹ کو عارضی طور پر غیر فعال کریں",
+    "deleteAccount": "اکاؤنٹ حذف کریں",
+    "deleteAccountDescription": "اپنے اکاؤنٹ اور تمام ڈیٹا کو مستقل طور پر حذف کریں",
+    "savingChanges": "تبدیلیاں محفوظ ہو رہی ہیں...",
+    "saveChanges": "تبدیلیاں محفوظ کریں",
+    "placeholders": {
+      "enterUsername": "اپنا صارف نام درج کریں",
+      "enterEmail": "اپنا ای میل درج کریں",
+      "firstName": "پہلا نام",
+      "lastName": "آخری نام",
+      "cityCountry": "شہر، ملک",
+      "websiteUrl": "https://yourwebsite.com",
+      "tellAboutYourself": "لوگوں کو اپنے بارے میں بتائیں..."
+    },
+    "validation": {
+      "usernameInvalid": "صارف نام 3-30 حروف کا ہونا چاہیے اور صرف حروف، نمبرز اور انڈر سکور پر مشتمل ہونا چاہیے",
+      "emailInvalid": "براہ کرم ایک درست ای میل پتہ درج کریں",
+      "bioTooLong": "بائیو 160 حروف یا اس سے کم ہونا چاہیے",
+      "websiteInvalid": "ویب سائٹ http:// یا https:// سے شروع ہونے والا ایک درست URL ہونا چاہیے",
+      "ageRequirement": "آپ کی عمر کم از کم 13 سال ہونی چاہیے",
+      "fileSizeTooLarge": "فائل کا سائز 5MB سے کم ہونا چاہیے",
+      "fileTypeInvalid": "صرف JPEG، PNG، GIF، اور WebP فائلیں اجازت یافتہ ہیں"
+    },
+    "messages": {
+      "profileUpdated": "پروفائل کامیابی سے اپ ڈیٹ ہو گیا!",
+      "updateFailed": "پروفائل اپ ڈیٹ کرنے میں ناکام",
+      "updateFailedTryAgain": "پروفائل اپ ڈیٹ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔"
+    }
   }
 }
 

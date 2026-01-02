@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Camera, X, Save, User, Mail, Calendar, MapPin, Link, Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE_URL } from '../config/api';
 
 const EditProfileScreen = ({ onBack }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState(null);
@@ -109,7 +111,7 @@ const EditProfileScreen = ({ onBack }) => {
       if (file.size > 5 * 1024 * 1024) {
         setErrors(prev => ({
           ...prev,
-          avatar: 'File size must be less than 5MB'
+          avatar: t('editProfile.validation.fileSizeTooLarge')
         }));
         return;
       }
@@ -119,7 +121,7 @@ const EditProfileScreen = ({ onBack }) => {
       if (!allowedTypes.includes(file.type)) {
         setErrors(prev => ({
           ...prev,
-          avatar: 'Only JPEG, PNG, GIF, and WebP files are allowed'
+          avatar: t('editProfile.validation.fileTypeInvalid')
         }));
         return;
       }
@@ -155,22 +157,22 @@ const EditProfileScreen = ({ onBack }) => {
 
     // Username validation
     if (formData.username && !/^[a-zA-Z0-9_]{3,30}$/.test(formData.username)) {
-      newErrors.username = 'Username must be 3-30 characters and contain only letters, numbers, and underscores';
+      newErrors.username = t('editProfile.validation.usernameInvalid');
     }
 
     // Email validation
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t('editProfile.validation.emailInvalid');
     }
 
     // Bio validation
     if (formData.bio && formData.bio.length > 160) {
-      newErrors.bio = 'Bio must be 160 characters or less';
+      newErrors.bio = t('editProfile.validation.bioTooLong');
     }
 
     // Website validation
     if (formData.website && formData.website.trim() !== '' && !/^https?:\/\/.+/.test(formData.website)) {
-      newErrors.website = 'Website must be a valid URL starting with http:// or https://';
+      newErrors.website = t('editProfile.validation.websiteInvalid');
     }
 
     // Age validation
@@ -184,7 +186,7 @@ const EditProfileScreen = ({ onBack }) => {
       }
       
       if (age < 13) {
-        newErrors.dateOfBirth = 'You must be at least 13 years old';
+        newErrors.dateOfBirth = t('editProfile.validation.ageRequirement');
       }
     }
 
@@ -233,18 +235,18 @@ const EditProfileScreen = ({ onBack }) => {
         localStorage.setItem('user', JSON.stringify(data.user));
         
         // Show success message
-        alert('Profile updated successfully!');
+        alert(t('editProfile.messages.profileUpdated'));
         
         // Go back to profile
         if (onBack) {
           onBack();
         }
       } else {
-        setErrors({ general: data.msg || 'Failed to update profile' });
+        setErrors({ general: data.msg || t('editProfile.messages.updateFailed') });
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      setErrors({ general: 'Failed to update profile. Please try again.' });
+      setErrors({ general: t('editProfile.messages.updateFailedTryAgain') });
     } finally {
       setSaving(false);
     }
@@ -255,7 +257,7 @@ const EditProfileScreen = ({ onBack }) => {
       <div className="min-h-screen bg-[#FFC0CB] text-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-4"></div>
-          <p className="text-gray-700">Loading profile...</p>
+          <p className="text-gray-700">{t('editProfile.loadingProfile')}</p>
         </div>
       </div>
     );
@@ -273,7 +275,7 @@ const EditProfileScreen = ({ onBack }) => {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-bold">Edit Profile</h1>
+            <h1 className="text-xl font-bold">{t('editProfile.editProfile')}</h1>
           </div>
           <button
             onClick={handleSave}
@@ -285,7 +287,7 @@ const EditProfileScreen = ({ onBack }) => {
             ) : (
               <Save className="w-4 h-4" />
             )}
-            <span>{saving ? 'Saving...' : 'Save'}</span>
+            <span>{saving ? t('editProfile.saving') : t('editProfile.save')}</span>
           </button>
         </div>
       </div>
@@ -300,7 +302,7 @@ const EditProfileScreen = ({ onBack }) => {
 
         {/* Avatar Section */}
         <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Profile Picture</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('editProfile.profilePicture')}</h2>
           <div className="flex items-center space-x-4">
             <div className="relative">
               <img
@@ -331,14 +333,14 @@ const EditProfileScreen = ({ onBack }) => {
                   htmlFor="avatar-upload"
                   className="px-4 py-2 bg-white border border-[#ff99b3] text-black rounded-lg hover:bg-[#ffb3c6] transition-colors cursor-pointer text-sm"
                 >
-                  Change Photo
+                  {t('editProfile.changePhoto')}
                 </label>
                 {(avatarPreview || user?.avatar) && (
                   <button
                     onClick={handleRemoveAvatar}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
                   >
-                    Remove
+                    {t('editProfile.remove')}
                   </button>
                 )}
               </div>
@@ -346,7 +348,7 @@ const EditProfileScreen = ({ onBack }) => {
                 <p className="text-red-600 text-sm mt-2">{errors.avatar}</p>
               )}
               <p className="text-gray-700 text-xs mt-2">
-                JPEG, PNG, GIF, or WebP. Max 5MB.
+                {t('editProfile.fileInfo')}
               </p>
             </div>
           </div>
@@ -354,13 +356,13 @@ const EditProfileScreen = ({ onBack }) => {
 
         {/* Personal Information */}
         <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Personal Information</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('editProfile.personalInformation')}</h2>
           <div className="space-y-4">
             {/* Username */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="w-4 h-4 inline mr-2" />
-                Username
+                {t('editProfile.username')}
               </label>
               <input
                 type="text"
@@ -368,7 +370,7 @@ const EditProfileScreen = ({ onBack }) => {
                 value={formData.username}
                 onChange={handleInputChange}
                 className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="Enter your username"
+                placeholder={t('editProfile.placeholders.enterUsername')}
               />
               {errors.username && (
                 <p className="text-red-600 text-sm mt-1">{errors.username}</p>
@@ -379,7 +381,7 @@ const EditProfileScreen = ({ onBack }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Mail className="w-4 h-4 inline mr-2" />
-                Email
+                {t('editProfile.email')}
               </label>
               <input
                 type="email"
@@ -387,7 +389,7 @@ const EditProfileScreen = ({ onBack }) => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="Enter your email"
+                placeholder={t('editProfile.placeholders.enterEmail')}
               />
               {errors.email && (
                 <p className="text-red-600 text-sm mt-1">{errors.email}</p>
@@ -398,7 +400,7 @@ const EditProfileScreen = ({ onBack }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name
+                  {t('editProfile.firstName')}
                 </label>
                 <input
                   type="text"
@@ -406,12 +408,12 @@ const EditProfileScreen = ({ onBack }) => {
                   value={formData.firstName}
                   onChange={handleInputChange}
                   className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="First name"
+                  placeholder={t('editProfile.placeholders.firstName')}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name
+                  {t('editProfile.lastName')}
                 </label>
                 <input
                   type="text"
@@ -419,7 +421,7 @@ const EditProfileScreen = ({ onBack }) => {
                   value={formData.lastName}
                   onChange={handleInputChange}
                   className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Last name"
+                  placeholder={t('editProfile.placeholders.lastName')}
                 />
               </div>
             </div>
@@ -428,7 +430,7 @@ const EditProfileScreen = ({ onBack }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="w-4 h-4 inline mr-2" />
-                Date of Birth
+                {t('editProfile.dateOfBirth')}
               </label>
               <input
                 type="date"
@@ -446,7 +448,7 @@ const EditProfileScreen = ({ onBack }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <MapPin className="w-4 h-4 inline mr-2" />
-                Location
+                {t('editProfile.location')}
               </label>
               <input
                 type="text"
@@ -454,7 +456,7 @@ const EditProfileScreen = ({ onBack }) => {
                 value={formData.location}
                 onChange={handleInputChange}
                 className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="City, Country"
+                placeholder={t('editProfile.placeholders.cityCountry')}
               />
             </div>
 
@@ -462,7 +464,7 @@ const EditProfileScreen = ({ onBack }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Link className="w-4 h-4 inline mr-2" />
-                Website
+                {t('editProfile.website')}
               </label>
               <input
                 type="url"
@@ -470,7 +472,7 @@ const EditProfileScreen = ({ onBack }) => {
                 value={formData.website}
                 onChange={handleInputChange}
                 className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="https://yourwebsite.com"
+                placeholder={t('editProfile.placeholders.websiteUrl')}
               />
               {errors.website && (
                 <p className="text-red-600 text-sm mt-1">{errors.website}</p>
@@ -481,7 +483,7 @@ const EditProfileScreen = ({ onBack }) => {
 
         {/* Bio */}
         <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Bio</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('editProfile.bio')}</h2>
           <div className="relative">
             <textarea
               name="bio"
@@ -490,7 +492,7 @@ const EditProfileScreen = ({ onBack }) => {
               rows={4}
               maxLength={160}
               className="w-full p-3 bg-white border border-[#ff99b3] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
-              placeholder="Tell people about yourself..."
+              placeholder={t('editProfile.placeholders.tellAboutYourself')}
             />
             <div className="absolute bottom-2 right-2 text-xs text-gray-700">
               {formData.bio.length}/160
@@ -503,14 +505,14 @@ const EditProfileScreen = ({ onBack }) => {
 
         {/* Privacy Settings - FIXED */}
         <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Privacy Settings</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('editProfile.privacySettings')}</h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               {formData.isPrivate ? <EyeOff className="w-5 h-5 text-pink-700" /> : <Eye className="w-5 h-5 text-pink-700" />}
               <div>
-                <p className="font-medium text-black">Private Account</p>
+                <p className="font-medium text-black">{t('editProfile.privateAccount')}</p>
                 <p className="text-sm text-gray-700">
-                  Only approved followers can see your posts, videos, and profile details
+                  {t('editProfile.privateAccountDescription')}
                 </p>
               </div>
             </div>
@@ -529,15 +531,15 @@ const EditProfileScreen = ({ onBack }) => {
 
         {/* Account Actions */}
         <div className="bg-white/70 border border-[#ff99b3] rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4 text-red-600">Danger Zone</h2>
+          <h2 className="text-lg font-semibold mb-4 text-red-600">{t('editProfile.dangerZone')}</h2>
           <div className="space-y-3">
             <button className="w-full p-3 text-left bg-red-100 border border-red-300 rounded-lg text-red-700 hover:bg-red-200 transition-colors">
-              <p className="font-medium">Deactivate Account</p>
-              <p className="text-sm text-red-600">Temporarily disable your account</p>
+              <p className="font-medium">{t('editProfile.deactivateAccount')}</p>
+              <p className="text-sm text-red-600">{t('editProfile.deactivateAccountDescription')}</p>
             </button>
             <button className="w-full p-3 text-left bg-red-100 border border-red-300 rounded-lg text-red-700 hover:bg-red-200 transition-colors">
-              <p className="font-medium">Delete Account</p>
-              <p className="text-sm text-red-600">Permanently delete your account and all data</p>
+              <p className="font-medium">{t('editProfile.deleteAccount')}</p>
+              <p className="text-sm text-red-600">{t('editProfile.deleteAccountDescription')}</p>
             </button>
           </div>
         </div>
@@ -552,12 +554,12 @@ const EditProfileScreen = ({ onBack }) => {
             {saving ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Saving Changes...</span>
+                <span>{t('editProfile.savingChanges')}</span>
               </>
             ) : (
               <>
                 <Save className="w-5 h-5" />
-                <span>Save Changes</span>
+                <span>{t('editProfile.saveChanges')}</span>
               </>
             )}
           </button>

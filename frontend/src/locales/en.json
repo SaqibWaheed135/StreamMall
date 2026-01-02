@@ -529,6 +529,58 @@
       "transferConfirm": "Transfer {{points}} points to {{recipient}}?",
       "transferSuccess": "Successfully transferred {{points}} points to {{recipient}}"
     }
+  },
+  "editProfile": {
+    "editProfile": "Edit Profile",
+    "saving": "Saving...",
+    "save": "Save",
+    "loadingProfile": "Loading profile...",
+    "profilePicture": "Profile Picture",
+    "changePhoto": "Change Photo",
+    "remove": "Remove",
+    "fileInfo": "JPEG, PNG, GIF, or WebP. Max 5MB.",
+    "personalInformation": "Personal Information",
+    "username": "Username",
+    "email": "Email",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "dateOfBirth": "Date of Birth",
+    "location": "Location",
+    "website": "Website",
+    "bio": "Bio",
+    "privacySettings": "Privacy Settings",
+    "privateAccount": "Private Account",
+    "privateAccountDescription": "Only approved followers can see your posts, videos, and profile details",
+    "dangerZone": "Danger Zone",
+    "deactivateAccount": "Deactivate Account",
+    "deactivateAccountDescription": "Temporarily disable your account",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDescription": "Permanently delete your account and all data",
+    "savingChanges": "Saving Changes...",
+    "saveChanges": "Save Changes",
+    "placeholders": {
+      "enterUsername": "Enter your username",
+      "enterEmail": "Enter your email",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "cityCountry": "City, Country",
+      "websiteUrl": "https://yourwebsite.com",
+      "tellAboutYourself": "Tell people about yourself..."
+    },
+    "validation": {
+      "usernameInvalid": "Username must be 3-30 characters and contain only letters, numbers, and underscores",
+      "emailInvalid": "Please enter a valid email address",
+      "bioTooLong": "Bio must be 160 characters or less",
+      "websiteInvalid": "Website must be a valid URL starting with http:// or https://",
+      "ageRequirement": "You must be at least 13 years old",
+      "fileSizeTooLarge": "File size must be less than 5MB",
+      "fileTypeInvalid": "Only JPEG, PNG, GIF, and WebP files are allowed"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully!",
+      "updateFailed": "Failed to update profile",
+      "updateFailedTryAgain": "Failed to update profile. Please try again."
+    }
   }
 }
 
