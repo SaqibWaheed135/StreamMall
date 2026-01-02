@@ -2943,6 +2943,85 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   </div>
                 )}
 
+                {/* Persistent Live Chat Panel - Always Visible on iPhone */}
+                {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <div
+                    className="fixed right-0 top-0 bottom-0 w-72 max-w-[75%] bg-black/85 backdrop-blur-xl border-l border-white/20 z-50 flex flex-col"
+                    style={{
+                      zIndex: 2147483645,
+                      height: '100vh',
+                      height: 'calc(var(--vh, 1vh) * 100)',
+                      paddingTop: 'env(safe-area-inset-top, 0px)',
+                      paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)', // Space for input bar
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)',
+                      display: showFullscreenControls ? 'none' : 'flex' // Hide when control panel is open
+                    }}
+                  >
+                    {/* Chat Header */}
+                    <div className="p-4 border-b border-white/20 flex items-center justify-between bg-black/50">
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <MessageCircle className="w-5 h-5 text-pink-400" />
+                        Live Chat
+                      </h3>
+                      {socket && (
+                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30">
+                          ● Live
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Chat Messages - Scrollable */}
+                    <div 
+                      className="flex-1 overflow-y-auto p-4 space-y-3"
+                      style={{
+                        WebkitOverflowScrolling: 'touch',
+                        scrollBehavior: 'smooth'
+                      }}
+                    >
+                      {comments.map((c) => (
+                        <div key={c.id} className="space-y-2">
+                          <div className="bg-white/10 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <span className="font-semibold text-pink-300 text-sm">@{c.username}: </span>
+                                <span className="text-white/90 text-sm break-words">{c.text}</span>
+                              </div>
+                            </div>
+                          </div>
+                          {c.replies && c.replies.length > 0 && (
+                            <div className="ml-4 space-y-2">
+                              {c.replies.map((reply) => (
+                                <div
+                                  key={reply._id || reply.id}
+                                  className={`text-sm rounded-xl px-3 py-2 ${
+                                    reply.isHost 
+                                      ? 'bg-pink-500/20 border border-pink-500/50' 
+                                      : 'bg-white/5 border border-white/10'
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-1">
+                                    {reply.isHost && <span className="text-pink-400">👑</span>}
+                                    <span className="font-semibold text-pink-300 text-xs">@{reply.username}:</span>
+                                    <span className="text-white/90 text-xs break-words">{reply.text}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {comments.length === 0 && (
+                        <div className="text-center text-white/50 py-8">
+                          <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                          <p className="text-sm">Waiting for comments...</p>
+                        </div>
+                      )}
+                      <div ref={commentsEndRef} />
+                    </div>
+                  </div>
+                )}
+
                 {/* iPhone Fullscreen Controls Panel */}
                 {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <>
