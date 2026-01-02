@@ -441,9 +441,9 @@ const ProfileScreen = ({ userId: propUserId }) => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl w-full max-w-md shadow-2xl border border-[#ff99b3] my-auto">
-          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#ff99b3]">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto pb-24 md:pb-4">
+        <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl w-full max-w-md shadow-2xl border border-[#ff99b3] my-auto max-h-[90vh] md:max-h-[85vh] flex flex-col">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#ff99b3] flex-shrink-0">
             <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
               <div className="p-1.5 sm:p-2 bg-pink-600 rounded-lg flex-shrink-0">
                 <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -458,7 +458,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
             </button>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6 overflow-y-auto flex-1">
             <div className="bg-pink-200 border border-pink-400 rounded-xl p-4">
               <div className="flex items-start space-x-3">
                 <div className="p-2 bg-pink-600 rounded-lg">
@@ -504,7 +504,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
             </div>
           </div>
 
-          <div className="p-6 border-t border-[#ff99b3] bg-[#ffb3c6]">
+          <div className="p-6 border-t border-[#ff99b3] bg-[#ffb3c6] flex-shrink-0">
             <button onClick={handleShare} className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2">
               <Share className="w-5 h-5" />
               <span>{t('profile.shareInviteLink')}</span>
