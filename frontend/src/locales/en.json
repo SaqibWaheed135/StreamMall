@@ -765,6 +765,46 @@
       "pleaseLoginToPurchase": "Please log in to purchase",
       "redirectingToPurchase": "Redirecting to purchase coins..."
     }
+  },
+  "liveStreams": {
+    "title": "Live Streams",
+    "loading": "Loading live streams...",
+    "liveNow": "live now",
+    "stream": "stream",
+    "streams": "streams",
+    "goLive": "Go Live",
+    "searchPlaceholder": "Search streams or creators...",
+    "all": "All",
+    "popular": "Popular",
+    "new": "New",
+    "failedToFetch": "Failed to fetch streams",
+    "couldNotLoad": "Could not load live streams",
+    "noLiveStreams": "No Live Streams",
+    "noStreamsMatch": "No streams match your search",
+    "beFirstToGoLive": "Be the first to go live!",
+    "startStreaming": "Start Streaming",
+    "liveStream": "Live Stream",
+    "live": "LIVE",
+    "views": "views",
+    "hosts": "hosts",
+    "loadMore": "Load More"
+  },
+  "liveBrowse": {
+    "liveNow": "Live Now",
+    "goLive": "Go Live",
+    "searchPlaceholder": "Search live streams...",
+    "mostViewers": "Most Viewers",
+    "recentlyStarted": "Recently Started",
+    "longestRunning": "Longest Running",
+    "errorLoading": "Error loading live streams",
+    "noStreamsFound": "No streams found",
+    "noLiveStreamsRightNow": "No live streams right now",
+    "noStreamsMatch": "No streams match \"{{term}}\"",
+    "beFirstToGoLive": "Be the first to go live and connect with your audience!",
+    "startStreaming": "Start Streaming",
+    "live": "LIVE",
+    "watching": "watching",
+    "autoRefreshing": "Auto-refreshing"
   }
 }
 

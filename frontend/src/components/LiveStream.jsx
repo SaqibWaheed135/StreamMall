@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Radio, Users, Eye, Clock, Search, Filter, X, Play } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
 const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
+  const { t } = useTranslation();
   const [streams, setStreams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -33,7 +35,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.msg || 'Failed to fetch streams');
+        throw new Error(data.msg || t('liveStreams.failedToFetch'));
       }
 
       // Filter out the current user's own streams
@@ -59,7 +61,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
       setError('');
     } catch (err) {
       console.error('Fetch streams error:', err);
-      setError('Could not load live streams');
+      setError(t('liveStreams.couldNotLoad'));
     } finally {
       setLoading(false);
     }
@@ -104,7 +106,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
       <div className="min-h-screen bg-[#FFC0CB] text-black flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-4 border-pink-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-700">Loading live streams...</p>
+          <p className="text-gray-700">{t('liveStreams.loading')}</p>
         </div>
       </div>
     );
@@ -119,10 +121,10 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2 sm:gap-3">
                 <Radio className="w-6 h-6 sm:w-8 sm:h-8 text-pink-700" />
-                Live Streams
+                {t('liveStreams.title')}
               </h1>
               <p className="text-sm sm:text-base text-gray-700 mt-2">
-                {filteredStreams.length} {filteredStreams.length === 1 ? 'stream' : 'streams'} live now
+                {filteredStreams.length} {filteredStreams.length === 1 ? t('liveStreams.stream') : t('liveStreams.streams')} {t('liveStreams.liveNow')}
               </p>
             </div>
             <button
@@ -131,7 +133,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
 
             >
               <Radio className="w-4 h-4 sm:w-5 sm:h-5" />
-              Go Live
+              {t('liveStreams.goLive')}
             </button>
           </div>
 
@@ -143,7 +145,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search streams or creators..."
+                placeholder={t('liveStreams.searchPlaceholder')}
                 className="w-full bg-white border border-[#ff99b3] rounded-lg pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base text-black placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-colors"
               />
             </div>
@@ -158,7 +160,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                       : 'bg-white text-gray-700 hover:bg-[#ffb3c6] border border-[#ff99b3]'
                     }`}
                 >
-                  {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+                  {filterOption === 'all' ? t('liveStreams.all') : filterOption === 'popular' ? t('liveStreams.popular') : t('liveStreams.new')}
                 </button>
               ))}
             </div>
@@ -178,15 +180,15 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
             <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full bg-white border border-[#ff99b3] flex items-center justify-center">
               <Radio className="w-8 h-8 sm:w-10 sm:h-10 text-gray-600" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-semibold mb-2">No Live Streams</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold mb-2">{t('liveStreams.noLiveStreams')}</h2>
             <p className="text-sm sm:text-base text-gray-700 mb-6">
-              {searchQuery ? 'No streams match your search' : 'Be the first to go live!'}
+              {searchQuery ? t('liveStreams.noStreamsMatch') : t('liveStreams.beFirstToGoLive')}
             </p>
             <button
               onClick={onStartStream}
               className="bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105 text-white"
             >
-              Start Streaming
+              {t('liveStreams.startStreaming')}
             </button>
           </div>
         )}
@@ -205,14 +207,14 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                   <div className="absolute inset-0 flex items-center justify-center group-hover:bg-black/20 transition-colors">
                     <div className="text-center group-hover:scale-110 transition-transform">
                       <Play className="w-12 h-12 sm:w-16 sm:h-16 text-pink-700/80 mx-auto mb-2" />
-                      <p className="text-pink-700 text-xs sm:text-sm">Live Stream</p>
+                      <p className="text-pink-700 text-xs sm:text-sm">{t('liveStreams.liveStream')}</p>
                     </div>
                   </div>
 
                   {/* Live Badge */}
                   <div className="absolute top-3 left-3 flex items-center gap-2 bg-pink-600 text-white px-2 sm:px-3 py-1 rounded-full z-10">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    <span className="text-xs sm:text-sm font-semibold">LIVE</span>
+                    <span className="text-xs sm:text-sm font-semibold">{t('liveStreams.live')}</span>
                   </div>
 
                   {/* Viewer Count */}
@@ -256,12 +258,12 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                   <div className="flex items-center gap-3 sm:gap-4 text-xs text-gray-700 pt-3 border-t border-[#ff99b3]">
                     <div className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      <span>{stream.totalViews || 0} views</span>
+                      <span>{stream.totalViews || 0} {t('liveStreams.views')}</span>
                     </div>
                     {stream.streams?.length > 1 && (
                       <div className="flex items-center gap-1">
                         <Radio className="w-3 h-3" />
-                        <span>{stream.streams.length} hosts</span>
+                        <span>{stream.streams.length} {t('liveStreams.hosts')}</span>
                       </div>
                     )}
                   </div>
@@ -278,7 +280,7 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
               onClick={fetchLiveStreams}
               className="bg-white border border-[#ff99b3] hover:bg-[#ffb3c6] hover:border-pink-600 px-6 py-3 rounded-lg font-medium transition-all"
             >
-              Load More
+              {t('liveStreams.loadMore')}
             </button>
           </div>
         )}
