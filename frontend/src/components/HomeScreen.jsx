@@ -16,11 +16,13 @@ import {
   Wallet,
   UserPlus,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import HostLiveStream from "./HostLiveStream";
 import PointsTransfer from "./PointsTransfer";
 import Logo from "../assets/logo.jpeg";
 import { useNavigate, useRoutes } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
@@ -31,6 +33,7 @@ const getAuthHeaders = () => {
 };
 
 export default function StreamMallHome() {
+  const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState("discover");
   const [liveRooms, setLiveRooms] = useState([]);
   const [friendsList, setFriendsList] = useState([]);
@@ -256,7 +259,7 @@ const LiveRoomCard = ({ room }) => {
           <button 
             onClick={handleJoinLive}
             className="w-full bg-gradient-to-r from-[#FF2B55] via-[#7B2FF7] to-[#00CFFF] hover:from-[#FF2B55]/80 hover:via-[#7B2FF7]/80 hover:to-[#00CFFF]/80 text-white font-bold py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(255,43,85,0.4)]">
-            Join Live
+            {t('home.joinLive')}
           </button>
         </div>
       </div>
@@ -276,10 +279,12 @@ const LiveRoomCard = ({ room }) => {
           />
 
           <div className="flex items-center gap-4">
+            <LanguageSwitcher variant="light" className="!bg-white/20 !border-white/30" />
+            
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#ff99b3]">
               <Coins className="w-5 h-5 text-pink-700" />
               {pointsLoading ? (
-                <span className="font-bold text-gray-700">Loading...</span>
+                <span className="font-bold text-gray-700">{t('common.loading')}</span>
               ) : (
                 <span className="font-bold text-black">{userCoins}</span>
               )}
@@ -302,23 +307,23 @@ const LiveRoomCard = ({ room }) => {
           <div className="bg-[#FFC0CB] backdrop-blur border-t border-[#ff99b3] p-4 space-y-3">
             <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left">
               <User className="w-5 h-5 text-pink-700" />
-              <span>Profile</span>
+              <span>{t('navbar.profile')}</span>
             </button>
             <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/search')}>
               <Users className="w-5 h-5 text-pink-700" />
-              <span>Friends</span>
+              <span>{t('home.friends')}</span>
             </button>
 
             <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/recharge-points')}
             >
               <Coins className="w-5 h-5 text-pink-700" />
-              <span>Recharge Points</span>
+              <span>{t('profile.rechargePoints')}</span>
             </button>
 
             <button className="w-full flex items-center gap-3 p-3 hover:bg-[#ffb3c6] rounded-lg transition-colors text-left" onClick={() => (window.location.href = '/withdraw-points')}
             >
               <Wallet className="w-5 h-5 text-pink-700" />
-              <span>Withdraw Points</span>
+              <span>{t('profile.withdraw')} {t('home.points')}</span>
             </button>
 
             <button
@@ -336,9 +341,9 @@ const LiveRoomCard = ({ room }) => {
       <div className="sticky top-[73px] z-30 bg-[#FFC0CB]/90 backdrop-blur border-b border-[#ff99b3]">
         <div className="max-w-7xl mx-auto px-4 flex gap-6 overflow-x-auto whitespace-nowrap">
           {[
-            { id: "discover", label: "🔥 Discover", icon: Zap },
-            { id: "friends", label: "👥 Friends", icon: Users },
-            { id: "create", label: "📡 Go Live", icon: Radio },
+            { id: "discover", label: `🔥 ${t('home.discover')}`, icon: Zap },
+            { id: "friends", label: `👥 ${t('home.friends')}`, icon: Users },
+            { id: "create", label: `📡 ${t('home.goLive')}`, icon: Radio },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -359,23 +364,23 @@ const LiveRoomCard = ({ room }) => {
         {/* Discover Tab */}
         {currentTab === "discover" && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Live Now</h2>
+            <h2 className="text-2xl font-bold mb-6">{t('common.live')} {t('common.now')}</h2>
 
             {liveRooms.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 <div className="bg-white/70 p-6 rounded-2xl border border-[#ff99b3] shadow-lg">
                   <WifiOff className="w-12 h-12 text-pink-700 mb-4" />
                   <h3 className="text-lg font-bold text-black">
-                    No Live Streams Right Now
+                    {t('home.noStreams')}
                   </h3>
                   <p className="text-gray-700 text-sm mt-2">
-                    Check back later or start your own live stream!
+                    {t('home.startStreaming')}
                   </p>
                   <button
                     onClick={() => setCurrentTab("create")}
                     className="mt-4 bg-gradient-to-r from-pink-600 to-pink-500 px-5 py-2 rounded-xl text-white font-semibold hover:scale-105 transition-all"
                   >
-                    Go Live Now 🚀
+                    {t('home.goLive')} 🚀
                   </button>
                 </div>
               </div>
@@ -392,11 +397,11 @@ const LiveRoomCard = ({ room }) => {
         {/* Friends Tab */}
         {currentTab === "friends" && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold mb-6">Friends & Chat</h2>
+            <h2 className="text-2xl font-bold mb-6">{t('home.friends')} & {t('chat.chat')}</h2>
             <div className="bg-white/70 backdrop-blur border border-[#ff99b3] rounded-2xl p-6">
               <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                 <Users className="w-5 h-5 text-pink-700" />
-                My Friends
+                {t('home.myFriends')}
               </h3>
               <div className="space-y-3">
                 {friendsList.map((friend) => (
@@ -418,7 +423,7 @@ const LiveRoomCard = ({ room }) => {
                 onClick={() => navigate("/add-friends")}
                 className="w-full mt-4 bg-gradient-to-r from-pink-600 to-pink-500 text-white py-2 rounded-lg font-bold hover:shadow-lg transition-all"
               >
-                Add Friend
+                {t('home.addFriend')}
               </button>
             </div>
           </div>
