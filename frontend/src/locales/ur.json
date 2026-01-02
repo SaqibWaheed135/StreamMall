@@ -80,6 +80,46 @@
     "language": "زبان",
     "english": "English",
     "urdu": "اردو"
+  },
+  "navbar": {
+    "home": "ہوم",
+    "live": "لائیو",
+    "discover": "دریافت",
+    "messages": "پیغامات",
+    "profile": "پروفائل",
+    "policies": "پالیسیاں"
+  },
+  "profile": {
+    "points": "پوائنٹس",
+    "followers": "فالوورز",
+    "following": "فالو کر رہے ہیں",
+    "transfer": "منتقل کریں",
+    "editProfile": "پروفائل میں ترمیم کریں",
+    "logout": "لاگ آؤٹ",
+    "withdraw": "نکالیں",
+    "public": "عوامی",
+    "private": "نجی",
+    "profileStatus": "پروفائل کی حیثیت",
+    "legalPolicies": "قانونی اور پالیسیاں",
+    "rechargePoints": "پوائنٹس ریچارج کریں",
+    "inviteEarn": "دعوت دیں اور کمائیں",
+    "inviteFriends": "دوستوں کو دعوت دیں",
+    "earnCoinsReferral": "ہر ریفرل کے لیے سکے کمائیں",
+    "earnRewards": "انعامات کمائیں!",
+    "getCoinsForFriend": "ہر دوست کے لیے {{amount}} سکے حاصل کریں جو سائن اپ کرتا ہے",
+    "totalInvites": "کل دعوتیں",
+    "coinsEarned": "سکے کمائے",
+    "yourInviteLink": "آپ کا دعوتی لنک",
+    "shareInviteLink": "دعوتی لنک شیئر کریں",
+    "howItWorks": "یہ کیسے کام کرتا ہے:",
+    "shareUniqueLink": "اپنا منفرد دعوتی لنک شیئر کریں",
+    "theySignUp": "وہ آپ کے لنک کا استعمال کرتے ہوئے سائن اپ کرتے ہیں",
+    "bothEarnCoins": "آپ دونوں فوری طور پر سکے کماتے ہیں",
+    "joined": "شامل ہوئے",
+    "recentlyJoined": "حال ہی میں شامل ہوئے",
+    "following": "فالو کر رہے ہیں",
+    "follow": "فالو کریں",
+    "unfollow": "ان فالو کریں"
   }
 }
 

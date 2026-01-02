@@ -8,6 +8,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { Home, Search, User, CircleDot, Bell, MessageSquare, FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 
 import logo from "./assets/logo.jpeg";
@@ -46,43 +47,51 @@ document.head.appendChild(poppinsLink);
 // Bottom Navigation
 // --------------------
 const BottomNavigation = ({ currentScreen, navigate }) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ur';
+  
   const navItems = [
-    { id: 'home', icon: Home, label: 'Home', path: '/' },
-    { id: 'live', icon: CircleDot, label: 'LIVE', path: '/live-streams' },
-    { id: 'search', icon: Search, label: 'Discover', path: '/search' },
-    { id: 'messages', icon: MessageSquare, label: 'Messages', path: '/messaging' },
-    { id: 'profile', icon: User, label: 'Profile', path: '/profile' },
-    { id: 'Policies', icon: FileText, label: 'Policies', path: '/terms-policies' }
+    { id: 'home', icon: Home, labelKey: 'navbar.home', path: '/' },
+    { id: 'live', icon: CircleDot, labelKey: 'navbar.live', path: '/live-streams' },
+    { id: 'search', icon: Search, labelKey: 'navbar.discover', path: '/search' },
+    { id: 'messages', icon: MessageSquare, labelKey: 'navbar.messages', path: '/messaging' },
+    { id: 'profile', icon: User, labelKey: 'navbar.profile', path: '/profile' },
+    { id: 'Policies', icon: FileText, labelKey: 'navbar.policies', path: '/terms-policies' }
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 font-[Poppins]">
       <div className="mx-auto max-w-5xl px-2 pb-4">
-        <div className="bg-white/90 border border-white/70 rounded-3xl shadow-[0_12px_40px_rgba(255,153,179,0.35)] backdrop-blur-xl overflow-hidden px-2">
-          <div className="flex">
+        <div className="bg-white/90 border border-white/70 rounded-3xl shadow-[0_12px_40px_rgba(255,153,179,0.35)] backdrop-blur-xl overflow-hidden px-1 sm:px-2">
+          <div className={`flex ${isRTL ? 'flex-row-reverse' : ''}`}>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentScreen === item.path;
+              const label = t(item.labelKey);
 
               return (
                 <button
                   key={item.id}
                   onClick={() => navigate(item.path)}
-                  className="flex-1 py-3 px-1 flex flex-col items-center justify-center min-h-[64px] transition-all"
+                  className="flex-1 py-2 sm:py-3 px-0.5 sm:px-1 flex flex-col items-center justify-center min-h-[64px] transition-all min-w-0"
                 >
                   <div
-                    className={`w-10 h-10 mb-1 flex items-center justify-center rounded-2xl transition-all ${isActive
+                    className={`w-8 h-8 sm:w-10 sm:h-10 mb-0.5 sm:mb-1 flex items-center justify-center rounded-2xl transition-all flex-shrink-0 ${isActive
                       ? 'bg-gradient-to-br from-pink-600 via-pink-500 to-rose-400 text-white shadow-lg shadow-pink-200 scale-105'
                       : 'text-pink-500/60 hover:text-pink-600'
                       }`}
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <span
-                    className={`text-xs tracking-wide transition-all ${isActive ? 'text-pink-600 font-semibold' : 'text-gray-500'
+                    className={`text-[9px] xs:text-[10px] sm:text-xs tracking-wide transition-all text-center leading-tight break-words max-w-full px-0.5 ${isActive ? 'text-pink-600 font-semibold' : 'text-gray-500'
                       }`}
+                    style={{
+                      wordBreak: 'break-word',
+                      hyphens: 'auto'
+                    }}
                   >
-                    {item.label}
+                    {label}
                   </span>
                 </button>
               );

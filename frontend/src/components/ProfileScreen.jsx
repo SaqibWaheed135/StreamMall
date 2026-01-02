@@ -5,8 +5,11 @@ import {
   Coins, ShoppingBag, FileText
 } from "lucide-react";
 import { API_BASE_URL } from "../config/api";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 const ProfileScreen = ({ userId: propUserId }) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(true);
@@ -292,9 +295,10 @@ const ProfileScreen = ({ userId: propUserId }) => {
   };
 
   const formatJoinDate = (dateString) => {
-    if (!dateString) return "Recently joined";
+    if (!dateString) return t('profile.recentlyJoined');
     const date = new Date(dateString);
-    return `Joined ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    return `${t('profile.joined')} ${formattedDate}`;
   };
 
   const formatNumber = (num) => {
@@ -411,6 +415,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
   };
 
   const InviteModal = ({ user, onClose, referralPoints }) => {
+    const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
     const inviteCode = user?.inviteCode || user?._id;
     const inviteLink = `${window.location.origin}/signup?ref=${inviteCode}`;
@@ -444,8 +449,8 @@ const ProfileScreen = ({ userId: propUserId }) => {
                 <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-lg sm:text-xl font-bold text-black break-words">Invite Friends</h3>
-                <p className="text-xs sm:text-sm text-gray-700 break-words">Earn coins for each referral</p>
+                <h3 className="text-lg sm:text-xl font-bold text-black break-words">{t('profile.inviteFriends')}</h3>
+                <p className="text-xs sm:text-sm text-gray-700 break-words">{t('profile.earnCoinsReferral')}</p>
               </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors flex-shrink-0 ml-2" aria-label="Close">
@@ -460,9 +465,9 @@ const ProfileScreen = ({ userId: propUserId }) => {
                   <Coins className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-black">Earn Rewards!</p>
+                  <p className="font-semibold text-black">{t('profile.earnRewards')}</p>
                   <p className="text-sm text-gray-800 mt-1">
-                    Get <span className="text-pink-700 font-bold">{referralPoints} coins</span> for each friend who signs up
+                    {t('profile.getCoinsForFriend', { amount: referralPoints })}
                   </p>
                 </div>
               </div>
@@ -471,16 +476,16 @@ const ProfileScreen = ({ userId: propUserId }) => {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-[#ffb3c6] rounded-lg p-4 text-center border border-[#ff99b3]">
                 <p className="text-2xl font-bold text-pink-700">{user.totalInvites || 0}</p>
-                <p className="text-xs text-gray-700 mt-1">Total Invites</p>
+                <p className="text-xs text-gray-700 mt-1">{t('profile.totalInvites')}</p>
               </div>
               <div className="bg-[#ffb3c6] rounded-lg p-4 text-center border border-[#ff99b3]">
                 <p className="text-2xl font-bold text-pink-700">{(user.totalInvites || 0) * referralPoints}</p>
-                <p className="text-xs text-gray-700 mt-1">Coins Earned</p>
+                <p className="text-xs text-gray-700 mt-1">{t('profile.coinsEarned')}</p>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">Your Invite Link</label>
+              <label className="block text-sm font-medium text-gray-800 mb-2">{t('profile.yourInviteLink')}</label>
               <div className="flex items-center space-x-2">
                 <input type="text" value={inviteLink} readOnly className="flex-1 bg-white border border-[#ff99b3] rounded-lg px-4 py-3 text-sm text-black focus:outline-none focus:ring-2 focus:ring-pink-500" />
                 <button onClick={handleCopyLink} className={`p-3 rounded-lg transition-all ${copied ? 'bg-green-600' : 'bg-pink-600'} hover:opacity-90`}>
@@ -490,11 +495,11 @@ const ProfileScreen = ({ userId: propUserId }) => {
             </div>
 
             <div className="bg-[#ffb3c6] rounded-lg p-4 border border-[#ff99b3]">
-              <p className="text-sm font-semibold text-gray-800 mb-2">How it works:</p>
+              <p className="text-sm font-semibold text-gray-800 mb-2">{t('profile.howItWorks')}</p>
               <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside">
-                <li>Share your unique invite link</li>
-                <li>They sign up using your link</li>
-                <li>You both earn coins instantly</li>
+                <li>{t('profile.shareUniqueLink')}</li>
+                <li>{t('profile.theySignUp')}</li>
+                <li>{t('profile.bothEarnCoins')}</li>
               </ol>
             </div>
           </div>
@@ -502,7 +507,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
           <div className="p-6 border-t border-[#ff99b3] bg-[#ffb3c6]">
             <button onClick={handleShare} className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2">
               <Share className="w-5 h-5" />
-              <span>Share Invite Link</span>
+              <span>{t('profile.shareInviteLink')}</span>
             </button>
           </div>
         </div>
@@ -528,9 +533,9 @@ const ProfileScreen = ({ userId: propUserId }) => {
   }
 
   const getFollowButtonText = () => {
-    if (followStatus.hasPendingRequest) return "Requested";
-    if (followStatus.isFollowing) return "Following";
-    return "Follow";
+    if (followStatus.hasPendingRequest) return t('profile.following');
+    if (followStatus.isFollowing) return t('profile.following');
+    return t('profile.follow');
   };
 
   const getFollowButtonStyle = () => {
@@ -553,15 +558,18 @@ const ProfileScreen = ({ userId: propUserId }) => {
           <div className="flex items-center space-x-3">
             <h1 className="text-xl font-bold">{user.username}</h1>
             {user.isVerified && <Shield className="w-5 h-5 text-pink-700" />}
-            {user.isPrivate && <div className="bg-[#ffb3c6] px-2 py-1 rounded-full text-xs">Private</div>}
+            {user.isPrivate && <div className="bg-[#ffb3c6] px-2 py-1 rounded-full text-xs">{t('profile.private')}</div>}
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Language Switcher */}
+            <LanguageSwitcher variant="light" className="!bg-white/20 !border-white/30" />
+            
             {/* Legal & Policies Button - Always visible */}
             <button
               onClick={() => window.location.href = '/terms-policies'}
               className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors"
-              title="Legal & Policies"
+              title={t('profile.legalPolicies')}
             >
               <FileText className="w-5 h-5" />
             </button>
@@ -578,7 +586,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
             {isOwnProfile && (
               <button onClick={() => setShowInviteModal(true)} className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 rounded-lg transition-all shadow-lg">
                 <UserPlus className="w-4 h-4" />
-                <span className="text-sm font-medium hidden sm:inline">Invite & Earn</span>
+                <span className="text-sm font-medium hidden sm:inline">{t('profile.inviteEarn')}</span>
               </button>
             )}
 
@@ -608,7 +616,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
                   <Coins className="w-5 h-5 text-white" />
                 </button>
                 <button onClick={() => (window.location.href = '/recharge-points')} className="py-2 px-4 rounded-lg font-medium bg-white text-pink-700 border border-[#ff99b3] hover:bg-[#ffb3c6] hidden sm:block">
-                  Recharge Points
+                  {t('profile.rechargePoints')}
                 </button>
               </>
             )}
@@ -640,11 +648,11 @@ const ProfileScreen = ({ userId: propUserId }) => {
             <div className="flex items-center space-x-3 mb-4">
               <div className="text-center">
                 <p className="font-bold text-sm sm:text-lg">{user?.following?.length || 0}</p>
-                <p className="text-gray-700 text-[10px] sm:text-sm">Following</p>
+                <p className="text-gray-700 text-[10px] sm:text-sm">{t('profile.following')}</p>
               </div>
               <div className="text-center">
                 <p className="font-bold text-sm sm:text-lg">{user?.followers?.length || 0}</p>
-                <p className="text-gray-700 text-[10px] sm:text-sm">Followers</p>
+                <p className="text-gray-700 text-[10px] sm:text-sm">{t('profile.followers')}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-1">
@@ -656,7 +664,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
                     )}
                   </p>
                 </div>
-                <p className="text-pink-700 text-[10px] sm:text-sm">Points</p>
+                <p className="text-pink-700 text-[10px] sm:text-sm">{t('profile.points')}</p>
               </div>
             </div>
 
@@ -665,16 +673,16 @@ const ProfileScreen = ({ userId: propUserId }) => {
               {isOwnProfile ? (
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => (window.location.href = "/edit-profile")} className="py-2 px-4 rounded-lg font-medium bg-white text-pink-700 border border-[#ff99b3] hover:bg-[#ffb3c6] transition-colors text-sm">
-                    Edit Profile
+                    {t('profile.editProfile')}
                   </button>
                   <button onClick={() => (window.location.href = "/transfer-points")} className="py-2 px-4 rounded-lg font-medium bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white text-sm flex items-center justify-center space-x-1">
-                    <span>Transfer</span>
+                    <span>{t('profile.transfer')}</span>
                   </button>
                   <button onClick={() => (window.location.href = "/withdraw-points")} className="py-2 px-4 rounded-lg font-medium bg-gradient-to-r from-pink-700 to-pink-600 hover:opacity-90 text-white text-sm flex items-center justify-center space-x-1">
-                    <span>Withdraw</span>
+                    <span>{t('profile.withdraw')}</span>
                   </button>
                   <button onClick={handleLogout} className="py-2 px-4 rounded-lg font-medium bg-gradient-to-r from-red-600 to-pink-600 hover:opacity-90 text-white text-sm">
-                    Logout
+                    {t('profile.logout')}
                   </button>
                 </div>
               ) : (
@@ -736,9 +744,9 @@ const ProfileScreen = ({ userId: propUserId }) => {
         {/* Additional Info + Legal & Policies */}
         <div className="bg-white/70 backdrop-blur-sm border border-[#ff99b3] rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-gray-700 text-sm">Profile Status</span>
+            <span className="text-gray-700 text-sm">{t('profile.profileStatus')}</span>
             <span className="px-3 py-1 bg-gradient-to-r from-pink-600 to-pink-500 rounded-full text-xs font-semibold text-white">
-              {user.isPrivate ? 'Private' : 'Public'}
+              {user.isPrivate ? t('profile.private') : t('profile.public')}
             </span>
           </div>
 
@@ -748,7 +756,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
             className="w-full flex items-center justify-center space-x-2 py-3 bg-[#ffb3c6] hover:bg-pink-300/50 rounded-xl transition-colors text-sm font-medium"
           >
             <FileText className="w-4 h-4" />
-            <span>Legal & Policies</span>
+            <span>{t('profile.legalPolicies')}</span>
           </button>
 
           {user.website && (
