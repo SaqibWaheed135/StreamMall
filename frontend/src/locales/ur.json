@@ -581,6 +581,56 @@
       "updateFailed": "پروفائل اپ ڈیٹ کرنے میں ناکام",
       "updateFailedTryAgain": "پروفائل اپ ڈیٹ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔"
     }
+  },
+  "notifications": {
+    "notifications": "اطلاعات",
+    "noNotificationsYet": "ابھی تک کوئی اطلاعات نہیں",
+    "emptyStateMessage": "فالو کی درخواستیں اور دیگر اطلاعات یہاں ظاہر ہوں گی",
+    "followRequests": "فالو کی درخواستیں",
+    "wantsToFollowYou": "آپ کو فالو کرنا چاہتا/چاہتی ہے",
+    "accept": "قبول کریں",
+    "reject": "مسترد کریں",
+    "withdrawalNotifications": "نکالنے کی اطلاعات",
+    "withdrawalApproved": "نکالنے کی منظوری",
+    "withdrawalApprovedMessage": "{{method}} کے ذریعے ${{amount}} کی آپ کی نکالنے کی درخواست منظور ہو گئی!",
+    "otherNotifications": "دیگر اطلاعات یہاں ظاہر ہوں گی",
+    "comingSoon": "لائکس، تبصرے، ذکر اور مزید جلد آرہا ہے!",
+    "timeAgo": {
+      "justNow": "ابھی ابھی",
+      "minutesAgo": "{{minutes}} منٹ پہلے",
+      "hoursAgo": "{{hours}} گھنٹے پہلے",
+      "daysAgo": "{{days}} دن پہلے"
+    },
+    "errors": {
+      "failedToAccept": "درخواست قبول کرنے میں ناکام",
+      "failedToReject": "درخواست مسترد کرنے میں ناکام"
+    }
+  },
+  "addFriends": {
+    "addFriends": "دوست شامل کریں",
+    "searchPlaceholder": "فالو کرنے کے لیے لوگوں کو تلاش کریں...",
+    "searchResults": "تلاش کے نتائج",
+    "noUsersFound": "کوئی صارف نہیں ملا",
+    "tryDifferentSearch": "ایک مختلف تلاش کی اصطلاح آزمائیں",
+    "suggestedForYou": "آپ کے لیے تجویز کردہ",
+    "noSuggestionsAvailable": "کوئی تجاویز دستیاب نہیں",
+    "trySearchingUsers": "مخصوص صارفین کو تلاش کرنے کی کوشش کریں",
+    "requested": "درخواست دی گئی",
+    "following": "فالو کر رہے ہیں",
+    "follow": "فالو کریں",
+    "friendsLabel": "دوست",
+    "followsYou": "آپ کو فالو کرتا/کرتی ہے",
+    "followers": "فالوورز",
+    "sendMessage": "پیغام بھیجیں",
+    "cannotStartConversation": "بات چیت شروع نہیں کر سکتے۔ دونوں صارفین کو ایک دوسرے کو فالو کرنا ہوگا۔",
+    "failedToStartConversation": "بات چیت شروع کرنے میں ناکام",
+    "tipsTitle": "💡 دوست بنانے کے لیے تجاویز",
+    "tips": {
+      "tip1": "ایسے صارفین کو فالو کریں جن میں آپ کی دلچسپی ہو",
+      "tip2": "جب وہ آپ کو فالو کریں گے، آپ دوست بن جائیں گے",
+      "tip3": "دوست ایک دوسرے کو براہ راست پیغامات بھیج سکتے ہیں",
+      "tip4": "آپ تلاش کے صفحے پر \"صارفین\" ٹیب میں اپنے دوست دیکھ سکتے ہیں"
+    }
   }
 }
 

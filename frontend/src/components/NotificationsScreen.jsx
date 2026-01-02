@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Bell, User, UserCheck, UserX, Clock, Heart, MessageCircle, UserPlus, DollarSign, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE_URL } from '../config/api';
 
 const NotificationsScreen = ({ onBack }) => {
+  const { t } = useTranslation();
   const [followRequests, setFollowRequests] = useState([]);
   const [withdrawalNotifications, setWithdrawalNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,11 +65,11 @@ const NotificationsScreen = ({ onBack }) => {
         setFollowRequests(prev => prev.filter(req => req._id !== requestId));
       } else {
         const error = await response.json();
-        alert(error.msg || 'Failed to accept request');
+        alert(error.msg || t('notifications.errors.failedToAccept'));
       }
     } catch (error) {
       console.error('Error accepting request:', error);
-      alert('Failed to accept request');
+      alert(t('notifications.errors.failedToAccept'));
     } finally {
       setProcessingRequest(null);
     }
@@ -86,11 +88,11 @@ const NotificationsScreen = ({ onBack }) => {
         setFollowRequests(prev => prev.filter(req => req._id !== requestId));
       } else {
         const error = await response.json();
-        alert(error.msg || 'Failed to reject request');
+        alert(error.msg || t('notifications.errors.failedToReject'));
       }
     } catch (error) {
       console.error('Error rejecting request:', error);
-      alert('Failed to reject request');
+      alert(t('notifications.errors.failedToReject'));
     } finally {
       setProcessingRequest(null);
     }
@@ -110,10 +112,10 @@ const NotificationsScreen = ({ onBack }) => {
     const diffInHours = Math.floor(diffInMinutes / 60);
     const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInDays < 7) return `${diffInDays}d ago`;
+    if (diffInMinutes < 1) return t('notifications.timeAgo.justNow');
+    if (diffInMinutes < 60) return t('notifications.timeAgo.minutesAgo', { minutes: diffInMinutes });
+    if (diffInHours < 24) return t('notifications.timeAgo.hoursAgo', { hours: diffInHours });
+    if (diffInDays < 7) return t('notifications.timeAgo.daysAgo', { days: diffInDays });
     return requestDate.toLocaleDateString();
   };
 
@@ -130,7 +132,7 @@ const NotificationsScreen = ({ onBack }) => {
           </button>
           <div className="flex items-center space-x-2">
             <Bell className="w-6 h-6" />
-            <h1 className="text-xl font-bold">Notifications</h1>
+            <h1 className="text-xl font-bold">{t('notifications.notifications')}</h1>
             {(followRequests.length + withdrawalNotifications.length) > 0 && (
               <span className="bg-pink-600 text-white text-xs px-2 py-1 rounded-full">
                 {followRequests.length + withdrawalNotifications.length}
@@ -166,8 +168,8 @@ const NotificationsScreen = ({ onBack }) => {
             <div className="bg-white border border-[#ff99b3] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bell className="w-10 h-10 text-gray-600" />
             </div>
-            <h2 className="text-xl font-bold mb-2">No notifications yet</h2>
-            <p className="text-gray-700">Follow requests and other notifications will appear here</p>
+            <h2 className="text-xl font-bold mb-2">{t('notifications.noNotificationsYet')}</h2>
+            <p className="text-gray-700">{t('notifications.emptyStateMessage')}</p>
           </div>
         ) : (
           // Notifications list
@@ -177,7 +179,7 @@ const NotificationsScreen = ({ onBack }) => {
               <div>
                 <h2 className="text-lg font-bold mb-4 flex items-center">
                   <UserPlus className="w-5 h-5 mr-2 text-pink-700" />
-                  Follow Requests ({followRequests.length})
+                  {t('notifications.followRequests')} ({followRequests.length})
                 </h2>
                 <div className="space-y-3">
                   {followRequests.map((request) => (
@@ -197,7 +199,7 @@ const NotificationsScreen = ({ onBack }) => {
                           />
                           <div className="text-left">
                             <p className="font-bold text-pink-700">{request.requester.username}</p>
-                            <p className="text-gray-700 text-sm">wants to follow you</p>
+                            <p className="text-gray-700 text-sm">{t('notifications.wantsToFollowYou')}</p>
                             <div className="flex items-center text-xs text-gray-600 mt-1">
                               <Clock className="w-3 h-3 mr-1" />
                               {formatTimeAgo(request.createdAt)}
@@ -211,7 +213,7 @@ const NotificationsScreen = ({ onBack }) => {
                             className="bg-gradient-to-r from-pink-600 to-pink-500 hover:opacity-90 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
                           >
                             <UserCheck className="w-4 h-4" />
-                            <span>Accept</span>
+                            <span>{t('notifications.accept')}</span>
                           </button>
                           <button
                             onClick={() => rejectRequest(request._id)}
@@ -219,7 +221,7 @@ const NotificationsScreen = ({ onBack }) => {
                             className="bg-white border border-[#ff99b3] hover:bg-[#ffb3c6] text-black px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
                           >
                             <UserX className="w-4 h-4" />
-                            <span>Reject</span>
+                            <span>{t('notifications.reject')}</span>
                           </button>
                         </div>
                       </div>
@@ -234,7 +236,7 @@ const NotificationsScreen = ({ onBack }) => {
               <div className={followRequests.length > 0 ? 'mt-8' : ''}>
                 <h2 className="text-lg font-bold mb-4 flex items-center">
                   <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-                  Withdrawal Notifications ({withdrawalNotifications.length})
+                  {t('notifications.withdrawalNotifications')} ({withdrawalNotifications.length})
                 </h2>
                 <div className="space-y-3">
                   {withdrawalNotifications.map((notification) => (
@@ -244,9 +246,12 @@ const NotificationsScreen = ({ onBack }) => {
                           <CheckCircle className="w-6 h-6 text-green-600" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-bold text-black">Withdrawal Approved</p>
+                          <p className="font-bold text-black">{t('notifications.withdrawalApproved')}</p>
                           <p className="text-gray-700 text-sm">
-                            Your withdrawal request of ${notification.withdrawalAmount} via {notification.method} has been approved!
+                            {t('notifications.withdrawalApprovedMessage', { 
+                              amount: notification.withdrawalAmount, 
+                              method: notification.method 
+                            })}
                           </p>
                           <div className="flex items-center text-xs text-gray-600 mt-1">
                             <Clock className="w-3 h-3 mr-1" />
@@ -267,9 +272,9 @@ const NotificationsScreen = ({ onBack }) => {
           <div className="mt-8 p-4 bg-white/70 border border-[#ff99b3] rounded-xl">
             <div className="flex items-center space-x-2 text-gray-700 mb-2">
               <Heart className="w-4 h-4" />
-              <span className="text-sm">Other notifications will appear here</span>
+              <span className="text-sm">{t('notifications.otherNotifications')}</span>
             </div>
-            <p className="text-xs text-gray-600">Likes, comments, mentions, and more coming soon!</p>
+            <p className="text-xs text-gray-600">{t('notifications.comingSoon')}</p>
           </div>
         )}
       </div>
