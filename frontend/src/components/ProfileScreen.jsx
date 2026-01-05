@@ -18,7 +18,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
   const [pointsLoading, setPointsLoading] = useState(false);
   const [userPoints, setUserPoints] = useState(0);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [referralPoints] = useState(500); // Example value – fetch from API if needed
+  const [referralPoints] = useState(10); // Referrer gets 10 points for each referral
 
   const [followStatus, setFollowStatus] = useState({
     isFollowing: false,
@@ -469,6 +469,9 @@ const ProfileScreen = ({ userId: propUserId }) => {
                   <p className="text-sm text-gray-800 mt-1">
                     {t('profile.getCoinsForFriend', { amount: referralPoints })}
                   </p>
+                  <p className="text-xs text-gray-700 mt-2">
+                    {t('profile.friendGetsBonus', { amount: 10 })}
+                  </p>
                 </div>
               </div>
             </div>
@@ -499,7 +502,7 @@ const ProfileScreen = ({ userId: propUserId }) => {
               <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside">
                 <li>{t('profile.shareUniqueLink')}</li>
                 <li>{t('profile.theySignUp')}</li>
-                <li>{t('profile.bothEarnCoins')}</li>
+                <li>{t('profile.bothEarnCoinsDetailed', { referrerAmount: 10, newUserAmount: 10 })}</li>
               </ol>
             </div>
           </div>

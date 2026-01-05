@@ -138,6 +138,8 @@
     "shareUniqueLink": "اپنا منفرد دعوتی لنک شیئر کریں",
     "theySignUp": "وہ آپ کے لنک کا استعمال کرتے ہوئے سائن اپ کرتے ہیں",
     "bothEarnCoins": "آپ دونوں فوری طور پر سکے کماتے ہیں",
+    "bothEarnCoinsDetailed": "آپ کو {{referrerAmount}} سکے ملتے ہیں اور انہیں {{newUserAmount}} سکے فوری طور پر ملتے ہیں!",
+    "friendGetsBonus": "آپ کے دوست کو بھی سائن اپ کرنے پر {{amount}} بونس پوائنٹس ملتے ہیں!",
     "joined": "شامل ہوئے",
     "recentlyJoined": "حال ہی میں شامل ہوئے",
     "following": "فالو کر رہے ہیں",
@@ -1163,6 +1165,7 @@
     "privacyPolicy": "رازداری کی پالیسی",
     "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟",
     "logIn": "لاگ ان کریں",
+    "referralBonusReceived": "🎉 مبارک ہو! آپ کو ریفرل کی وجہ سے {{amount}} پوائنٹس ملے!",
     "errors": {
       "passwordsDontMatch": "پاس ورڈز میچ نہیں کرتے",
       "passwordMinLength": "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے",
