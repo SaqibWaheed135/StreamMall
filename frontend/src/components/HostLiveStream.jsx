@@ -1992,7 +1992,18 @@ const applyBackgroundFilter = React.useCallback(async () => {
       return;
     }
 
-    const originalTrack = cameraPublication.track.mediaStreamTrack;
+    // Check if we already have a processed track - if so, we need to get the original
+    let originalMediaStreamTrack;
+    if (cameraPublication.track.name === 'camera-with-background') {
+      // We're replacing an existing processed track, need to get original camera
+      console.log('Background filter: Replacing existing processed track');
+      // For now, we'll use the current track's mediaStreamTrack
+      // In a production app, you'd want to store the original track reference
+      originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
+    } else {
+      // Get the original track
+      originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
+    }
 
     if (selectedBackground === 'none') {
       console.log('Background filter: Removing filter');
@@ -2020,16 +2031,23 @@ const applyBackgroundFilter = React.useCallback(async () => {
         }
       }
 
-      // Re-enable camera to get fresh track
-      await liveKitRoom.localParticipant.setCameraEnabled(false);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      await liveKitRoom.localParticipant.setCameraEnabled(true);
-      
-      // Wait for track to be ready and attach it
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const newCamPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (newCamPublication && newCamPublication.track && newCamPublication.track.mediaStreamTrack) {
-        attachVideoStream(newCamPublication.track);
+      // Check if we need to re-enable the original camera track
+      const currentCamPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (!currentCamPub || !currentCamPub.track || currentCamPub.track.name === 'camera-with-background') {
+        // Re-enable camera to get fresh track
+        await liveKitRoom.localParticipant.setCameraEnabled(false);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await liveKitRoom.localParticipant.setCameraEnabled(true);
+        
+        // Wait for track to be ready and attach it
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const newCamPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (newCamPublication && newCamPublication.track && newCamPublication.track.mediaStreamTrack) {
+          attachVideoStream(newCamPublication.track);
+        }
+      } else {
+        // Original track is still there, just attach it
+        attachVideoStream(currentCamPub.track);
       }
       
       return;
@@ -2066,7 +2084,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
 
     // Process video with background
     const newProcessedStream = processVideoWithBackground(
-      originalTrack,
+      originalMediaStreamTrack,
       canvas,
       selectedBackground,
       backgroundColor,
@@ -2079,9 +2097,18 @@ const applyBackgroundFilter = React.useCallback(async () => {
       // Wait for track to be ready
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Unpublish original track
+      // Unpublish original track (only if it's not already the processed one)
+      // IMPORTANT: We unpublish AFTER processing starts, so the original track's mediaStreamTrack
+      // continues running to feed the canvas processing
       try {
-        await liveKitRoom.localParticipant.unpublishTrack(originalTrack);
+        const currentPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (currentPub && currentPub.track && currentPub.track.name !== 'camera-with-background') {
+          // Store reference to mediaStreamTrack before unpublishing (it will keep running)
+          const originalMST = currentPub.track.mediaStreamTrack;
+          await liveKitRoom.localParticipant.unpublishTrack(currentPub.track);
+          // The mediaStreamTrack should continue running since it's used by the canvas
+          console.log('Background filter: Unpublished original track, but mediaStreamTrack continues for processing');
+        }
       } catch (e) {
         console.warn('Error unpublishing original track:', e);
       }
@@ -2140,7 +2167,37 @@ const applyBackgroundFilter = React.useCallback(async () => {
       console.error('Error restoring camera:', e);
     }
   }
-}, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream]);
+}, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
+
+  // Update background when selection changes
+  useEffect(() => {
+    if (!isLive || !liveKitRoom) {
+      // Clean up if not live
+      backgroundProcessingRef.current = false;
+      if (backgroundAnimationFrameRef.current) {
+        cancelAnimationFrame(backgroundAnimationFrameRef.current);
+        backgroundAnimationFrameRef.current = null;
+      }
+      if (processedStream) {
+        if (processedStream._cleanup) {
+          processedStream._cleanup();
+        }
+        processedStream.getTracks().forEach(track => track.stop());
+        setProcessedStream(null);
+      }
+      return;
+    }
+
+    // Delay to ensure room is ready
+    const timer = setTimeout(() => {
+      applyBackgroundFilter();
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [selectedBackground, backgroundColor, backgroundBlur, isLive, liveKitRoom, applyBackgroundFilter, processedStream]);
+
   // Detect iOS device
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
