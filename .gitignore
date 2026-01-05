@@ -25,6 +25,7 @@ build/
 
 # Old backend folder (removed from repo)
 streammall-backend/
+LiveApp/
 
 # Temporary files
 *.zip
