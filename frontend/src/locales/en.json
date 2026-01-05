@@ -138,6 +138,8 @@
     "shareUniqueLink": "Share your unique invite link",
     "theySignUp": "They sign up using your link",
     "bothEarnCoins": "You both earn coins instantly",
+    "bothEarnCoinsDetailed": "You get {{referrerAmount}} coins and they get {{newUserAmount}} coins instantly!",
+    "friendGetsBonus": "Your friend also gets {{amount}} bonus points when they sign up!",
     "joined": "Joined",
     "recentlyJoined": "Recently joined",
     "following": "Following",
@@ -1163,6 +1165,7 @@
     "privacyPolicy": "Privacy Policy",
     "alreadyHaveAccount": "Already have an account?",
     "logIn": "Log In",
+    "referralBonusReceived": "🎉 Congrats! You got {{amount}} points because of referral!",
     "errors": {
       "passwordsDontMatch": "Passwords don't match",
       "passwordMinLength": "Password must be at least 6 characters",

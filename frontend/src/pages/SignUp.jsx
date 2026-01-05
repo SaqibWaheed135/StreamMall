@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { CheckCircle, X } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { API_BASE_URL } from "../config/api";
 
@@ -36,6 +37,8 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showReferralBonus, setShowReferralBonus] = useState(false);
+  const [referralBonusAmount, setReferralBonusAmount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -100,6 +103,14 @@ export default function Signup() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
+      // Show referral bonus snackbar if received
+      if (res.data.referralBonus && res.data.referralBonus.received) {
+        setReferralBonusAmount(res.data.referralBonus.amount);
+        setShowReferralBonus(true);
+        // Hide snackbar after 5 seconds
+        setTimeout(() => setShowReferralBonus(false), 5000);
+      }
+
       // ✅ Check for redirect
       const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
 
@@ -123,12 +134,22 @@ export default function Signup() {
     setError("");
     try {
       const idToken = response.credential;
+      const referralCode = sessionStorage.getItem("referralCode");
       const res = await axios.post(
         `${API_BASE_URL}/auth/google`,
-        { idToken }
+        { idToken, referralCode }
       );
+      sessionStorage.removeItem("referralCode");
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // Show referral bonus snackbar if received
+      if (res.data.referralBonus && res.data.referralBonus.received) {
+        setReferralBonusAmount(res.data.referralBonus.amount);
+        setShowReferralBonus(true);
+        // Hide snackbar after 5 seconds
+        setTimeout(() => setShowReferralBonus(false), 5000);
+      }
 
       // ✅ Check for redirect
       const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
@@ -363,6 +384,46 @@ export default function Signup() {
           </p>
         </div>
       </div>
+
+      {/* Referral Bonus Snackbar */}
+      {showReferralBonus && (
+        <div
+          className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-lg shadow-2xl z-50 flex items-center gap-3 animate-slide-up max-w-md w-[90%]"
+          style={{
+            animation: 'slideUp 0.3s ease-out'
+          }}
+        >
+          <CheckCircle className="w-6 h-6 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold text-sm sm:text-base">
+              {t('signup.referralBonusReceived', { amount: referralBonusAmount })}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowReferralBonus(false)}
+            className="flex-shrink-0 hover:bg-white/20 rounded-full p-1 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from {
+            transform: translate(-50%, 100%);
+            opacity: 0;
+          }
+          to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-up {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
