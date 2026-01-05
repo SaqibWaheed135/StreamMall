@@ -204,10 +204,32 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
               >
                 {/* Thumbnail */}
                 <div className="relative bg-gradient-to-br from-[#FFC0CB] to-[#ffb3c6] aspect-video overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+                  {/* User Avatar as Background */}
+                  {stream.streamer?.avatar ? (
+                    <img
+                      src={stream.streamer.avatar}
+                      alt={stream.streamer?.username || 'Streamer'}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 w-full h-full flex items-center justify-center"
+                      style={{
+                        background: `url(https://ui-avatars.com/api/?name=${encodeURIComponent(stream.streamer?.username || 'User')}&background=FFC0CB&color=000&size=400&bold=true)`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    />
+                  )}
+                  
+                  {/* Overlay with Play Icon */}
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition-colors">
                     <div className="text-center group-hover:scale-110 transition-transform">
-                      <Play className="w-12 h-12 sm:w-16 sm:h-16 text-pink-700/80 mx-auto mb-2" />
-                      <p className="text-pink-700 text-xs sm:text-sm">{t('liveStreams.liveStream')}</p>
+                      <Play className="w-12 h-12 sm:w-16 sm:h-16 text-white/90 mx-auto mb-2 drop-shadow-lg" />
+                      <p className="text-white/90 text-xs sm:text-sm font-semibold drop-shadow-md">{t('liveStreams.liveStream')}</p>
                     </div>
                   </div>
 
@@ -233,11 +255,14 @@ const LiveStreamsListing = ({ onJoinStream, onStartStream }) => {
                 {/* Stream Info */}
                 <div className="p-3 sm:p-4">
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-pink-600 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 text-white">
-                      <span className="text-xs sm:text-sm font-bold">
-                        {stream.streamer?.username?.[0]?.toUpperCase()}
-                      </span>
-                    </div>
+                    <img
+                      src={stream.streamer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(stream.streamer?.username || 'User')}&background=FFC0CB&color=000&size=200&bold=true`}
+                      alt={stream.streamer?.username || 'Streamer'}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0 border-2 border-pink-500"
+                      onError={(e) => {
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(stream.streamer?.username || 'User')}&background=FFC0CB&color=000&size=200&bold=true`;
+                      }}
+                    />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-black group-hover:text-pink-700 transition-colors line-clamp-2 text-sm sm:text-base">
                         {stream.title}
