@@ -35,6 +35,8 @@ const ProfileScreen = ({ userId: propUserId }) => {
   const [orders, setOrders] = useState([]);
   const [showOrders, setShowOrders] = useState(false);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [orderType, setOrderType] = useState('host'); // 'host' or 'buyer'
+  const [orderTab, setOrderTab] = useState('all'); // 'all', 'host', 'buyer'
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -148,12 +150,101 @@ const ProfileScreen = ({ userId: propUserId }) => {
         const allOrders = (data.orders || []).map(o => ({
           ...o,
           buyerUsername: o.buyer?.username || 'Unknown Buyer',
-          product: o.productName ? { name: o.productName, price: o.productPrice } : null
+          buyerAvatar: o.buyer?.avatar,
+          buyerEmail: o.buyer?.email,
+          product: {
+            name: o.productName,
+            price: o.productPrice,
+            image: o.productImage,
+            description: o.productDescription
+          },
+          streamerUsername: o.streamer?.username || 'Unknown Streamer',
+          streamerAvatar: o.streamer?.avatar
         }));
         setOrders(allOrders);
+        setOrderType('host');
       }
     } catch (error) {
       console.error('Error fetching host orders:', error);
+    }
+  };
+
+  const fetchBuyerOrders = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/live/buyer/orders`, {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const allOrders = (data.orders || []).map(o => ({
+          ...o,
+          streamerUsername: o.streamer?.username || 'Unknown Streamer',
+          streamerAvatar: o.streamer?.avatar,
+          product: {
+            name: o.productName,
+            price: o.productPrice,
+            image: o.productImage,
+            description: o.productDescription
+          }
+        }));
+        setOrders(allOrders);
+        setOrderType('buyer');
+      }
+    } catch (error) {
+      console.error('Error fetching buyer orders:', error);
+    }
+  };
+
+  const fetchAllOrders = async () => {
+    try {
+      // Fetch both host and buyer orders in parallel
+      const [hostResponse, buyerResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/live/host/orders`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE_URL}/live/buyer/orders`, { headers: getAuthHeaders() })
+      ]);
+
+      const allOrders = [];
+
+      if (hostResponse.ok) {
+        const hostData = await hostResponse.json();
+        const hostOrders = (hostData.orders || []).map(o => ({
+          ...o,
+          buyerUsername: o.buyer?.username || 'Unknown Buyer',
+          buyerAvatar: o.buyer?.avatar,
+          buyerEmail: o.buyer?.email,
+          product: {
+            name: o.productName,
+            price: o.productPrice,
+            image: o.productImage,
+            description: o.productDescription
+          },
+          streamerUsername: o.streamer?.username || 'Unknown Streamer',
+          streamerAvatar: o.streamer?.avatar
+        }));
+        allOrders.push(...hostOrders);
+      }
+
+      if (buyerResponse.ok) {
+        const buyerData = await buyerResponse.json();
+        const buyerOrders = (buyerData.orders || []).map(o => ({
+          ...o,
+          streamerUsername: o.streamer?.username || 'Unknown Streamer',
+          streamerAvatar: o.streamer?.avatar,
+          product: {
+            name: o.productName,
+            price: o.productPrice,
+            image: o.productImage,
+            description: o.productDescription
+          }
+        }));
+        allOrders.push(...buyerOrders);
+      }
+
+      // Sort by orderedAt descending (most recent first)
+      allOrders.sort((a, b) => new Date(b.orderedAt) - new Date(a.orderedAt));
+      setOrders(allOrders);
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
     }
   };
 
@@ -352,62 +443,273 @@ const ProfileScreen = ({ userId: propUserId }) => {
     </div>
   );
 
-  const OrdersModal = () => (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[90vh] sm:max-h-[80vh] border border-[#ff99b3] overflow-hidden my-auto">
-        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[#ff99b3]">
-          <h3 className="text-base sm:text-lg font-bold text-black pr-2 break-words">My Orders</h3>
-          <button onClick={() => setShowOrders(false)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors flex-shrink-0" aria-label="Close">
-            <X className="w-5 h-5 text-black" />
-          </button>
-        </div>
-        <div className="p-3 sm:p-4 overflow-y-auto max-h-[calc(90vh-80px)] sm:max-h-[calc(80vh-80px)]">
-          {orders.length === 0 ? (
-            <div className="text-center py-8 text-gray-700">
-              <ShoppingBag className="w-12 h-12 mx-auto mb-2" />
-              <p>No orders yet</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {orders.map((order, i) => (
-                <div key={i} className="bg-[#ffb3c6] rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-black">{order.product?.name || 'Unknown Product'}</p>
-                      <p className="text-xs text-gray-700">Buyer: {order.buyerUsername}</p>
-                      <p className="text-xs text-pink-600 mt-1">+{Math.ceil((order.product?.price || 0) * 100)} coins</p>
-                      <p className="text-xs text-gray-600">Stream: {order.streamTitle}</p>
+  const OrdersModal = () => {
+    // Separate orders by type
+    const hostOrders = orders.filter(o => o.buyerUsername);
+    const buyerOrders = orders.filter(o => o.streamerUsername && !o.buyerUsername);
+
+    const displayOrders = orderTab === 'host' ? hostOrders : orderTab === 'buyer' ? buyerOrders : orders;
+
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-[#FFC0CB]/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[90vh] sm:max-h-[80vh] border border-[#ff99b3] overflow-hidden my-auto">
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[#ff99b3]">
+            <h3 className="text-base sm:text-lg font-bold text-black pr-2 break-words">{t('profile.myOrders') || 'My Orders'}</h3>
+            <button onClick={() => setShowOrders(false)} className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors flex-shrink-0" aria-label="Close">
+              <X className="w-5 h-5 text-black" />
+            </button>
+          </div>
+          
+          {/* Tabs */}
+          <div className="flex border-b border-[#ff99b3] bg-[#ffb3c6]">
+            <button
+              onClick={() => setOrderTab('all')}
+              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                orderTab === 'all' ? 'bg-[#FFC0CB] text-black border-b-2 border-pink-600' : 'text-gray-700 hover:bg-[#ffb3c6]'
+              }`}
+            >
+              All ({orders.length})
+            </button>
+            {hostOrders.length > 0 && (
+              <button
+                onClick={() => setOrderTab('host')}
+                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                  orderTab === 'host' ? 'bg-[#FFC0CB] text-black border-b-2 border-pink-600' : 'text-gray-700 hover:bg-[#ffb3c6]'
+                }`}
+              >
+                To Ship ({hostOrders.length})
+              </button>
+            )}
+            {buyerOrders.length > 0 && (
+              <button
+                onClick={() => setOrderTab('buyer')}
+                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                  orderTab === 'buyer' ? 'bg-[#FFC0CB] text-black border-b-2 border-pink-600' : 'text-gray-700 hover:bg-[#ffb3c6]'
+                }`}
+              >
+                Purchased ({buyerOrders.length})
+              </button>
+            )}
+          </div>
+
+          <div className="p-3 sm:p-4 overflow-y-auto max-h-[calc(90vh-140px)] sm:max-h-[calc(80vh-140px)]">
+            {displayOrders.length === 0 ? (
+              <div className="text-center py-8 text-gray-700">
+                <ShoppingBag className="w-12 h-12 mx-auto mb-2" />
+                <p>{t('profile.noOrders') || 'No orders yet'}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {displayOrders.map((order, i) => {
+                  const isHostOrder = !!order.buyerUsername;
+                  return (
+                    <div key={order.orderId || i} className="bg-[#ffb3c6] rounded-lg p-3 hover:bg-[#ff99b3] transition-colors">
+                      <div className="flex items-start gap-3">
+                        {order.product?.image && (
+                          <img
+                            src={order.product.image}
+                            alt={order.product.name}
+                            className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-black truncate">{order.product?.name || 'Unknown Product'}</p>
+                          {isHostOrder ? (
+                            <>
+                              <div className="flex items-center gap-2 mt-1">
+                                <img
+                                  src={order.buyerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.buyerUsername)}&background=FFC0CB&color=000&size=200&bold=true`}
+                                  alt={order.buyerUsername}
+                                  className="w-5 h-5 rounded-full object-cover"
+                                />
+                                <p className="text-xs text-gray-700">Buyer: {order.buyerUsername}</p>
+                              </div>
+                              <p className="text-xs text-pink-600 mt-1">+{Math.ceil((order.product?.price || 0) * 100)} coins</p>
+                              <p className="text-xs text-gray-600 mt-1">Status: <span className={`font-semibold ${
+                                order.status === 'completed' ? 'text-green-600' : 
+                                order.status === 'cancelled' ? 'text-red-600' : 
+                                'text-yellow-600'
+                              }`}>{order.status || 'pending'}</span></p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-2 mt-1">
+                                <img
+                                  src={order.streamerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.streamerUsername)}&background=FFC0CB&color=000&size=200&bold=true`}
+                                  alt={order.streamerUsername}
+                                  className="w-5 h-5 rounded-full object-cover"
+                                />
+                                <p className="text-xs text-gray-700">From: {order.streamerUsername}</p>
+                              </div>
+                              <p className="text-xs text-pink-600 mt-1">-{Math.ceil((order.product?.price || 0) * 100)} coins</p>
+                              <p className="text-xs text-gray-600 mt-1">Status: <span className={`font-semibold ${
+                                order.status === 'completed' ? 'text-green-600' : 
+                                order.status === 'cancelled' ? 'text-red-600' : 
+                                'text-yellow-600'
+                              }`}>{order.status || 'pending'}</span></p>
+                            </>
+                          )}
+                          <p className="text-xs text-gray-600 mt-1">Stream: {order.streamTitle}</p>
+                          <p className="text-xs text-gray-500 mt-1">{new Date(order.orderedAt).toLocaleString()}</p>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedOrderDetails({ order, product: order.product })}
+                          className="text-pink-700 hover:text-pink-800 text-xs font-medium px-3 py-1 bg-white rounded-lg transition-colors flex-shrink-0"
+                        >
+                          Details
+                        </button>
+                      </div>
                     </div>
-                    <button onClick={() => setSelectedOrderDetails({ order, product: order.product })}
-                      className="text-pink-700 hover:text-pink-800 text-xs font-medium">
-                      Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const OrderDetailsModal = ({ order, product, onClose }) => {
     if (!order || !product) return null;
     const deliveryInfo = order.deliveryInfo || {};
+    const isHostOrder = !!order.buyerUsername;
 
     return (
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
         <div className="bg-[#FFC0CB] rounded-lg sm:rounded-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-[#ff99b3] my-auto">
           <div className="p-4 sm:p-6 sticky top-0 bg-[#FFC0CB] border-b border-[#ff99b3] flex justify-between items-center z-10">
-            <h3 className="text-lg sm:text-xl font-semibold text-black pr-2 break-words">Order Details</h3>
+            <h3 className="text-lg sm:text-xl font-semibold text-black pr-2 break-words">{t('profile.orderDetails') || 'Order Details'}</h3>
             <button onClick={onClose} className="text-gray-800 hover:text-black transition flex-shrink-0" aria-label="Close">
               <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 text-black">
-            {/* ... (content unchanged, only colors adjusted) */}
-            {/* You can keep the existing inner content – only wrapper colors changed */}
+            {/* Product Info */}
+            <div className="bg-white/70 rounded-lg p-4 border border-[#ff99b3]">
+              <h4 className="font-semibold text-lg mb-3">{t('profile.productInfo') || 'Product Information'}</h4>
+              <div className="flex gap-4">
+                {product.image && (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-24 h-24 rounded-lg object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                )}
+                <div className="flex-1">
+                  <p className="font-semibold text-lg">{product.name}</p>
+                  {product.description && (
+                    <p className="text-sm text-gray-700 mt-1">{product.description}</p>
+                  )}
+                  <p className="text-pink-600 font-semibold mt-2">
+                    {isHostOrder ? '+' : '-'}{Math.ceil((product.price || 0) * 100)} coins
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {t('profile.quantity') || 'Quantity'}: {order.quantity || 1}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Stream Info */}
+            <div className="bg-white/70 rounded-lg p-4 border border-[#ff99b3]">
+              <h4 className="font-semibold text-lg mb-3">{t('profile.streamInfo') || 'Stream Information'}</h4>
+              <p className="text-sm"><span className="font-semibold">{t('profile.streamTitle') || 'Stream'}:</span> {order.streamTitle}</p>
+              <p className="text-sm mt-2">
+                <span className="font-semibold">{t('profile.orderedAt') || 'Ordered At'}:</span> {new Date(order.orderedAt).toLocaleString()}
+              </p>
+              <p className="text-sm mt-2">
+                <span className="font-semibold">{t('profile.status') || 'Status'}:</span> 
+                <span className={`ml-2 font-semibold ${
+                  order.status === 'completed' ? 'text-green-600' : 
+                  order.status === 'cancelled' ? 'text-red-600' : 
+                  'text-yellow-600'
+                }`}>
+                  {order.status || 'pending'}
+                </span>
+              </p>
+            </div>
+
+            {/* Buyer/Streamer Info */}
+            {isHostOrder ? (
+              <div className="bg-white/70 rounded-lg p-4 border border-[#ff99b3]">
+                <h4 className="font-semibold text-lg mb-3">{t('profile.buyerInfo') || 'Buyer Information'}</h4>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={order.buyerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.buyerUsername)}&background=FFC0CB&color=000&size=200&bold=true`}
+                    alt={order.buyerUsername}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold">{order.buyerUsername}</p>
+                    {order.buyerEmail && (
+                      <p className="text-sm text-gray-600">{order.buyerEmail}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/70 rounded-lg p-4 border border-[#ff99b3]">
+                <h4 className="font-semibold text-lg mb-3">{t('profile.streamerInfo') || 'Streamer Information'}</h4>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={order.streamerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.streamerUsername)}&background=FFC0CB&color=000&size=200&bold=true`}
+                    alt={order.streamerUsername}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold">{order.streamerUsername}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Delivery Info (for host orders) */}
+            {isHostOrder && deliveryInfo && Object.keys(deliveryInfo).length > 0 && (
+              <div className="bg-white/70 rounded-lg p-4 border border-[#ff99b3]">
+                <h4 className="font-semibold text-lg mb-3">{t('profile.deliveryInfo') || 'Delivery Information'}</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-gray-600">{t('profile.firstName') || 'First Name'}:</p>
+                    <p className="font-semibold">{deliveryInfo.firstName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">{t('profile.lastName') || 'Last Name'}:</p>
+                    <p className="font-semibold">{deliveryInfo.lastName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">{t('profile.email') || 'Email'}:</p>
+                    <p className="font-semibold">{deliveryInfo.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">{t('profile.phone') || 'Phone'}:</p>
+                    <p className="font-semibold">{deliveryInfo.phone}</p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-gray-600">{t('profile.address') || 'Address'}:</p>
+                    <p className="font-semibold">{deliveryInfo.address}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">{t('profile.city') || 'City'}:</p>
+                    <p className="font-semibold">{deliveryInfo.city}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">{t('profile.state') || 'State'}:</p>
+                    <p className="font-semibold">{deliveryInfo.state}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">{t('profile.zipCode') || 'Zip Code'}:</p>
+                    <p className="font-semibold">{deliveryInfo.zipCode}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">{t('profile.country') || 'Country'}:</p>
+                    <p className="font-semibold">{deliveryInfo.country}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -594,7 +896,12 @@ const ProfileScreen = ({ userId: propUserId }) => {
             )}
 
             {isOwnProfile && (
-              <button onClick={async () => { setLoading(true); await fetchHostOrders(); setShowOrders(true); setLoading(false); }}
+              <button onClick={async () => { 
+                setLoading(true); 
+                await fetchAllOrders(); 
+                setShowOrders(true); 
+                setLoading(false); 
+              }}
                 className="p-2 hover:bg-[#ffb3c6] rounded-full transition-colors">
                 <ShoppingBag className="w-5 h-5" />
               </button>
