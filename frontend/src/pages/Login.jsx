@@ -180,7 +180,7 @@ const handleGoogleResponse = async (response) => {
       <div className="hidden md:flex md:w-1/2 flex-col justify-center items-center text-center relative z-10">
         <img
           src={logo}
-          alt="StreamMall Logo"
+          alt="SensePodcast Logo"
           className="w-44 mb-6 drop-shadow-[0_0_30px_rgba(255,43,85,0.4)] rounded-[12px]"
         />
         <h1 className="text-4xl font-semibold bg-gradient-to-r from-pink-600 to-pink-500 bg-clip-text text-transparent">
@@ -196,9 +196,9 @@ const handleGoogleResponse = async (response) => {
         <div className="w-full max-w-md bg-white/70 backdrop-blur-2xl rounded-3xl border border-[#ff99b3] p-10 shadow-[0_0_30px_rgba(255,192,203,0.4)]">
           {/* Mobile Header */}
           <div className="md:hidden flex flex-col items-center mb-8">
-            <img src={logo} alt="StreamMall Logo" className="w-20 mb-3 rounded-[12px]" />
+            <img src={logo} alt="SensePodcast Logo" className="w-20 mb-3 rounded-[12px]" />
             <h1 className="text-2xl font-semibold text-black">{t('login.welcomeBack')}</h1>
-            <p className="text-gray-700 text-sm">{t('login.signInToStreamMall')}</p>
+            <p className="text-gray-700 text-sm">{t('login.signInToSensePodcast')}</p>
           </div>
 
           {error && (
