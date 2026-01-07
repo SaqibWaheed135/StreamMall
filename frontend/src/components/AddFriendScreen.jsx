@@ -280,13 +280,18 @@ const AddFriendsScreen = ({ onBack }) => {
 
     return (
       <div key={user._id} className="bg-white/70 border border-[#ff99b3] p-4 rounded-xl hover:bg-[#ffb3c6] transition-colors">
-        <div className="flex items-center space-x-3">
-          <button onClick={() => goToProfile(user)} className="flex items-center space-x-3 flex-1">
+        <div className="flex items-center gap-3">
+          {/* Profile Picture - Fixed Size */}
+          <button 
+            onClick={() => goToProfile(user)} 
+            className="flex-shrink-0"
+          >
             <div className="relative">
               <img
                 src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random&color=fff&size=200&bold=true`}
                 alt={user.username}
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
+                style={{ minWidth: '56px', minHeight: '56px' }}
                 onError={(e) => {
                   e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random&color=fff&size=200&bold=true`;
                 }}
@@ -297,60 +302,66 @@ const AddFriendsScreen = ({ onBack }) => {
                 </div>
               )}
             </div>
-            <div className="flex-1 text-left">
-              <div className="flex items-center space-x-1">
-                <p className="font-bold text-pink-700">{user.username}</p>
-                {user.isVerified && (
-                  <Shield className="w-4 h-4 text-pink-600" />
-                )}
-                {isFriend && (
-                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                    <Users className="w-3 h-3 inline mr-1" />
-                    {t('addFriends.friendsLabel')}
-                  </span>
-                )}
-                {followStatus.relationship === 'following' && (
-                  <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
-                    {t('addFriends.following')}
-                  </span>
-                )}
-                {followStatus.relationship === 'follower' && (
-                  <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">
-                    {t('addFriends.followsYou')}
-                  </span>
-                )}
-              </div>
-              <p className="text-gray-700 text-sm">
-                {formatNumber(user.followersCount || 0)} {t('addFriends.followers')}
-                {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
-              </p>
-            </div>
           </button>
 
-          <div className="flex items-center space-x-2">
+          {/* User Info - Flexible */}
+          <button 
+            onClick={() => goToProfile(user)} 
+            className="flex-1 min-w-0 text-left"
+          >
+            <div className="flex items-center gap-1 flex-wrap">
+              <p className="font-bold text-pink-700 truncate">{user.username}</p>
+              {user.isVerified && (
+                <Shield className="w-4 h-4 text-pink-600 flex-shrink-0" />
+              )}
+              {isFriend && (
+                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full flex-shrink-0">
+                  <Users className="w-3 h-3 inline mr-1" />
+                  {t('addFriends.friendsLabel')}
+                </span>
+              )}
+              {followStatus.relationship === 'following' && (
+                <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full flex-shrink-0">
+                  {t('addFriends.following')}
+                </span>
+              )}
+              {followStatus.relationship === 'follower' && (
+                <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full flex-shrink-0">
+                  {t('addFriends.followsYou')}
+                </span>
+              )}
+            </div>
+            <p className="text-gray-700 text-sm mt-1 truncate">
+              {formatNumber(user.followersCount || 0)} {t('addFriends.followers')}
+              {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
+            </p>
+          </button>
+
+          {/* Action Buttons - Fixed Width */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Message button - show if friends or can message */}
             {(isFriend || followStatus.canMessage) && (
               <button
                 onClick={() => startConversation(user)}
-                className="p-2 bg-pink-600 hover:bg-pink-700 rounded-full transition-colors"
+                className="p-2 bg-pink-600 hover:bg-pink-700 rounded-full transition-colors flex-shrink-0"
                 title={t('addFriends.sendMessage')}
               >
                 <MessageCircle className="w-4 h-4 text-white" />
               </button>
             )}
 
-            {/* Follow button */}
+            {/* Follow button - Fixed min width to prevent shrinking */}
             <button
               onClick={() => handleFollowToggle(user)}
               disabled={followStatus.hasPendingRequest}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-1 ${getFollowButtonStyle(user._id)}`}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap min-w-[90px] sm:min-w-[100px] ${getFollowButtonStyle(user._id)}`}
             >
               {followStatus.isFollowing ? (
-                <UserCheck className="w-4 h-4" />
+                <UserCheck className="w-4 h-4 flex-shrink-0" />
               ) : (
-                <UserPlus className="w-4 h-4" />
+                <UserPlus className="w-4 h-4 flex-shrink-0" />
               )}
-              <span className="text-sm">{getFollowButtonText(user._id)}</span>
+              <span className="text-xs sm:text-sm">{getFollowButtonText(user._id)}</span>
             </button>
           </div>
         </div>
