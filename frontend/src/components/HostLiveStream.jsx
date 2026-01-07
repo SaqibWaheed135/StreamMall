@@ -1642,19 +1642,26 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
   // Background processing functions
   const processVideoWithBackground = (videoTrack, canvas, bgType, bgColor, bgBlur) => {
-    if (!canvas || !videoTrack) return null;
-
-    // Use willReadFrequently for better performance when reading image data
+    if (!canvas || !videoTrack) {
+      console.error('Missing canvas or video track');
+      return null;
+    }
+  
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) {
+      console.error('Failed to get canvas context');
+      return null;
+    }
+  
     const video = document.createElement('video');
     video.srcObject = new MediaStream([videoTrack]);
     video.autoplay = true;
     video.playsInline = true;
     video.muted = true;
-    
+  
     let animationFrameId = null;
-    let isProcessing = true;
-
+    let isProcessing = false;
+  
     const processFrame = () => {
       if (!isProcessing || !backgroundProcessingRef.current) {
         if (animationFrameId) {
@@ -1662,42 +1669,39 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         }
         return;
       }
-
+  
       if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
-        // Set canvas dimensions to match video
+        // Update canvas dimensions if video dimensions changed
         if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
+          console.log('Updated canvas dimensions to:', canvas.width, 'x', canvas.height);
         }
-
+  
         // Draw video frame
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
+  
         if (bgType === 'blur') {
-          // Create a temporary canvas for blur effect
+          // Apply blur effect
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = canvas.width;
           tempCanvas.height = canvas.height;
           const tempCtx = tempCanvas.getContext('2d');
-          
-          // Draw current frame to temp canvas
+  
           tempCtx.drawImage(video, 0, 0);
-          
-          // Apply blur filter to entire canvas
+  
           ctx.save();
           ctx.filter = `blur(${bgBlur}px)`;
           ctx.drawImage(tempCanvas, 0, 0);
           ctx.filter = 'none';
           ctx.restore();
-          
-          // Keep center region sharp (foreground) - overlay original video
+  
+          // Keep center region sharp
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
           const keepWidth = canvas.width * 0.7;
           const keepHeight = canvas.height * 0.7;
-          
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-over';
+  
           ctx.drawImage(
             video,
             centerX - keepWidth / 2,
@@ -1709,58 +1713,49 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             keepWidth,
             keepHeight
           );
-          ctx.restore();
         } else if (bgType === 'color') {
           // Chroma key background replacement
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
-          
-          // Parse chroma key color (green screen)
-          const chromaR = 0;
-          const chromaG = 255;
-          const chromaB = 0;
-          
+  
           // Parse replacement color
-          const replaceColor = bgColor.startsWith('#') 
-            ? bgColor.substring(1) 
-            : bgColor;
+          const replaceColor = bgColor.startsWith('#') ? bgColor.substring(1) : bgColor;
           const replaceR = parseInt(replaceColor.substring(0, 2), 16);
           const replaceG = parseInt(replaceColor.substring(2, 4), 16);
           const replaceB = parseInt(replaceColor.substring(4, 6), 16);
-          
-          // Replace green screen pixels with new color
+  
+          // Chroma key (green screen)
+          const chromaR = 0, chromaG = 255, chromaB = 0;
+          const threshold = 80;
+  
           for (let i = 0; i < data.length; i += 4) {
             const pixelR = data[i];
             const pixelG = data[i + 1];
             const pixelB = data[i + 2];
-            
-            // Calculate distance from green screen color
+  
             const distance = Math.sqrt(
-              Math.pow(pixelR - chromaR, 2) + 
-              Math.pow(pixelG - chromaG, 2) + 
+              Math.pow(pixelR - chromaR, 2) +
+              Math.pow(pixelG - chromaG, 2) +
               Math.pow(pixelB - chromaB, 2)
             );
-            
-            // Threshold for chroma key (adjustable sensitivity)
-            const threshold = 80;
+  
             if (distance < threshold) {
-              // Replace with new background color
               data[i] = replaceR;
               data[i + 1] = replaceG;
               data[i + 2] = replaceB;
             }
           }
-          
+  
           ctx.putImageData(imageData, 0, 0);
         }
       }
-      
+  
       if (isProcessing && backgroundProcessingRef.current) {
         animationFrameId = requestAnimationFrame(processFrame);
         backgroundAnimationFrameRef.current = animationFrameId;
       }
     };
-
+   
     const handleVideoReady = () => {
       if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
         console.log('Background filter: Video ready, dimensions:', video.videoWidth, 'x', video.videoHeight);
@@ -1768,7 +1763,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           console.log('Background filter: Video playing, starting frame processing');
           backgroundProcessingRef.current = true;
           isProcessing = true;
-          // Start processing after a short delay to ensure video is playing
           setTimeout(() => {
             processFrame();
           }, 200);
@@ -1778,26 +1772,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         });
       }
     };
-
-    // Set up event listeners
+  
     video.addEventListener('loadedmetadata', handleVideoReady);
     video.addEventListener('canplay', handleVideoReady);
-    video.addEventListener('playing', () => {
-      console.log('Background filter: Video playing event fired');
-      if (!isProcessing && video.videoWidth > 0 && video.videoHeight > 0) {
-        backgroundProcessingRef.current = true;
-        isProcessing = true;
-        processFrame();
-      }
-    });
-
-    // Set initial canvas dimensions (will be updated when video is ready)
-    canvas.width = 640;
-    canvas.height = 480;
-
-    // Start the stream - canvas will start capturing once video plays
+    video.addEventListener('playing', handleVideoReady);
+  
+    // Start the stream - canvas will capture at 30fps
     const stream = canvas.captureStream(30);
-
+  
     // Store cleanup function
     const cleanup = () => {
       isProcessing = false;
@@ -1811,21 +1793,17 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       video.removeEventListener('playing', handleVideoReady);
       video.pause();
       if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => {
-          // Don't stop the original track, just remove the reference
-        });
         video.srcObject = null;
       }
     };
-
-    // Store cleanup on the stream object
+  
     stream._cleanup = cleanup;
-
+  
     // Try to start playing immediately
     video.play().catch(() => {
       // Will retry on loadedmetadata/canplay
     });
-
+  
     return stream;
   };
 
@@ -1987,46 +1965,234 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   //   };
   // }, [selectedBackground, backgroundColor, backgroundBlur, isLive, liveKitRoom, applyBackgroundFilter]);
 // Update the applyBackgroundFilter function
-  const applyBackgroundFilter = React.useCallback(async () => {
-    if (!liveKitRoom || !isLive) {
-      console.log('Background filter: Not live or no room');
+//   const applyBackgroundFilter = React.useCallback(async () => {
+//     if (!liveKitRoom || !isLive) {
+//       console.log('Background filter: Not live or no room');
+//       return;
+//     }
+
+//     try {
+//       const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+//       if (!cameraPublication || !cameraPublication.track) {
+//         console.warn('Background filter: No camera track available');
+//         return;
+//       }
+
+//     // Check if we already have a processed track - if so, we need to get the original
+//     let originalMediaStreamTrack;
+//     if (cameraPublication.track.name === 'camera-with-background') {
+//       // We're replacing an existing processed track, use stored original
+//       console.log('Background filter: Replacing existing processed track');
+//       if (originalMediaStreamTrackRef.current) {
+//         originalMediaStreamTrack = originalMediaStreamTrackRef.current;
+//       } else {
+//         // Fallback: use current track's mediaStreamTrack
+//         originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
+//       }
+//     } else {
+//       // Get the original track and store it
+//       originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
+//       originalMediaStreamTrackRef.current = originalMediaStreamTrack;
+//     }
+      
+//       if (selectedBackground === 'none') {
+//         console.log('Background filter: Removing filter');
+//         // Stop processing
+//         backgroundProcessingRef.current = false;
+//         if (backgroundAnimationFrameRef.current) {
+//           cancelAnimationFrame(backgroundAnimationFrameRef.current);
+//           backgroundAnimationFrameRef.current = null;
+//         }
+        
+//         // Clean up processed stream
+//       if (processedStream) {
+//         if (processedStream._cleanup) {
+//           processedStream._cleanup();
+//         }
+//         processedStream.getTracks().forEach(track => track.stop());
+//         setProcessedStream(null);
+//       }
+        
+//         // Unpublish any processed track first
+//       const publications = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+//         for (const pub of publications) {
+//           if (pub.track && pub.track.name === 'camera-with-background') {
+//             await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+//           }
+//         }
+        
+//       // Check if we need to re-enable the original camera track
+//       const currentCamPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+//       if (!currentCamPub || !currentCamPub.track || currentCamPub.track.name === 'camera-with-background') {
+//         // Re-enable camera to get fresh track
+//         await liveKitRoom.localParticipant.setCameraEnabled(false);
+//         await new Promise(resolve => setTimeout(resolve, 300));
+//         await liveKitRoom.localParticipant.setCameraEnabled(true);
+        
+//         // Wait for track to be ready and attach it
+//         await new Promise(resolve => setTimeout(resolve, 500));
+//         const newCamPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+//         if (newCamPublication && newCamPublication.track && newCamPublication.track.mediaStreamTrack) {
+//           attachVideoStream(newCamPublication.track);
+//         }
+//       } else {
+//         // Original track is still there, just attach it
+//         attachVideoStream(currentCamPub.track);
+//       }
+      
+//         return;
+//       }
+
+//       console.log('Background filter: Applying filter', selectedBackground);
+
+//       // Create canvas for processing
+//       if (!backgroundCanvasRef.current) {
+//         const canvas = document.createElement('canvas');
+//         backgroundCanvasRef.current = canvas;
+//       }
+
+//       const canvas = backgroundCanvasRef.current;
+      
+//       // Stop any existing processing
+//       backgroundProcessingRef.current = false;
+//       if (backgroundAnimationFrameRef.current) {
+//         cancelAnimationFrame(backgroundAnimationFrameRef.current);
+//         backgroundAnimationFrameRef.current = null;
+//       }
+
+//       // Clean up previous processed stream
+//     if (processedStream) {
+//       if (processedStream._cleanup) {
+//         processedStream._cleanup();
+//       }
+//       processedStream.getTracks().forEach(track => track.stop());
+//       setProcessedStream(null);
+//     }
+
+//     // Wait for cleanup
+//     await new Promise(resolve => setTimeout(resolve, 200));
+
+//       // Process video with background
+//       const newProcessedStream = processVideoWithBackground(
+//       originalMediaStreamTrack,
+//         canvas, 
+//         selectedBackground, 
+//         backgroundColor, 
+//         backgroundBlur
+//       );
+      
+//     if (newProcessedStream && newProcessedStream.getVideoTracks().length > 0) {
+//       const processedTrack = newProcessedStream.getVideoTracks()[0];
+      
+//       // Ensure track is enabled
+//       processedTrack.enabled = true;
+      
+//       // Wait for frames to start flowing (canvas needs time to capture frames)
+//       await new Promise(resolve => setTimeout(resolve, 800));
+
+//       // IMPORTANT: Don't unpublish the original track - we need it to keep running
+//       // to feed the canvas processing. Instead, we'll publish the processed track
+//       // and LiveKit will handle the switching. The original track's MediaStreamTrack
+//       // will continue running as long as it's referenced by the canvas video element.
+//       console.log('Background filter: Keeping original track running for canvas processing');
+
+//       // Wait before publishing new track
+//       await new Promise(resolve => setTimeout(resolve, 300));
+      
+//       // Publish processed track
+//       await liveKitRoom.localParticipant.publishTrack(processedTrack, {
+//         source: Track.Source.Camera,
+//         name: 'camera-with-background'
+//       });
+
+//       setProcessedStream(newProcessedStream);
+      
+//       // Attach the processed track to video element
+//       await new Promise(resolve => setTimeout(resolve, 500));
+//       const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+//       if (publication && publication.track) {
+//         // Create a MediaStream from the processed track for immediate display
+//         const processedMediaStream = new MediaStream([processedTrack]);
+//         if (videoRef.current) {
+//           videoRef.current.srcObject = processedMediaStream;
+//           videoRef.current.muted = true;
+//           videoRef.current.play().catch(e => console.error('Error playing processed video:', e));
+//         }
+//         // Also attach via the helper function
+//         attachVideoStream(publication.track);
+//       }
+      
+//       console.log('Background filter: Applied successfully');
+//     } else {
+//       console.error('Background filter: No video tracks in processed stream or failed to create processed stream');
+//     }
+//   } catch (error) {
+//       console.error('Error applying background filter:', error);
+//       // On error, try to restore original camera
+//       try {
+//       backgroundProcessingRef.current = false;
+//       if (backgroundAnimationFrameRef.current) {
+//         cancelAnimationFrame(backgroundAnimationFrameRef.current);
+//         backgroundAnimationFrameRef.current = null;
+//       }
+      
+//       if (processedStream) {
+//         if (processedStream._cleanup) {
+//           processedStream._cleanup();
+//         }
+//         processedStream.getTracks().forEach(track => track.stop());
+//         setProcessedStream(null);
+//       }
+      
+//         await liveKitRoom.localParticipant.setCameraEnabled(false);
+//       await new Promise(resolve => setTimeout(resolve, 300));
+//         await liveKitRoom.localParticipant.setCameraEnabled(true);
+      
+//       // Attach the restored camera
+//       await new Promise(resolve => setTimeout(resolve, 500));
+//       const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+//       if (publication && publication.track) {
+//         attachVideoStream(publication.track);
+//       }
+//       } catch (e) {
+//         console.error('Error restoring camera:', e);
+//       }
+//     }
+// }, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
+
+
+const applyBackgroundFilter = React.useCallback(async () => {
+  if (!liveKitRoom || !isLive) {
+    console.log('Background filter: Not live or no room');
+    return;
+  }
+
+  try {
+    const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+    if (!cameraPublication || !cameraPublication.track) {
+      console.warn('Background filter: No camera track available');
       return;
     }
 
-    try {
-      const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (!cameraPublication || !cameraPublication.track) {
-        console.warn('Background filter: No camera track available');
-        return;
+    // Get the original MediaStreamTrack (store first time only)
+    if (!originalMediaStreamTrackRef.current) {
+      originalMediaStreamTrackRef.current = cameraPublication.track.mediaStreamTrack;
+      console.log('Stored original track reference');
+    }
+
+    const originalTrack = originalMediaStreamTrackRef.current;
+
+    if (selectedBackground === 'none') {
+      console.log('Background filter: Removing filter');
+      
+      // Stop processing
+      backgroundProcessingRef.current = false;
+      if (backgroundAnimationFrameRef.current) {
+        cancelAnimationFrame(backgroundAnimationFrameRef.current);
+        backgroundAnimationFrameRef.current = null;
       }
 
-    // Check if we already have a processed track - if so, we need to get the original
-    let originalMediaStreamTrack;
-    if (cameraPublication.track.name === 'camera-with-background') {
-      // We're replacing an existing processed track, use stored original
-      console.log('Background filter: Replacing existing processed track');
-      if (originalMediaStreamTrackRef.current) {
-        originalMediaStreamTrack = originalMediaStreamTrackRef.current;
-      } else {
-        // Fallback: use current track's mediaStreamTrack
-        originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
-      }
-    } else {
-      // Get the original track and store it
-      originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
-      originalMediaStreamTrackRef.current = originalMediaStreamTrack;
-    }
-      
-      if (selectedBackground === 'none') {
-        console.log('Background filter: Removing filter');
-        // Stop processing
-        backgroundProcessingRef.current = false;
-        if (backgroundAnimationFrameRef.current) {
-          cancelAnimationFrame(backgroundAnimationFrameRef.current);
-          backgroundAnimationFrameRef.current = null;
-        }
-        
-        // Clean up processed stream
+      // Clean up processed stream
       if (processedStream) {
         if (processedStream._cleanup) {
           processedStream._cleanup();
@@ -2034,55 +2200,52 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         processedStream.getTracks().forEach(track => track.stop());
         setProcessedStream(null);
       }
-        
-        // Unpublish any processed track first
-      const publications = Array.from(liveKitRoom.localParticipant.trackPublications.values());
-        for (const pub of publications) {
-          if (pub.track && pub.track.name === 'camera-with-background') {
-            await liveKitRoom.localParticipant.unpublishTrack(pub.track);
-          }
+
+      // Unpublish processed track
+      const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+      for (const pub of currentPubs) {
+        if (pub.track && pub.track.name === 'camera-with-background') {
+          await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+          console.log('Unpublished processed track');
         }
-        
-      // Check if we need to re-enable the original camera track
-      const currentCamPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (!currentCamPub || !currentCamPub.track || currentCamPub.track.name === 'camera-with-background') {
-        // Re-enable camera to get fresh track
-        await liveKitRoom.localParticipant.setCameraEnabled(false);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        await liveKitRoom.localParticipant.setCameraEnabled(true);
-        
-        // Wait for track to be ready and attach it
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const newCamPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (newCamPublication && newCamPublication.track && newCamPublication.track.mediaStreamTrack) {
-          attachVideoStream(newCamPublication.track);
-        }
-      } else {
-        // Original track is still there, just attach it
-        attachVideoStream(currentCamPub.track);
-      }
-      
-        return;
       }
 
-      console.log('Background filter: Applying filter', selectedBackground);
+      // Re-publish original track
+      await liveKitRoom.localParticipant.publishTrack(originalTrack, {
+        source: Track.Source.Camera,
+        name: 'camera'
+      });
 
-      // Create canvas for processing
-      if (!backgroundCanvasRef.current) {
-        const canvas = document.createElement('canvas');
-        backgroundCanvasRef.current = canvas;
+      console.log('Restored original camera track');
+
+      // Attach to video element
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const newPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (newPublication && newPublication.track) {
+        attachVideoStream(newPublication.track);
       }
 
-      const canvas = backgroundCanvasRef.current;
-      
-      // Stop any existing processing
-      backgroundProcessingRef.current = false;
-      if (backgroundAnimationFrameRef.current) {
-        cancelAnimationFrame(backgroundAnimationFrameRef.current);
-        backgroundAnimationFrameRef.current = null;
-      }
+      return;
+    }
 
-      // Clean up previous processed stream
+    console.log('Background filter: Applying filter', selectedBackground);
+
+    // Create or get canvas
+    if (!backgroundCanvasRef.current) {
+      const canvas = document.createElement('canvas');
+      backgroundCanvasRef.current = canvas;
+    }
+
+    const canvas = backgroundCanvasRef.current;
+
+    // Stop any existing processing
+    backgroundProcessingRef.current = false;
+    if (backgroundAnimationFrameRef.current) {
+      cancelAnimationFrame(backgroundAnimationFrameRef.current);
+      backgroundAnimationFrameRef.current = null;
+    }
+
+    // Clean up previous processed stream
     if (processedStream) {
       if (processedStream._cleanup) {
         processedStream._cleanup();
@@ -2094,33 +2257,42 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     // Wait for cleanup
     await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Process video with background
-      const newProcessedStream = processVideoWithBackground(
-      originalMediaStreamTrack,
-        canvas, 
-        selectedBackground, 
-        backgroundColor, 
-        backgroundBlur
-      );
-      
+    // CRITICAL: Set canvas dimensions from video track settings
+    const settings = originalTrack.getSettings();
+    canvas.width = settings.width || 1280;
+    canvas.height = settings.height || 720;
+    console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
+
+    // Process video with background
+    const newProcessedStream = processVideoWithBackground(
+      originalTrack,
+      canvas,
+      selectedBackground,
+      backgroundColor,
+      backgroundBlur
+    );
+
     if (newProcessedStream && newProcessedStream.getVideoTracks().length > 0) {
       const processedTrack = newProcessedStream.getVideoTracks()[0];
-      
+
       // Ensure track is enabled
       processedTrack.enabled = true;
-      
-      // Wait for frames to start flowing (canvas needs time to capture frames)
-      await new Promise(resolve => setTimeout(resolve, 800));
 
-      // IMPORTANT: Don't unpublish the original track - we need it to keep running
-      // to feed the canvas processing. Instead, we'll publish the processed track
-      // and LiveKit will handle the switching. The original track's MediaStreamTrack
-      // will continue running as long as it's referenced by the canvas video element.
-      console.log('Background filter: Keeping original track running for canvas processing');
+      // Wait for frames to start flowing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Unpublish any existing processed track
+      const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+      for (const pub of currentPubs) {
+        if (pub.track && (pub.track.name === 'camera-with-background' || pub.source === Track.Source.Camera)) {
+          await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+          console.log('Unpublished existing track:', pub.track.name);
+        }
+      }
 
       // Wait before publishing new track
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       // Publish processed track
       await liveKitRoom.localParticipant.publishTrack(processedTrack, {
         source: Track.Source.Camera,
@@ -2128,36 +2300,33 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       });
 
       setProcessedStream(newProcessedStream);
-      
-      // Attach the processed track to video element
+
+      // Attach to video element
       await new Promise(resolve => setTimeout(resolve, 500));
-      const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (publication && publication.track) {
-        // Create a MediaStream from the processed track for immediate display
-        const processedMediaStream = new MediaStream([processedTrack]);
-        if (videoRef.current) {
-          videoRef.current.srcObject = processedMediaStream;
-          videoRef.current.muted = true;
-          videoRef.current.play().catch(e => console.error('Error playing processed video:', e));
-        }
-        // Also attach via the helper function
-        attachVideoStream(publication.track);
-      }
       
+      // Create MediaStream for immediate local display
+      const displayStream = new MediaStream([processedTrack]);
+      if (videoRef.current) {
+        videoRef.current.srcObject = displayStream;
+        videoRef.current.muted = true;
+        await videoRef.current.play().catch(e => console.error('Error playing processed video:', e));
+      }
+
       console.log('Background filter: Applied successfully');
     } else {
-      console.error('Background filter: No video tracks in processed stream or failed to create processed stream');
+      throw new Error('Failed to create processed stream with video tracks');
     }
   } catch (error) {
-      console.error('Error applying background filter:', error);
-      // On error, try to restore original camera
-      try {
+    console.error('Error applying background filter:', error);
+
+    // On error, restore original camera
+    try {
       backgroundProcessingRef.current = false;
       if (backgroundAnimationFrameRef.current) {
         cancelAnimationFrame(backgroundAnimationFrameRef.current);
         backgroundAnimationFrameRef.current = null;
       }
-      
+
       if (processedStream) {
         if (processedStream._cleanup) {
           processedStream._cleanup();
@@ -2165,21 +2334,32 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         processedStream.getTracks().forEach(track => track.stop());
         setProcessedStream(null);
       }
-      
-        await liveKitRoom.localParticipant.setCameraEnabled(false);
-      await new Promise(resolve => setTimeout(resolve, 300));
-        await liveKitRoom.localParticipant.setCameraEnabled(true);
-      
-      // Attach the restored camera
+
+      // Unpublish processed track
+      const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+      for (const pub of currentPubs) {
+        if (pub.track && pub.track.name === 'camera-with-background') {
+          await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+        }
+      }
+
+      // Re-publish original track
+      if (originalMediaStreamTrackRef.current) {
+        await liveKitRoom.localParticipant.publishTrack(originalMediaStreamTrackRef.current, {
+          source: Track.Source.Camera,
+          name: 'camera'
+        });
+      }
+
       await new Promise(resolve => setTimeout(resolve, 500));
       const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
       if (publication && publication.track) {
         attachVideoStream(publication.track);
       }
-      } catch (e) {
-        console.error('Error restoring camera:', e);
-      }
+    } catch (e) {
+      console.error('Error restoring camera:', e);
     }
+  }
 }, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
 
   // Update background when selection changes
