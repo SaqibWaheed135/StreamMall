@@ -494,111 +494,178 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
     }
   }, [API_CONFIG]);
 
+  // Initialize socket connection once
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    socketRef.current = io('https://streammall-backend-73a4b072d5eb.herokuapp.com', {
-      withCredentials: true,
-      auth: { token }
-    });
-
-    socketRef.current.on('connect', () => console.log('Connected'));
-
-    // socketRef.current.on('new-message', (data) => {
-    //   const { message, conversation } = data;
-    //   setMessages(prev => {
-    //     const newMessages = [...prev];
-    //     if (!newMessages.some(m => m._id === message._id) &&
-    //         ((selectedConversation && message.conversation === selectedConversation._id) ||
-    //          (selectedGroup && message.conversation === selectedGroup.conversation._id))) {
-    //       newMessages.push(message);
-    //     }
-    //     return newMessages;
-    //   });
-    //   if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
-    //     fetchSignedUrl(message._id, message.key);
-    //   }
-    //   scrollToBottom();
-    //   setConversations(prev => prev.map(conv =>
-    //     conv._id === conversation._id ? { ...conv, lastMessage: message, updatedAt: new Date() } : conv
-    //   ));
-    // });
-
-     socketRef.current.on('new-message', (data) => {
-      const { message, conversation } = data;
-      // Only add to messages if it's for the currently selected DM conversation
-      setMessages(prev => {
-        const newMessages = [...prev];
-        if (!newMessages.some(m => m._id === message._id) &&
-            selectedConversation && message.conversation === selectedConversation._id) {
-          newMessages.push(message);
-        }
-        return newMessages;
+    // Only create socket if it doesn't exist
+    if (!socketRef.current || !socketRef.current.connected) {
+      socketRef.current = io('https://streammall-backend-73a4b072d5eb.herokuapp.com', {
+        withCredentials: true,
+        auth: { token },
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5
       });
-      if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
-        fetchSignedUrl(message._id, message.key);
-      }
-      scrollToBottom();
-      // Only update DM conversations, not groups
-      setConversations(prev => prev.map(conv =>
-        conv._id === conversation._id ? { ...conv, lastMessage: message, updatedAt: new Date() } : conv
-      ));
-    });
-    socketRef.current.on('new-group-message', (data) => {
-      const { message, groupId } = data;
-      setMessages(prev => {
-        const newMessages = [...prev];
-        if (selectedGroup && selectedGroup._id === groupId && !newMessages.some(m => m._id === message._id)) {
-          newMessages.push(message);
-        }
-        return newMessages;
+
+      socketRef.current.on('connect', () => {
+        console.log('Socket connected');
       });
-      if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
-        fetchSignedUrl(message._id, message.key);
-      }
-      scrollToBottom();
-    });
 
-    socketRef.current.on('user-typing', (data) => {
-      const { userId, username, conversationId } = data;
-      if (selectedConversation && conversationId === selectedConversation._id) {
-        setTypingUsers(prev => [...prev.filter(u => u.userId !== userId), { userId, username }]);
-      }
-    });
+      socketRef.current.on('disconnect', () => {
+        console.log('Socket disconnected');
+      });
 
-    socketRef.current.on('user-stopped-typing', (data) => {
-      const { userId, conversationId } = data;
-      if (selectedConversation && conversationId === selectedConversation._id) {
-        setTypingUsers(prev => prev.filter(u => u.userId !== userId));
-      }
-    });
+      socketRef.current.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
 
-    socketRef.current.on('group-user-typing', (data) => {
-      const { userId, username, groupId } = data;
-      if (selectedGroup && groupId === selectedGroup._id) {
-        setTypingUsers(prev => [...prev.filter(u => u.userId !== userId), { userId, username }]);
-      }
-    });
+      // Handle new messages - update both messages list and conversation list
+      socketRef.current.on('new-message', (data) => {
+        const { message, conversation } = data;
+        
+        // Normalize conversation ID for comparison
+        const conversationId = conversation._id?.toString() || conversation._id;
+        const messageConversationId = message.conversation?.toString() || message.conversation;
+        
+        // Always update conversation list with new message
+        setConversations(prev => {
+          const updated = prev.map(conv => {
+            const convId = conv._id?.toString() || conv._id;
+            return convId === conversationId 
+              ? { ...conv, lastMessage: message, updatedAt: new Date() }
+              : conv;
+          });
+          // If conversation not in list, add it
+          if (!updated.find(c => {
+            const cId = c._id?.toString() || c._id;
+            return cId === conversationId;
+          })) {
+            return [{ ...conversation, lastMessage: message }, ...updated];
+          }
+          // Sort by updatedAt
+          return updated.sort((a, b) => 
+            new Date(b.updatedAt || b.lastMessage?.createdAt || 0) - 
+            new Date(a.updatedAt || a.lastMessage?.createdAt || 0)
+          );
+        });
 
-    socketRef.current.on('group-user-stopped-typing', (data) => {
-      const { userId } = data;
-      setTypingUsers(prev => prev.filter(u => u.userId !== userId));
-    });
+        // Add to messages if it's for the currently selected conversation
+        setMessages(prev => {
+          if (selectedConversation) {
+            const selectedConvId = selectedConversation._id?.toString() || selectedConversation._id;
+            if (messageConversationId === selectedConvId) {
+              if (!prev.some(m => m._id === message._id)) {
+                const newMessages = [...prev, message];
+                // Auto-scroll after state update
+                setTimeout(() => scrollToBottom(), 100);
+                return newMessages;
+              }
+            }
+          }
+          return prev;
+        });
 
-    socketRef.current.on('message-deleted-everyone', (data) => {
-      const { messageId } = data;
-      setMessages(prev => prev.map(msg =>
-        msg._id === messageId
-          ? { ...msg, isDeleted: true, content: 'This message was deleted', key: null, fileType: null, fileName: null }
-          : msg
-      ));
-    });
+        // Fetch signed URL for media messages
+        if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
+          fetchSignedUrl(message._id, message.key);
+        }
+      });
+
+      // Handle new group messages
+      socketRef.current.on('new-group-message', (data) => {
+        const { message, groupId } = data;
+        
+        // Update groups list
+        setGroups(prev => prev.map(group => {
+          if (group._id === groupId && group.conversation) {
+            return {
+              ...group,
+              conversation: {
+                ...group.conversation,
+                lastMessage: message
+              }
+            };
+          }
+          return group;
+        }));
+
+        // Add to messages if it's for the currently selected group
+        setMessages(prev => {
+          if (selectedGroup && selectedGroup._id === groupId) {
+            if (!prev.some(m => m._id === message._id)) {
+              const newMessages = [...prev, message];
+              setTimeout(() => scrollToBottom(), 100);
+              return newMessages;
+            }
+          }
+          return prev;
+        });
+
+        // Fetch signed URL for media messages
+        if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
+          fetchSignedUrl(message._id, message.key);
+        }
+      });
+
+      // Handle typing indicators for DMs
+      socketRef.current.on('user-typing', (data) => {
+        const { userId, username, conversationId } = data;
+        if (selectedConversation && conversationId === selectedConversation._id) {
+          setTypingUsers(prev => {
+            const filtered = prev.filter(u => u.userId !== userId);
+            return [...filtered, { userId, username }];
+          });
+        }
+      });
+
+      socketRef.current.on('user-stopped-typing', (data) => {
+        const { userId, conversationId } = data;
+        if (selectedConversation && conversationId === selectedConversation._id) {
+          setTypingUsers(prev => prev.filter(u => u.userId !== userId));
+        }
+      });
+
+      // Handle typing indicators for groups
+      socketRef.current.on('group-user-typing', (data) => {
+        const { userId, username, groupId } = data;
+        if (selectedGroup && groupId === selectedGroup._id) {
+          setTypingUsers(prev => {
+            const filtered = prev.filter(u => u.userId !== userId);
+            return [...filtered, { userId, username }];
+          });
+        }
+      });
+
+      socketRef.current.on('group-user-stopped-typing', (data) => {
+        const { userId, groupId } = data;
+        if (selectedGroup && groupId === selectedGroup._id) {
+          setTypingUsers(prev => prev.filter(u => u.userId !== userId));
+        }
+      });
+
+      // Handle message deletion
+      socketRef.current.on('message-deleted-everyone', (data) => {
+        const { messageId } = data;
+        setMessages(prev => prev.map(msg =>
+          msg._id === messageId
+            ? { ...msg, isDeleted: true, content: 'This message was deleted', key: null, fileType: null, fileName: null }
+            : msg
+        ));
+      });
+    }
 
     return () => {
-      if (socketRef.current) socketRef.current.disconnect();
+      // Don't disconnect on cleanup, keep connection alive
+      // Only disconnect when component unmounts completely
     };
-  }, [selectedConversation, selectedGroup, fetchSignedUrl]);
+  }, [fetchSignedUrl]);
+
+  // Clear typing indicators when switching conversations
+  useEffect(() => {
+    setTypingUsers([]);
+  }, [selectedConversation, selectedGroup]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -677,12 +744,22 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       console.error("Conversation has no ID:", conversation);
       return;
     }
+    
+    // Leave previous conversation room
+    if (socketRef.current && selectedConversation) {
+      socketRef.current.emit('leave-conversation', { conversationId: selectedConversation._id });
+    }
+    
     setSelectedConversation(conversation);
     setSelectedGroup(null);
     setMessages([]);
+    setTypingUsers([]); // Clear typing indicators
+    
+    // Join new conversation room
     if (socketRef.current) {
       socketRef.current.emit('join-conversation', { conversationId: conversation._id });
     }
+    
     try {
       const response = await fetch(`${API_CONFIG.baseUrl}/messages/conversations/${conversation._id}/messages`, {
         headers: getAuthHeaders()
@@ -690,6 +767,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       if (response.ok) {
         const messages = await response.json();
         setMessages(messages);
+        setTimeout(() => scrollToBottom(), 100);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -698,12 +776,22 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
 
   const selectGroup = async (group) => {
     console.log('Selecting group:', group._id, 'Conversation ID:', group.conversation?._id);
+    
+    // Leave previous group room
+    if (socketRef.current && selectedGroup) {
+      socketRef.current.emit('leave-group', { groupId: selectedGroup._id });
+    }
+    
     setSelectedGroup(group);
     setSelectedConversation(null);
     setMessages([]);
+    setTypingUsers([]); // Clear typing indicators
+    
+    // Join new group room
     if (socketRef.current) {
       socketRef.current.emit('join-group', { groupId: group._id });
     }
+    
     try {
       const response = await fetch(`${API_CONFIG.baseUrl}/messages/conversations/${group.conversation._id}/messages`, {
         headers: getAuthHeaders()
@@ -712,6 +800,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         const msgs = await response.json();
         console.log('Loaded group messages:', msgs.length);
         setMessages(msgs);
+        setTimeout(() => scrollToBottom(), 100);
       }
     } catch (error) {
       console.error('Error fetching group messages:', error);
@@ -810,8 +899,11 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
   };
 
   const handleTyping = (e) => {
-    setNewMessage(e.target.value);
-    if (socketRef.current) {
+    const value = e.target.value;
+    setNewMessage(value);
+    
+    if (socketRef.current && (selectedConversation || selectedGroup)) {
+      // Start typing indicator
       if (!isTyping) {
         setIsTyping(true);
         if (selectedGroup) {
@@ -820,7 +912,13 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
           socketRef.current.emit('typing-start', { conversationId: selectedConversation._id });
         }
       }
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Stop typing after 2 seconds of inactivity
       typingTimeoutRef.current = setTimeout(() => {
         setIsTyping(false);
         if (selectedGroup) {
@@ -828,7 +926,7 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         } else if (selectedConversation) {
           socketRef.current.emit('typing-stop', { conversationId: selectedConversation._id });
         }
-      }, 1000);
+      }, 2000);
     }
   };
 
