@@ -3,9 +3,9 @@
 ---
 
 ```markdown
-# 🎥 StreamMall — Live Shopping & Streaming Platform
+# 🎥 SensePodcast — Live Shopping & Streaming Platform
 
-StreamMall is a **next-generation live commerce platform** that combines **real-time streaming, social interaction, and e-commerce** into one powerful ecosystem.  
+SensePodcast is a **next-generation live commerce platform** that combines **real-time streaming, social interaction, and e-commerce** into one powerful ecosystem.  
 Creators can go live, showcase their products, and allow users to purchase directly — all while chatting and engaging with their audience.
 
 ---

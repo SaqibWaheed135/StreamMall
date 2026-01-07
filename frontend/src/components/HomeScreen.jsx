@@ -274,7 +274,7 @@ const LiveRoomCard = ({ room }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <img
             src={Logo}
-            alt="StreamMall Logo"
+            alt="SensePodcast Logo"
             className="w-20 sm:w-18 rounded-xl drop-shadow-[0_0_30px_rgba(255,43,85,0.4)]"
           />
 
