@@ -467,6 +467,8 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordingIntervalRef = useRef(null);
+  const selectedConversationRef = useRef(null);
+  const selectedGroupRef = useRef(null);
 
   const API_CONFIG = useMemo(() => ({
     baseUrl: API_BASE_URL,
@@ -510,11 +512,42 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       });
 
       socketRef.current.on('connect', () => {
-        console.log('Socket connected');
+        console.log('Socket connected', socketRef.current.id);
+        // Rejoin rooms after connection
+        if (selectedConversationRef.current) {
+          socketRef.current.emit('join-conversation', { 
+            conversationId: selectedConversationRef.current._id 
+          });
+        }
+        if (selectedGroupRef.current) {
+          socketRef.current.emit('join-group', { 
+            groupId: selectedGroupRef.current._id 
+          });
+        }
+      });
+      
+      // Handle successful room join
+      socketRef.current.on('joined-conversation', (data) => {
+        console.log('Successfully joined conversation:', data.conversationId);
       });
 
       socketRef.current.on('disconnect', () => {
         console.log('Socket disconnected');
+      });
+
+      socketRef.current.on('reconnect', () => {
+        console.log('Socket reconnected');
+        // Rejoin conversation/group rooms after reconnection
+        if (selectedConversationRef.current) {
+          socketRef.current.emit('join-conversation', { 
+            conversationId: selectedConversationRef.current._id 
+          });
+        }
+        if (selectedGroupRef.current) {
+          socketRef.current.emit('join-group', { 
+            groupId: selectedGroupRef.current._id 
+          });
+        }
       });
 
       socketRef.current.on('connect_error', (error) => {
@@ -523,11 +556,12 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
 
       // Handle new messages - update both messages list and conversation list
       socketRef.current.on('new-message', (data) => {
+        console.log('Received new message:', data);
         const { message, conversation } = data;
         
         // Normalize conversation ID for comparison
-        const conversationId = conversation._id?.toString() || conversation._id;
-        const messageConversationId = message.conversation?.toString() || message.conversation;
+        const conversationId = conversation?._id?.toString() || conversation?._id || message?.conversation?.toString() || message?.conversation;
+        const messageConversationId = message?.conversation?.toString() || message?.conversation || conversationId;
         
         // Always update conversation list with new message
         setConversations(prev => {
@@ -552,20 +586,38 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         });
 
         // Add to messages if it's for the currently selected conversation
-        setMessages(prev => {
-          if (selectedConversation) {
-            const selectedConvId = selectedConversation._id?.toString() || selectedConversation._id;
-            if (messageConversationId === selectedConvId) {
-              if (!prev.some(m => m._id === message._id)) {
+        // Use ref to get latest selectedConversation value
+        const currentConv = selectedConversationRef.current;
+        if (currentConv) {
+          const selectedConvId = currentConv._id?.toString() || currentConv._id;
+          console.log('Socket message - Comparing conversation IDs:', messageConversationId, '===', selectedConvId);
+          
+          if (messageConversationId === selectedConvId) {
+            setMessages(prev => {
+              // Check if message already exists
+              const exists = prev.some(m => {
+                const mId = m._id?.toString() || m._id;
+                const msgId = message._id?.toString() || message._id;
+                return mId === msgId;
+              });
+              
+              if (!exists) {
+                console.log('Adding new message from socket to current conversation');
                 const newMessages = [...prev, message];
                 // Auto-scroll after state update
                 setTimeout(() => scrollToBottom(), 100);
                 return newMessages;
+              } else {
+                console.log('Message already exists, skipping');
               }
-            }
+              return prev;
+            });
+          } else {
+            console.log('Message is for different conversation, not adding to messages');
           }
-          return prev;
-        });
+        } else {
+          console.log('No conversation selected, message will only update conversation list');
+        }
 
         // Fetch signed URL for media messages
         if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
@@ -592,16 +644,30 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
         }));
 
         // Add to messages if it's for the currently selected group
-        setMessages(prev => {
-          if (selectedGroup && selectedGroup._id === groupId) {
-            if (!prev.some(m => m._id === message._id)) {
-              const newMessages = [...prev, message];
-              setTimeout(() => scrollToBottom(), 100);
-              return newMessages;
-            }
+        // Use ref to get latest selectedGroup value
+        const currentGroup = selectedGroupRef.current;
+        const groupIdStr = groupId?.toString() || groupId;
+        
+        if (currentGroup) {
+          const currentGroupId = currentGroup._id?.toString() || currentGroup._id;
+          console.log('Group message - Comparing:', groupIdStr, 'with', currentGroupId);
+          
+          if (groupIdStr === currentGroupId) {
+            setMessages(prev => {
+              if (!prev.some(m => {
+                const mId = m._id?.toString() || m._id;
+                const msgId = message._id?.toString() || message._id;
+                return mId === msgId;
+              })) {
+                console.log('Adding message to current group');
+                const newMessages = [...prev, message];
+                setTimeout(() => scrollToBottom(), 100);
+                return newMessages;
+              }
+              return prev;
+            });
           }
-          return prev;
-        });
+        }
 
         // Fetch signed URL for media messages
         if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
@@ -612,36 +678,56 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       // Handle typing indicators for DMs
       socketRef.current.on('user-typing', (data) => {
         const { userId, username, conversationId } = data;
-        if (selectedConversation && conversationId === selectedConversation._id) {
-          setTypingUsers(prev => {
-            const filtered = prev.filter(u => u.userId !== userId);
-            return [...filtered, { userId, username }];
-          });
+        const currentConv = selectedConversationRef.current;
+        if (currentConv) {
+          const convId = currentConv._id?.toString() || currentConv._id;
+          const dataConvId = conversationId?.toString() || conversationId;
+          if (convId === dataConvId) {
+            setTypingUsers(prev => {
+              const filtered = prev.filter(u => u.userId !== userId);
+              return [...filtered, { userId, username }];
+            });
+          }
         }
       });
 
       socketRef.current.on('user-stopped-typing', (data) => {
         const { userId, conversationId } = data;
-        if (selectedConversation && conversationId === selectedConversation._id) {
-          setTypingUsers(prev => prev.filter(u => u.userId !== userId));
+        const currentConv = selectedConversationRef.current;
+        if (currentConv) {
+          const convId = currentConv._id?.toString() || currentConv._id;
+          const dataConvId = conversationId?.toString() || conversationId;
+          if (convId === dataConvId) {
+            setTypingUsers(prev => prev.filter(u => u.userId !== userId));
+          }
         }
       });
 
       // Handle typing indicators for groups
       socketRef.current.on('group-user-typing', (data) => {
         const { userId, username, groupId } = data;
-        if (selectedGroup && groupId === selectedGroup._id) {
-          setTypingUsers(prev => {
-            const filtered = prev.filter(u => u.userId !== userId);
-            return [...filtered, { userId, username }];
-          });
+        const currentGroup = selectedGroupRef.current;
+        if (currentGroup) {
+          const currentGroupId = currentGroup._id?.toString() || currentGroup._id;
+          const dataGroupId = groupId?.toString() || groupId;
+          if (currentGroupId === dataGroupId) {
+            setTypingUsers(prev => {
+              const filtered = prev.filter(u => u.userId !== userId);
+              return [...filtered, { userId, username }];
+            });
+          }
         }
       });
 
       socketRef.current.on('group-user-stopped-typing', (data) => {
         const { userId, groupId } = data;
-        if (selectedGroup && groupId === selectedGroup._id) {
-          setTypingUsers(prev => prev.filter(u => u.userId !== userId));
+        const currentGroup = selectedGroupRef.current;
+        if (currentGroup) {
+          const currentGroupId = currentGroup._id?.toString() || currentGroup._id;
+          const dataGroupId = groupId?.toString() || groupId;
+          if (currentGroupId === dataGroupId) {
+            setTypingUsers(prev => prev.filter(u => u.userId !== userId));
+          }
         }
       });
 
@@ -661,6 +747,15 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       // Only disconnect when component unmounts completely
     };
   }, [fetchSignedUrl]);
+
+  // Update refs when selected conversation/group changes
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
+
+  useEffect(() => {
+    selectedGroupRef.current = selectedGroup;
+  }, [selectedGroup]);
 
   // Clear typing indicators when switching conversations
   useEffect(() => {
@@ -756,8 +851,11 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
     setTypingUsers([]); // Clear typing indicators
     
     // Join new conversation room
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
+      console.log('Joining conversation:', conversation._id);
       socketRef.current.emit('join-conversation', { conversationId: conversation._id });
+    } else {
+      console.warn('Socket not connected, cannot join conversation');
     }
     
     try {
@@ -788,8 +886,11 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
     setTypingUsers([]); // Clear typing indicators
     
     // Join new group room
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
+      console.log('Joining group:', group._id);
       socketRef.current.emit('join-group', { groupId: group._id });
+    } else {
+      console.warn('Socket not connected, cannot join group');
     }
     
     try {
@@ -874,13 +975,34 @@ const MessagingScreen = ({ conversationId: propConversationId }) => {
       });
       if (response.ok) {
         const message = await response.json();
+        // Optimistically add message immediately
         setMessages(prev => {
           const newMessages = [...prev];
-          if (!newMessages.some(m => m._id === message._id)) {
+          if (!newMessages.some(m => {
+            const mId = m._id?.toString() || m._id;
+            const msgId = message._id?.toString() || message._id;
+            return mId === msgId;
+          })) {
             newMessages.push(message);
+            setTimeout(() => scrollToBottom(), 100);
           }
           return newMessages;
         });
+        
+        // Update conversation list
+        setConversations(prev => {
+          const convId = conversationId?.toString() || conversationId;
+          return prev.map(conv => {
+            const cId = conv._id?.toString() || conv._id;
+            return cId === convId 
+              ? { ...conv, lastMessage: message, updatedAt: new Date() }
+              : conv;
+          }).sort((a, b) => 
+            new Date(b.updatedAt || b.lastMessage?.createdAt || 0) - 
+            new Date(a.updatedAt || a.lastMessage?.createdAt || 0)
+          );
+        });
+        
         if (message.key && ['image', 'video', 'audio'].includes(message.type)) {
           fetchSignedUrl(message._id, message.key);
         }
