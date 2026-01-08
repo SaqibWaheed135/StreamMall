@@ -1473,13 +1473,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         window.history.replaceState(null, '', window.location.href);
       }
 
-      // Navigate back after a small delay to ensure cleanup completes
-      // Use requestAnimationFrame to ensure state updates are processed
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          onBack();
-        }, 100);
-      });
+      // Auto-refresh the page to ensure all state is completely reset
+      // This resolves the issue where the page gets stuck after ending stream
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
 
     } catch (err) {
       console.error('Error ending stream:', err);
