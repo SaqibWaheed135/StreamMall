@@ -45,7 +45,9 @@ import ConfirmEndModal from './globalComponents/hostStreamComponents/ConfirmEndM
 import { API_BASE_URL, SOCKET_URL } from '../config/api';
 import { Room, RoomEvent, Track } from 'livekit-client';
 import { SelfieSegmentation } from '@mediapipe/selfie_segmentation';
-import { FaceDetection } from '@mediapipe/face_detection';
+// FaceDetection - temporarily disabled due to import/constructor issues
+// Will be re-enabled once the import issue is resolved
+const FaceDetectionClass = null;
 
 const isMobile = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -1952,23 +1954,27 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       throw err;
     }
 
-    // Initialize MediaPipe Face Detection
-    let faceDetection;
-    try {
-      faceDetection = new FaceDetection({
-        locateFile: (file) => {
-          return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
-        }
-      });
-      
-      faceDetection.setOptions({
-        model: 'short', // 'short' for faster processing, 'full' for better accuracy
-        minDetectionConfidence: 0.5,
-      });
-      console.log('✅ MediaPipe Face Detection initialized');
-    } catch (err) {
-      console.error('❌ Failed to initialize Face Detection:', err);
-      // Don't throw - face detection is optional
+    // Initialize MediaPipe Face Detection (optional - skip if import fails)
+    let faceDetection = null;
+    if (FaceDetectionClass && typeof FaceDetectionClass === 'function') {
+      try {
+        faceDetection = new FaceDetectionClass({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+          }
+        });
+        
+        faceDetection.setOptions({
+          model: 'short', // 'short' for faster processing, 'full' for better accuracy
+          minDetectionConfidence: 0.5,
+        });
+        console.log('✅ MediaPipe Face Detection initialized');
+      } catch (err) {
+        console.warn('⚠️ Failed to initialize Face Detection (non-critical):', err);
+        faceDetection = null;
+      }
+    } else {
+      console.log('⚠️ FaceDetection class not available, skipping face detection');
     }
 
     // Face detection callback
@@ -3261,10 +3267,29 @@ const applyBackgroundFilter = React.useCallback(async () => {
     // Wait for cleanup
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Set canvas dimensions
-    const settings = originalTrack.getSettings();
-    canvas.width = settings.width || 1280;
-    canvas.height = settings.height || 720;
+    // Set canvas dimensions - use getCapabilities if getSettings returns invalid values
+    let canvasWidth = 1280;
+    let canvasHeight = 720;
+    
+    try {
+      const settings = originalTrack.getSettings();
+      if (settings && settings.width && settings.height && settings.width > 10 && settings.height > 10) {
+        canvasWidth = settings.width;
+        canvasHeight = settings.height;
+      } else {
+        // Try getCapabilities as fallback
+        const capabilities = originalTrack.getCapabilities();
+        if (capabilities && capabilities.width && capabilities.height) {
+          canvasWidth = capabilities.width.max || capabilities.width.min || 1280;
+          canvasHeight = capabilities.height.max || capabilities.height.min || 720;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not get track dimensions, using defaults:', err);
+    }
+    
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
 
     // Load background image if needed
