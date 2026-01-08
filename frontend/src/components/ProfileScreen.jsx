@@ -732,8 +732,8 @@ const ProfileScreen = ({ userId: propUserId }) => {
       if (navigator.share) {
         try {
           await navigator.share({
-            title: 'Join ClipStream',
-            text: `Join me on ClipStream and start creating amazing content!`,
+            title: 'Join PodCast',
+            text: `Join me on PodCast and start creating amazing content!`,
             url: inviteLink
           });
         } catch (err) { console.log('Error sharing:', err); }
