@@ -2706,16 +2706,48 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       // Don't store it because tracks can end and become unusable
       let originalTrack = cameraPublication.track.mediaStreamTrack;
       
-      // Check if track is active
+      // Check if track is active - if ended, we need to restore the camera first
       if (originalTrack.readyState === 'ended') {
-        console.warn('⚠️ Track is ended, trying to get fresh track from camera...');
-        // Try to get a fresh track by checking if there's a new publication
-        const freshPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (freshPublication && freshPublication.track && freshPublication.track.mediaStreamTrack.readyState !== 'ended') {
-          originalTrack = freshPublication.track.mediaStreamTrack;
-          console.log('✅ Got fresh active track');
-        } else {
-          throw new Error('Camera track is ended and no fresh track available. Please restart the camera.');
+        console.warn('⚠️ Track is ended, restoring original camera track...');
+        
+        // If we have a processed stream, clean it up first
+        if (processedStream) {
+          if (processedStream._cleanup) {
+            processedStream._cleanup();
+          }
+          processedStream.getTracks().forEach(track => track.stop());
+          setProcessedStream(null);
+          // Wait for cleanup
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        // Restore the original camera by unpublishing and republishing
+        try {
+          // Unpublish current track
+          await cameraPublication.unpublish();
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Re-enable camera to get a fresh track
+          await liveKitRoom.localParticipant.setCameraEnabled(false);
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await liveKitRoom.localParticipant.setCameraEnabled(true);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Get the new publication
+          const newCameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+          if (newCameraPublication && newCameraPublication.track && newCameraPublication.track.mediaStreamTrack) {
+            originalTrack = newCameraPublication.track.mediaStreamTrack;
+            if (originalTrack.readyState === 'live') {
+              console.log('✅ Got fresh camera track after restore');
+            } else {
+              throw new Error('Fresh track is not live');
+            }
+          } else {
+            throw new Error('Could not get fresh camera track');
+          }
+        } catch (restoreErr) {
+          console.error('Error restoring camera:', restoreErr);
+          throw new Error('Camera track is ended and could not be restored. Please restart the camera.');
         }
       }
       
@@ -2807,10 +2839,30 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         }
         processedStream.getTracks().forEach(track => track.stop());
         setProcessedStream(null);
+        // Wait for cleanup
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Restore original camera track before applying new filter
+        // This ensures we always start from a known good state
+        if (originalMediaStreamTrackRef.current && originalMediaStreamTrackRef.current.readyState === 'live') {
+          try {
+            const currentCameraPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+            if (currentCameraPub && currentCameraPub.track) {
+              await currentCameraPub.track.replaceTrack(originalMediaStreamTrackRef.current);
+              console.log('✅ Restored original camera track before applying new filter');
+              // Wait a bit for the track to stabilize
+              await new Promise(resolve => setTimeout(resolve, 200));
+              // Update originalTrack to the restored track
+              originalTrack = originalMediaStreamTrackRef.current;
+            }
+          } catch (restoreErr) {
+            console.warn('Could not restore original track, continuing with current track:', restoreErr);
+          }
+        }
+      } else {
+        // Wait for cleanup
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
-
-      // Wait for cleanup
-      await new Promise(resolve => setTimeout(resolve, 200));
 
       // CRITICAL: Set canvas dimensions from video track settings
       const settings = originalTrack.getSettings();

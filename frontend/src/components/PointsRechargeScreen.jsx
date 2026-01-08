@@ -642,22 +642,22 @@ const getTransactionIcon = (category) => {
         setTimerInterval(iv);
 
         startPaymentStatusCheck(data.data.orderId);
-        } else {
-          // Handle error - if there's a pending order, show option to continue
-          if (data.orderId) {
-            const continueExisting = window.confirm(
+      } else {
+        // Handle error - if there's a pending order, show option to continue
+        if (data.orderId) {
+          const continueExisting = window.confirm(
               `${data.msg}\n\n${t('recharge.messages.continueExistingOrder')}`
-            );
-            if (continueExisting) {
-              // Redirect to check existing order status
+          );
+          if (continueExisting) {
+            // Redirect to check existing order status
               alert(t('recharge.messages.checkPreviousOrder'));
-            }
-          } else {
-            alert(data.errors?.[0]?.msg || data.msg || t('recharge.messages.failedToCreateOrder'));
           }
+        } else {
+            alert(data.errors?.[0]?.msg || data.msg || t('recharge.messages.failedToCreateOrder'));
         }
-      } catch (error) {
-        console.error('Error creating USDT order:', error);
+      }
+    } catch (error) {
+      console.error('Error creating USDT order:', error);
         alert(t('recharge.messages.failedToCreateOrderTryAgain'));
     } finally {
       setRecharging(false);
