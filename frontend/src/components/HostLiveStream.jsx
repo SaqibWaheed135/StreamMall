@@ -2037,57 +2037,21 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         ctx.save();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw background first
-        if (bgType === 'blur') {
-          // Draw blurred video as background
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = canvas.height;
-          const tempCtx = tempCanvas.getContext('2d');
-          tempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          ctx.save();
-          ctx.filter = `blur(${bgBlur}px)`;
-          ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
-          ctx.filter = 'none';
-          ctx.restore();
-        } else if (bgType === 'color') {
-          // Fill with solid color
-          ctx.fillStyle = bgColor;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        } else if (bgType === 'image' && backgroundImageRef.current) {
-          // Draw background image
-          const bgImg = backgroundImageRef.current;
-          ctx.save();
-          ctx.translate(canvas.width / 2, canvas.height / 2);
-          const rotation = selectedBackgroundImage?.rotation || 0;
-          ctx.rotate((rotation * Math.PI) / 180);
-          const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-          ctx.drawImage(
-            bgImg,
-            -bgImg.width * scale / 2,
-            -bgImg.height * scale / 2,
-            bgImg.width * scale,
-            bgImg.height * scale
-          );
-          ctx.restore();
-        } else {
-          // No background (transparent or default)
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // CORRECT MediaPipe compositing (from official docs):
-        // 1. Draw segmentation mask
-        // 2. Use source-in to fill with color/image
-        // 3. Draw original image with destination-atop
+        // CORRECT MediaPipe compositing approach:
+        // 1. Draw the person (image) first
+        // 2. Apply segmentation mask to keep only the person (destination-in)
+        // 3. Draw background behind in transparent areas (destination-over)
         
-        // Draw segmentation mask first
+        // Step 1: Draw the person image
         ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        
+        // Step 2: Apply segmentation mask - keep only where mask is opaque (white = person)
+        ctx.globalCompositeOperation = 'destination-in';
         ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
         
-        // Fill with background color/image where mask is
-        ctx.globalCompositeOperation = 'source-in';
+        // Step 3: Draw background behind (in transparent areas where person isn't)
+        ctx.globalCompositeOperation = 'destination-over';
         if (bgType === 'blur') {
           const blurTemp = document.createElement('canvas');
           blurTemp.width = canvas.width;
@@ -2115,10 +2079,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           ctx.fillStyle = '#000000';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        
-        // Draw original image on top (foreground)
-        ctx.globalCompositeOperation = 'destination-atop';
-        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
         ctx.restore();
         framesDrawn++;
