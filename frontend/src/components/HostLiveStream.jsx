@@ -1909,6 +1909,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     video.playsInline = true;
     video.muted = true;
     video.autoplay = true;
+    await video.play(); // 🔥 REQUIRED
+
+    
+
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
     
@@ -1934,6 +1938,26 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     let isProcessing = false;
     let videoReady = false;
     let framesDrawn = 0;
+
+const drawLoop = async () => {
+  if (!video.videoWidth || !video.videoHeight) {
+    requestAnimationFrame(drawLoop);
+    return;
+  }
+
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  framesDrawn++;
+
+  if (framesDrawn > 10) {
+    // Only capture stream AFTER frames exist
+    stream = canvas.captureStream(30);
+  }
+
+  requestAnimationFrame(drawLoop);
+};
+
+drawLoop();
+
     let stream = null;
 
     // Initialize MediaPipe Selfie Segmentation
@@ -3212,7 +3236,10 @@ const applyBackgroundFilter = React.useCallback(async () => {
       const currentCameraPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
       if (currentCameraPub && currentCameraPub.track) {
         try {
-          await currentCameraPub.track.replaceTrack(originalTrack);
+          await liveKitRoom.localParticipant.publishTrack(processedTrack, {
+            source: Track.Source.Camera,
+            name: 'camera-with-background'
+          });
           console.log('✅ Restored original track using replaceTrack');
         } catch (replaceError) {
           console.warn('replaceTrack failed:', replaceError);
