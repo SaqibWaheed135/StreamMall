@@ -98,7 +98,7 @@ const HostLiveStream = ({ onBack }) => {
   const [products, setProducts] = useState([]);
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const [fullscreenComment, setFullscreenComment] = useState('');
-const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
+  const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const fullscreenInputContainerRef = useRef(null); // For iPhone fullscreen input container
 
   const [newProduct, setNewProduct] = useState({
@@ -159,6 +159,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const isNavigatingAwayRef = useRef(false); // Track if we're navigating away to prevent unnecessary operations
   const iPhoneChatPanelRef = useRef(null); // Ref for iPhone chat panel auto-scroll
 
+
   // Handle iOS viewport height changes
   useEffect(() => {
     const handleResize = () => {
@@ -195,14 +196,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       const attemptFullscreen = (attempts = 0) => {
         const container = videoContainerRef.current;
         console.log(`🔄 Fullscreen attempt ${attempts}:`, { container: !!container });
-        
+
         // Check if already in fullscreen to avoid duplicate calls
         if (container && container.classList.contains('ios-fullscreen')) {
           console.log('✅ Already in fullscreen');
           setIsFullscreen(true);
           return;
         }
-        
+
         if (!container && attempts < 20) {
           // Retry if container not ready yet (up to 4 seconds)
           setTimeout(() => attemptFullscreen(attempts + 1), 200);
@@ -211,7 +212,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
         if (container && !container.classList.contains('ios-fullscreen')) {
           console.log('🎬 Applying iPhone fullscreen');
-          
+
           // Use requestAnimationFrame to ensure DOM is ready
           requestAnimationFrame(() => {
             // Apply iPhone fullscreen directly
@@ -297,12 +298,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
               // Technique 3: Direct focus
               input.focus();
-              
+
               // Technique 4: Click method (iOS sometimes needs this)
               if (input.click) {
                 input.click();
               }
-              
+
               // Technique 5: Set selection range (makes input more "active" on iOS)
               if (input.setSelectionRange) {
                 try {
@@ -331,7 +332,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   }
                 }, 10);
               }, 50);
-              
+
               console.log('⌨️ Attempted to show keyboard with multiple techniques');
             };
 
@@ -371,7 +372,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   // Auto-focus input to show keyboard when iPhone enters fullscreen mode
   useEffect(() => {
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    
+
     if (isFullscreen && isIPhone && isLive) {
       // Aggressive focus with multiple techniques for iOS
       const triggerKeyboard = () => {
@@ -401,12 +402,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
         // Technique 3: Direct focus
         input.focus();
-        
+
         // Technique 4: Click method (iOS sometimes needs this)
         if (typeof input.click === 'function') {
           input.click();
         }
-        
+
         // Technique 5: Set selection range
         if (typeof input.setSelectionRange === 'function') {
           try {
@@ -416,7 +417,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             // Ignore errors
           }
         }
-        
+
         // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
         setTimeout(() => {
           input.blur();
@@ -435,7 +436,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             }
           }, 10);
         }, 50);
-        
+
         console.log('⌨️ Auto-focused input to show keyboard in iPhone fullscreen mode');
       };
 
@@ -443,7 +444,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       requestAnimationFrame(() => {
         triggerKeyboard();
       });
-      
+
       // Multiple attempts with increasing delays
       const timeouts = [
         setTimeout(triggerKeyboard, 100),
@@ -589,7 +590,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     };
 
     return (
-      <div 
+      <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4 overflow-y-auto"
         style={{ zIndex: 2147483649 }}
       >
@@ -798,11 +799,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         if (fullscreenControlsTimeoutRef.current) {
           clearTimeout(fullscreenControlsTimeoutRef.current);
         }
-        
+
         // Show the fullscreen controls
         setShowFullscreenControls(true);
         setActiveFullscreenTab('chat');
-        
+
         // Auto-hide after 60 seconds
         fullscreenControlsTimeoutRef.current = setTimeout(() => {
           setShowFullscreenControls(false);
@@ -1064,7 +1065,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
       if (response.ok) {
         const data = await response.json();
-        setBackgroundImages(prev => 
+        setBackgroundImages(prev =>
           prev.map(img => img.id === imageId ? data.backgroundImage : img)
         );
         if (selectedBackgroundImage && selectedBackgroundImage.id === imageId) {
@@ -1488,7 +1489,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const endStream = async () => {
     console.log('🛑 endStream function called');
     console.log('Current state:', { isLive, streamData: !!streamData, liveKitRoom: !!liveKitRoom });
-    
+
     // Get streamId from streamData or fallback to localStorage session
     let streamId = streamData?.streamId || streamData?._id;
 
@@ -1574,7 +1575,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       // Mark that we're navigating away FIRST to prevent camera preview from starting
       // This must be set before setIsLive(false) to avoid race condition
       isNavigatingAwayRef.current = true;
-      
+
       // Reset navigation blocking flag
       isBlockingNavigationRef.current = false;
 
@@ -1679,6 +1680,98 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       return false;
     }
   };
+
+  const startBackgroundProcessing = () => {
+    if (backgroundProcessingRef.current) return;
+  
+    backgroundProcessingRef.current = true;
+  
+    const video = backgroundVideoRef.current;
+    const canvas = backgroundCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+  
+    const render = () => {
+      if (!backgroundProcessingRef.current) return;
+  
+      if (video.readyState >= 2) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+  
+        // Background
+        if (selectedBackground === 'color') {
+          ctx.fillStyle = backgroundColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+  
+        if (selectedBackground === 'image' && backgroundImageRef.current) {
+          ctx.drawImage(
+            backgroundImageRef.current,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+        }
+  
+        // Camera on top
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
+  
+      backgroundAnimationFrameRef.current = requestAnimationFrame(render);
+    };
+  
+    render();
+  };
+
+  const createProcessedStream = () => {
+    const canvas = backgroundCanvasRef.current;
+    return canvas.captureStream(30);
+  };
+  
+  const replaceLiveKitTrack = async (processedStream) => {
+    if (!liveKitRoom) return;
+  
+    const videoTrack = processedStream.getVideoTracks()[0];
+  
+    const publication =
+      liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+  
+    if (publication?.track) {
+      await publication.track.replaceTrack(videoTrack);
+    }
+  };
+  const applyBackground = async () => {
+    if (!localStream || !liveKitRoom) return;
+  
+    // Attach original camera stream to hidden video
+    backgroundVideoRef.current.srcObject = localStream;
+    await backgroundVideoRef.current.play();
+  
+    // Start rendering to canvas
+    startBackgroundProcessing();
+  
+    // Capture canvas stream
+    const processedStream = createProcessedStream();
+  
+    // Replace LiveKit camera track
+    await replaceLiveKitTrack(processedStream);
+  };
+  const restoreOriginalCamera = async () => {
+    if (!liveKitRoom || !localStream) return;
+  
+    const originalTrack = localStream.getVideoTracks()[0];
+  
+    const publication =
+      liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+  
+    if (publication?.track) {
+      await publication.track.replaceTrack(originalTrack);
+    }
+  
+    cancelAnimationFrame(backgroundAnimationFrameRef.current);
+    backgroundProcessingRef.current = false;
+  };
+      
 
   const toggleCamera = async () => {
     if (liveKitRoom && isLive) {
@@ -1796,13 +1889,13 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       console.error('Missing canvas or video track');
       return null;
     }
-  
+
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) {
       console.error('Failed to get canvas context');
       return null;
     }
-  
+
     const video = document.createElement('video');
     video.srcObject = new MediaStream([videoTrack]);
     video.autoplay = true;
@@ -1810,11 +1903,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     video.muted = true;
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
-  
+
     let animationFrameId = null;
     let isProcessing = false;
     let videoReady = false;
-  
+
     const processFrame = () => {
       if (!isProcessing || !backgroundProcessingRef.current) {
         if (animationFrameId) {
@@ -1822,7 +1915,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         }
         return;
       }
-  
+
       // Ensure video is ready and has valid dimensions
       if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
         // Update canvas dimensions if video dimensions changed
@@ -1831,34 +1924,34 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           canvas.height = video.videoHeight;
           console.log('Updated canvas dimensions to:', canvas.width, 'x', canvas.height);
         }
-  
+
         // Clear canvas first to avoid artifacts
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
         // Draw video frame
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  
+
         if (bgType === 'blur') {
           // Apply blur effect
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = canvas.width;
           tempCanvas.height = canvas.height;
           const tempCtx = tempCanvas.getContext('2d');
-  
+
           tempCtx.drawImage(video, 0, 0);
-  
+
           ctx.save();
           ctx.filter = `blur(${bgBlur}px)`;
           ctx.drawImage(tempCanvas, 0, 0);
           ctx.filter = 'none';
           ctx.restore();
-  
+
           // Keep center region sharp
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
           const keepWidth = canvas.width * 0.7;
           const keepHeight = canvas.height * 0.7;
-  
+
           ctx.drawImage(
             video,
             centerX - keepWidth / 2,
@@ -1925,7 +2018,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           bgCtx.translate(canvas.width / 2, canvas.height / 2);
           const rotation = selectedBackgroundImage?.rotation || 0;
           bgCtx.rotate((rotation * Math.PI) / 180);
-          
+
           // Scale to cover entire canvas
           const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
           bgCtx.drawImage(
@@ -1965,22 +2058,22 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           ctx.putImageData(imageData, 0, 0);
         }
       }
-  
+
       if (isProcessing && backgroundProcessingRef.current) {
         animationFrameId = requestAnimationFrame(processFrame);
         backgroundAnimationFrameRef.current = animationFrameId;
       }
     };
-   
+
     const handleVideoReady = () => {
       if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0 && !videoReady) {
         videoReady = true;
         console.log('Background filter: Video ready, dimensions:', video.videoWidth, 'x', video.videoHeight);
-        
+
         // Set canvas dimensions immediately
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        
+
         video.play().then(() => {
           console.log('Background filter: Video playing, starting frame processing');
           // Wait a bit more to ensure frames are flowing
@@ -1995,7 +2088,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         });
       }
     };
-  
+
     video.addEventListener('loadedmetadata', handleVideoReady);
     video.addEventListener('loadeddata', handleVideoReady);
     video.addEventListener('canplay', handleVideoReady);
@@ -2004,11 +2097,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       console.log('Background filter: Video is playing');
       handleVideoReady();
     });
-  
+
     // Start the stream - canvas will capture at 30fps
     // Create stream early, but it will only capture frames once we start drawing
     const stream = canvas.captureStream(30);
-  
+
     // Store cleanup function
     const cleanup = () => {
       isProcessing = false;
@@ -2028,22 +2121,22 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         video.srcObject = null;
       }
     };
-  
+
     stream._cleanup = cleanup;
-  
+
     // Try to start playing immediately
     video.play().catch((err) => {
       console.warn('Initial video play failed, will retry:', err);
       // Will retry on loadedmetadata/canplay
     });
-  
+
     // Ensure video starts playing
     setTimeout(() => {
       if (video.paused) {
         video.play().catch(err => console.error('Retry video play failed:', err));
       }
     }, 100);
-  
+
     return stream;
   };
 
@@ -2204,446 +2297,446 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   //     clearTimeout(timer);
   //   };
   // }, [selectedBackground, backgroundColor, backgroundBlur, isLive, liveKitRoom, applyBackgroundFilter]);
-// Update the applyBackgroundFilter function
-//   const applyBackgroundFilter = React.useCallback(async () => {
-//     if (!liveKitRoom || !isLive) {
-//       console.log('Background filter: Not live or no room');
-//       return;
-//     }
+  // Update the applyBackgroundFilter function
+  //   const applyBackgroundFilter = React.useCallback(async () => {
+  //     if (!liveKitRoom || !isLive) {
+  //       console.log('Background filter: Not live or no room');
+  //       return;
+  //     }
 
-//     try {
-//       const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-//       if (!cameraPublication || !cameraPublication.track) {
-//         console.warn('Background filter: No camera track available');
-//         return;
-//       }
+  //     try {
+  //       const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+  //       if (!cameraPublication || !cameraPublication.track) {
+  //         console.warn('Background filter: No camera track available');
+  //         return;
+  //       }
 
-//     // Check if we already have a processed track - if so, we need to get the original
-//     let originalMediaStreamTrack;
-//     if (cameraPublication.track.name === 'camera-with-background') {
-//       // We're replacing an existing processed track, use stored original
-//       console.log('Background filter: Replacing existing processed track');
-//       if (originalMediaStreamTrackRef.current) {
-//         originalMediaStreamTrack = originalMediaStreamTrackRef.current;
-//       } else {
-//         // Fallback: use current track's mediaStreamTrack
-//         originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
-//       }
-//     } else {
-//       // Get the original track and store it
-//       originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
-//       originalMediaStreamTrackRef.current = originalMediaStreamTrack;
-//     }
-      
-//       if (selectedBackground === 'none') {
-//         console.log('Background filter: Removing filter');
-//         // Stop processing
-//         backgroundProcessingRef.current = false;
-//         if (backgroundAnimationFrameRef.current) {
-//           cancelAnimationFrame(backgroundAnimationFrameRef.current);
-//           backgroundAnimationFrameRef.current = null;
-//         }
-        
-//         // Clean up processed stream
-//       if (processedStream) {
-//         if (processedStream._cleanup) {
-//           processedStream._cleanup();
-//         }
-//         processedStream.getTracks().forEach(track => track.stop());
-//         setProcessedStream(null);
-//       }
-        
-//         // Unpublish any processed track first
-//       const publications = Array.from(liveKitRoom.localParticipant.trackPublications.values());
-//         for (const pub of publications) {
-//           if (pub.track && pub.track.name === 'camera-with-background') {
-//             await liveKitRoom.localParticipant.unpublishTrack(pub.track);
-//           }
-//         }
-        
-//       // Check if we need to re-enable the original camera track
-//       const currentCamPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-//       if (!currentCamPub || !currentCamPub.track || currentCamPub.track.name === 'camera-with-background') {
-//         // Re-enable camera to get fresh track
-//         await liveKitRoom.localParticipant.setCameraEnabled(false);
-//         await new Promise(resolve => setTimeout(resolve, 300));
-//         await liveKitRoom.localParticipant.setCameraEnabled(true);
-        
-//         // Wait for track to be ready and attach it
-//         await new Promise(resolve => setTimeout(resolve, 500));
-//         const newCamPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-//         if (newCamPublication && newCamPublication.track && newCamPublication.track.mediaStreamTrack) {
-//           attachVideoStream(newCamPublication.track);
-//         }
-//       } else {
-//         // Original track is still there, just attach it
-//         attachVideoStream(currentCamPub.track);
-//       }
-      
-//         return;
-//       }
+  //     // Check if we already have a processed track - if so, we need to get the original
+  //     let originalMediaStreamTrack;
+  //     if (cameraPublication.track.name === 'camera-with-background') {
+  //       // We're replacing an existing processed track, use stored original
+  //       console.log('Background filter: Replacing existing processed track');
+  //       if (originalMediaStreamTrackRef.current) {
+  //         originalMediaStreamTrack = originalMediaStreamTrackRef.current;
+  //       } else {
+  //         // Fallback: use current track's mediaStreamTrack
+  //         originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
+  //       }
+  //     } else {
+  //       // Get the original track and store it
+  //       originalMediaStreamTrack = cameraPublication.track.mediaStreamTrack;
+  //       originalMediaStreamTrackRef.current = originalMediaStreamTrack;
+  //     }
 
-//       console.log('Background filter: Applying filter', selectedBackground);
+  //       if (selectedBackground === 'none') {
+  //         console.log('Background filter: Removing filter');
+  //         // Stop processing
+  //         backgroundProcessingRef.current = false;
+  //         if (backgroundAnimationFrameRef.current) {
+  //           cancelAnimationFrame(backgroundAnimationFrameRef.current);
+  //           backgroundAnimationFrameRef.current = null;
+  //         }
 
-//       // Create canvas for processing
-//       if (!backgroundCanvasRef.current) {
-//         const canvas = document.createElement('canvas');
-//         backgroundCanvasRef.current = canvas;
-//       }
+  //         // Clean up processed stream
+  //       if (processedStream) {
+  //         if (processedStream._cleanup) {
+  //           processedStream._cleanup();
+  //         }
+  //         processedStream.getTracks().forEach(track => track.stop());
+  //         setProcessedStream(null);
+  //       }
 
-//       const canvas = backgroundCanvasRef.current;
-      
-//       // Stop any existing processing
-//       backgroundProcessingRef.current = false;
-//       if (backgroundAnimationFrameRef.current) {
-//         cancelAnimationFrame(backgroundAnimationFrameRef.current);
-//         backgroundAnimationFrameRef.current = null;
-//       }
+  //         // Unpublish any processed track first
+  //       const publications = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+  //         for (const pub of publications) {
+  //           if (pub.track && pub.track.name === 'camera-with-background') {
+  //             await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+  //           }
+  //         }
 
-//       // Clean up previous processed stream
-//     if (processedStream) {
-//       if (processedStream._cleanup) {
-//         processedStream._cleanup();
-//       }
-//       processedStream.getTracks().forEach(track => track.stop());
-//       setProcessedStream(null);
-//     }
+  //       // Check if we need to re-enable the original camera track
+  //       const currentCamPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+  //       if (!currentCamPub || !currentCamPub.track || currentCamPub.track.name === 'camera-with-background') {
+  //         // Re-enable camera to get fresh track
+  //         await liveKitRoom.localParticipant.setCameraEnabled(false);
+  //         await new Promise(resolve => setTimeout(resolve, 300));
+  //         await liveKitRoom.localParticipant.setCameraEnabled(true);
 
-//     // Wait for cleanup
-//     await new Promise(resolve => setTimeout(resolve, 200));
+  //         // Wait for track to be ready and attach it
+  //         await new Promise(resolve => setTimeout(resolve, 500));
+  //         const newCamPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+  //         if (newCamPublication && newCamPublication.track && newCamPublication.track.mediaStreamTrack) {
+  //           attachVideoStream(newCamPublication.track);
+  //         }
+  //       } else {
+  //         // Original track is still there, just attach it
+  //         attachVideoStream(currentCamPub.track);
+  //       }
 
-//       // Process video with background
-//       const newProcessedStream = processVideoWithBackground(
-//       originalMediaStreamTrack,
-//         canvas, 
-//         selectedBackground, 
-//         backgroundColor, 
-//         backgroundBlur
-//       );
-      
-//     if (newProcessedStream && newProcessedStream.getVideoTracks().length > 0) {
-//       const processedTrack = newProcessedStream.getVideoTracks()[0];
-      
-//       // Ensure track is enabled
-//       processedTrack.enabled = true;
-      
-//       // Wait for frames to start flowing (canvas needs time to capture frames)
-//       await new Promise(resolve => setTimeout(resolve, 800));
+  //         return;
+  //       }
 
-//       // IMPORTANT: Don't unpublish the original track - we need it to keep running
-//       // to feed the canvas processing. Instead, we'll publish the processed track
-//       // and LiveKit will handle the switching. The original track's MediaStreamTrack
-//       // will continue running as long as it's referenced by the canvas video element.
-//       console.log('Background filter: Keeping original track running for canvas processing');
+  //       console.log('Background filter: Applying filter', selectedBackground);
 
-//       // Wait before publishing new track
-//       await new Promise(resolve => setTimeout(resolve, 300));
-      
-//       // Publish processed track
-//       await liveKitRoom.localParticipant.publishTrack(processedTrack, {
-//         source: Track.Source.Camera,
-//         name: 'camera-with-background'
-//       });
+  //       // Create canvas for processing
+  //       if (!backgroundCanvasRef.current) {
+  //         const canvas = document.createElement('canvas');
+  //         backgroundCanvasRef.current = canvas;
+  //       }
 
-//       setProcessedStream(newProcessedStream);
-      
-//       // Attach the processed track to video element
-//       await new Promise(resolve => setTimeout(resolve, 500));
-//       const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-//       if (publication && publication.track) {
-//         // Create a MediaStream from the processed track for immediate display
-//         const processedMediaStream = new MediaStream([processedTrack]);
-//         if (videoRef.current) {
-//           videoRef.current.srcObject = processedMediaStream;
-//           videoRef.current.muted = true;
-//           videoRef.current.play().catch(e => console.error('Error playing processed video:', e));
-//         }
-//         // Also attach via the helper function
-//         attachVideoStream(publication.track);
-//       }
-      
-//       console.log('Background filter: Applied successfully');
-//     } else {
-//       console.error('Background filter: No video tracks in processed stream or failed to create processed stream');
-//     }
-//   } catch (error) {
-//       console.error('Error applying background filter:', error);
-//       // On error, try to restore original camera
-//       try {
-//       backgroundProcessingRef.current = false;
-//       if (backgroundAnimationFrameRef.current) {
-//         cancelAnimationFrame(backgroundAnimationFrameRef.current);
-//         backgroundAnimationFrameRef.current = null;
-//       }
-      
-//       if (processedStream) {
-//         if (processedStream._cleanup) {
-//           processedStream._cleanup();
-//         }
-//         processedStream.getTracks().forEach(track => track.stop());
-//         setProcessedStream(null);
-//       }
-      
-//         await liveKitRoom.localParticipant.setCameraEnabled(false);
-//       await new Promise(resolve => setTimeout(resolve, 300));
-//         await liveKitRoom.localParticipant.setCameraEnabled(true);
-      
-//       // Attach the restored camera
-//       await new Promise(resolve => setTimeout(resolve, 500));
-//       const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-//       if (publication && publication.track) {
-//         attachVideoStream(publication.track);
-//       }
-//       } catch (e) {
-//         console.error('Error restoring camera:', e);
-//       }
-//     }
-// }, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
+  //       const canvas = backgroundCanvasRef.current;
+
+  //       // Stop any existing processing
+  //       backgroundProcessingRef.current = false;
+  //       if (backgroundAnimationFrameRef.current) {
+  //         cancelAnimationFrame(backgroundAnimationFrameRef.current);
+  //         backgroundAnimationFrameRef.current = null;
+  //       }
+
+  //       // Clean up previous processed stream
+  //     if (processedStream) {
+  //       if (processedStream._cleanup) {
+  //         processedStream._cleanup();
+  //       }
+  //       processedStream.getTracks().forEach(track => track.stop());
+  //       setProcessedStream(null);
+  //     }
+
+  //     // Wait for cleanup
+  //     await new Promise(resolve => setTimeout(resolve, 200));
+
+  //       // Process video with background
+  //       const newProcessedStream = processVideoWithBackground(
+  //       originalMediaStreamTrack,
+  //         canvas, 
+  //         selectedBackground, 
+  //         backgroundColor, 
+  //         backgroundBlur
+  //       );
+
+  //     if (newProcessedStream && newProcessedStream.getVideoTracks().length > 0) {
+  //       const processedTrack = newProcessedStream.getVideoTracks()[0];
+
+  //       // Ensure track is enabled
+  //       processedTrack.enabled = true;
+
+  //       // Wait for frames to start flowing (canvas needs time to capture frames)
+  //       await new Promise(resolve => setTimeout(resolve, 800));
+
+  //       // IMPORTANT: Don't unpublish the original track - we need it to keep running
+  //       // to feed the canvas processing. Instead, we'll publish the processed track
+  //       // and LiveKit will handle the switching. The original track's MediaStreamTrack
+  //       // will continue running as long as it's referenced by the canvas video element.
+  //       console.log('Background filter: Keeping original track running for canvas processing');
+
+  //       // Wait before publishing new track
+  //       await new Promise(resolve => setTimeout(resolve, 300));
+
+  //       // Publish processed track
+  //       await liveKitRoom.localParticipant.publishTrack(processedTrack, {
+  //         source: Track.Source.Camera,
+  //         name: 'camera-with-background'
+  //       });
+
+  //       setProcessedStream(newProcessedStream);
+
+  //       // Attach the processed track to video element
+  //       await new Promise(resolve => setTimeout(resolve, 500));
+  //       const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+  //       if (publication && publication.track) {
+  //         // Create a MediaStream from the processed track for immediate display
+  //         const processedMediaStream = new MediaStream([processedTrack]);
+  //         if (videoRef.current) {
+  //           videoRef.current.srcObject = processedMediaStream;
+  //           videoRef.current.muted = true;
+  //           videoRef.current.play().catch(e => console.error('Error playing processed video:', e));
+  //         }
+  //         // Also attach via the helper function
+  //         attachVideoStream(publication.track);
+  //       }
+
+  //       console.log('Background filter: Applied successfully');
+  //     } else {
+  //       console.error('Background filter: No video tracks in processed stream or failed to create processed stream');
+  //     }
+  //   } catch (error) {
+  //       console.error('Error applying background filter:', error);
+  //       // On error, try to restore original camera
+  //       try {
+  //       backgroundProcessingRef.current = false;
+  //       if (backgroundAnimationFrameRef.current) {
+  //         cancelAnimationFrame(backgroundAnimationFrameRef.current);
+  //         backgroundAnimationFrameRef.current = null;
+  //       }
+
+  //       if (processedStream) {
+  //         if (processedStream._cleanup) {
+  //           processedStream._cleanup();
+  //         }
+  //         processedStream.getTracks().forEach(track => track.stop());
+  //         setProcessedStream(null);
+  //       }
+
+  //         await liveKitRoom.localParticipant.setCameraEnabled(false);
+  //       await new Promise(resolve => setTimeout(resolve, 300));
+  //         await liveKitRoom.localParticipant.setCameraEnabled(true);
+
+  //       // Attach the restored camera
+  //       await new Promise(resolve => setTimeout(resolve, 500));
+  //       const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+  //       if (publication && publication.track) {
+  //         attachVideoStream(publication.track);
+  //       }
+  //       } catch (e) {
+  //         console.error('Error restoring camera:', e);
+  //       }
+  //     }
+  // }, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
 
 
-const applyBackgroundFilter = React.useCallback(async () => {
-  if (!liveKitRoom || !isLive) {
-    console.log('Background filter: Not live or no room');
-    return;
-  }
-
-  try {
-    const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-    if (!cameraPublication || !cameraPublication.track) {
-      console.warn('Background filter: No camera track available');
+  const applyBackgroundFilter = React.useCallback(async () => {
+    if (!liveKitRoom || !isLive) {
+      console.log('Background filter: Not live or no room');
       return;
     }
 
-    // Get the original MediaStreamTrack (store first time only)
-    if (!originalMediaStreamTrackRef.current) {
-      originalMediaStreamTrackRef.current = cameraPublication.track.mediaStreamTrack;
-      console.log('Stored original track reference');
-    }
-
-    const originalTrack = originalMediaStreamTrackRef.current;
-
-    if (selectedBackground === 'none') {
-      console.log('Background filter: Removing filter');
-      
-      // Stop processing
-      backgroundProcessingRef.current = false;
-      if (backgroundAnimationFrameRef.current) {
-        cancelAnimationFrame(backgroundAnimationFrameRef.current);
-        backgroundAnimationFrameRef.current = null;
-      }
-
-      // Clean up processed stream
-      if (processedStream) {
-        if (processedStream._cleanup) {
-          processedStream._cleanup();
-        }
-        processedStream.getTracks().forEach(track => track.stop());
-        setProcessedStream(null);
-      }
-
-      // Unpublish processed track
-      const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
-      for (const pub of currentPubs) {
-        if (pub.track && pub.track.name === 'camera-with-background') {
-          await liveKitRoom.localParticipant.unpublishTrack(pub.track);
-          console.log('Unpublished processed track');
-        }
-      }
-
-      // Re-publish original track
-      await liveKitRoom.localParticipant.publishTrack(originalTrack, {
-        source: Track.Source.Camera,
-        name: 'camera'
-      });
-
-      console.log('Restored original camera track');
-
-      // Attach to video element
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const newPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (newPublication && newPublication.track) {
-        attachVideoStream(newPublication.track);
-      }
-
-      return;
-    }
-
-    console.log('Background filter: Applying filter', selectedBackground);
-
-    // Create or get canvas
-    if (!backgroundCanvasRef.current) {
-      const canvas = document.createElement('canvas');
-      backgroundCanvasRef.current = canvas;
-    }
-
-    const canvas = backgroundCanvasRef.current;
-
-    // Stop any existing processing
-    backgroundProcessingRef.current = false;
-    if (backgroundAnimationFrameRef.current) {
-      cancelAnimationFrame(backgroundAnimationFrameRef.current);
-      backgroundAnimationFrameRef.current = null;
-    }
-
-    // Clean up previous processed stream
-    if (processedStream) {
-      if (processedStream._cleanup) {
-        processedStream._cleanup();
-      }
-      processedStream.getTracks().forEach(track => track.stop());
-      setProcessedStream(null);
-    }
-
-    // Wait for cleanup
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // CRITICAL: Set canvas dimensions from video track settings
-    const settings = originalTrack.getSettings();
-    canvas.width = settings.width || 1280;
-    canvas.height = settings.height || 720;
-    console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
-
-    // Load background image if image type is selected
-    if (selectedBackground === 'image' && selectedBackgroundImage) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        backgroundImageRef.current = img;
-      };
-      img.onerror = () => {
-        console.error('Failed to load background image');
-      };
-      img.src = selectedBackgroundImage.imageUrl;
-    } else {
-      backgroundImageRef.current = null;
-    }
-
-    // Process video with background
-    const newProcessedStream = processVideoWithBackground(
-      originalTrack,
-      canvas,
-      selectedBackground,
-      backgroundColor,
-      backgroundBlur
-    );
-
-    if (newProcessedStream && newProcessedStream.getVideoTracks().length > 0) {
-      const processedTrack = newProcessedStream.getVideoTracks()[0];
-
-      // Ensure track is enabled
-      processedTrack.enabled = true;
-
-      // Wait for frames to start flowing and canvas to have content
-      // Give more time for the video to start playing and frames to flow
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Check if canvas has content (not black)
-      const testImageData = canvas.getContext('2d').getImageData(0, 0, Math.min(10, canvas.width), Math.min(10, canvas.height));
-      const hasContent = testImageData.data.some((val, idx) => idx % 4 !== 3 && val !== 0); // Check RGB channels
-      
-      if (!hasContent) {
-        console.warn('Canvas appears to be black, waiting more...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
-      // Unpublish any existing processed track (but keep original track active for processing)
-      const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
-      for (const pub of currentPubs) {
-        // Only unpublish if it's a processed track, not the original camera track
-        // We need to keep the original track active so the video element can continue receiving frames
-        if (pub.track && pub.track.name === 'camera-with-background') {
-          await liveKitRoom.localParticipant.unpublishTrack(pub.track);
-          console.log('Unpublished existing processed track:', pub.track.name);
-        }
-      }
-
-      // Wait before publishing new track
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Now unpublish the original camera track (if still published)
-      // BUT we keep the originalMediaStreamTrackRef active so processing can continue
-      const originalPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (originalPub && originalPub.track && originalPub.track.name !== 'camera-with-background') {
-        await liveKitRoom.localParticipant.unpublishTrack(originalPub.track);
-        console.log('Unpublished original camera track after processed track is ready');
-      }
-
-      // Publish processed track
-      await liveKitRoom.localParticipant.publishTrack(processedTrack, {
-        source: Track.Source.Camera,
-        name: 'camera-with-background'
-      });
-
-      setProcessedStream(newProcessedStream);
-
-      // Attach to video element - use the published track from LiveKit
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Get the published track from LiveKit (it wraps our track)
-      const publishedTrack = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (publishedTrack && publishedTrack.track) {
-        attachVideoStream(publishedTrack.track);
-      } else {
-        // Fallback: use the processed track directly
-        const displayStream = new MediaStream([processedTrack]);
-        if (videoRef.current) {
-          videoRef.current.srcObject = displayStream;
-          videoRef.current.muted = true;
-          videoRef.current.style.objectFit = 'cover';
-          videoRef.current.style.objectPosition = 'center';
-          await videoRef.current.play().catch(e => console.error('Error playing processed video:', e));
-        }
-      }
-
-      console.log('Background filter: Applied successfully');
-    } else {
-      throw new Error('Failed to create processed stream with video tracks');
-    }
-  } catch (error) {
-    console.error('Error applying background filter:', error);
-
-    // On error, restore original camera
     try {
-      backgroundProcessingRef.current = false;
-      if (backgroundAnimationFrameRef.current) {
-        cancelAnimationFrame(backgroundAnimationFrameRef.current);
-        backgroundAnimationFrameRef.current = null;
+      const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (!cameraPublication || !cameraPublication.track) {
+        console.warn('Background filter: No camera track available');
+        return;
       }
 
-      if (processedStream) {
-        if (processedStream._cleanup) {
-          processedStream._cleanup();
+      // Get the original MediaStreamTrack (store first time only)
+      if (!originalMediaStreamTrackRef.current) {
+        originalMediaStreamTrackRef.current = cameraPublication.track.mediaStreamTrack;
+        console.log('Stored original track reference');
+      }
+
+      const originalTrack = originalMediaStreamTrackRef.current;
+
+      if (selectedBackground === 'none') {
+        console.log('Background filter: Removing filter');
+
+        // Stop processing
+        backgroundProcessingRef.current = false;
+        if (backgroundAnimationFrameRef.current) {
+          cancelAnimationFrame(backgroundAnimationFrameRef.current);
+          backgroundAnimationFrameRef.current = null;
         }
-        processedStream.getTracks().forEach(track => track.stop());
-        setProcessedStream(null);
-      }
 
-      // Unpublish processed track
-      const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
-      for (const pub of currentPubs) {
-        if (pub.track && pub.track.name === 'camera-with-background') {
-          await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+        // Clean up processed stream
+        if (processedStream) {
+          if (processedStream._cleanup) {
+            processedStream._cleanup();
+          }
+          processedStream.getTracks().forEach(track => track.stop());
+          setProcessedStream(null);
         }
-      }
 
-      // Re-publish original track
-      if (originalMediaStreamTrackRef.current) {
-        await liveKitRoom.localParticipant.publishTrack(originalMediaStreamTrackRef.current, {
+        // Unpublish processed track
+        const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+        for (const pub of currentPubs) {
+          if (pub.track && pub.track.name === 'camera-with-background') {
+            await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+            console.log('Unpublished processed track');
+          }
+        }
+
+        // Re-publish original track
+        await liveKitRoom.localParticipant.publishTrack(originalTrack, {
           source: Track.Source.Camera,
           name: 'camera'
         });
+
+        console.log('Restored original camera track');
+
+        // Attach to video element
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const newPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (newPublication && newPublication.track) {
+          attachVideoStream(newPublication.track);
+        }
+
+        return;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (publication && publication.track) {
-        attachVideoStream(publication.track);
+      console.log('Background filter: Applying filter', selectedBackground);
+
+      // Create or get canvas
+      if (!backgroundCanvasRef.current) {
+        const canvas = document.createElement('canvas');
+        backgroundCanvasRef.current = canvas;
       }
-    } catch (e) {
-      console.error('Error restoring camera:', e);
+
+      const canvas = backgroundCanvasRef.current;
+
+      // Stop any existing processing
+      backgroundProcessingRef.current = false;
+      if (backgroundAnimationFrameRef.current) {
+        cancelAnimationFrame(backgroundAnimationFrameRef.current);
+        backgroundAnimationFrameRef.current = null;
+      }
+
+      // Clean up previous processed stream
+      if (processedStream) {
+        if (processedStream._cleanup) {
+          processedStream._cleanup();
+        }
+        processedStream.getTracks().forEach(track => track.stop());
+        setProcessedStream(null);
+      }
+
+      // Wait for cleanup
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // CRITICAL: Set canvas dimensions from video track settings
+      const settings = originalTrack.getSettings();
+      canvas.width = settings.width || 1280;
+      canvas.height = settings.height || 720;
+      console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
+
+      // Load background image if image type is selected
+      if (selectedBackground === 'image' && selectedBackgroundImage) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          backgroundImageRef.current = img;
+        };
+        img.onerror = () => {
+          console.error('Failed to load background image');
+        };
+        img.src = selectedBackgroundImage.imageUrl;
+      } else {
+        backgroundImageRef.current = null;
+      }
+
+      // Process video with background
+      const newProcessedStream = processVideoWithBackground(
+        originalTrack,
+        canvas,
+        selectedBackground,
+        backgroundColor,
+        backgroundBlur
+      );
+
+      if (newProcessedStream && newProcessedStream.getVideoTracks().length > 0) {
+        const processedTrack = newProcessedStream.getVideoTracks()[0];
+
+        // Ensure track is enabled
+        processedTrack.enabled = true;
+
+        // Wait for frames to start flowing and canvas to have content
+        // Give more time for the video to start playing and frames to flow
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Check if canvas has content (not black)
+        const testImageData = canvas.getContext('2d').getImageData(0, 0, Math.min(10, canvas.width), Math.min(10, canvas.height));
+        const hasContent = testImageData.data.some((val, idx) => idx % 4 !== 3 && val !== 0); // Check RGB channels
+
+        if (!hasContent) {
+          console.warn('Canvas appears to be black, waiting more...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Unpublish any existing processed track (but keep original track active for processing)
+        const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+        for (const pub of currentPubs) {
+          // Only unpublish if it's a processed track, not the original camera track
+          // We need to keep the original track active so the video element can continue receiving frames
+          if (pub.track && pub.track.name === 'camera-with-background') {
+            await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+            console.log('Unpublished existing processed track:', pub.track.name);
+          }
+        }
+
+        // Wait before publishing new track
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Now unpublish the original camera track (if still published)
+        // BUT we keep the originalMediaStreamTrackRef active so processing can continue
+        const originalPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (originalPub && originalPub.track && originalPub.track.name !== 'camera-with-background') {
+          await liveKitRoom.localParticipant.unpublishTrack(originalPub.track);
+          console.log('Unpublished original camera track after processed track is ready');
+        }
+
+        // Publish processed track
+        await liveKitRoom.localParticipant.publishTrack(processedTrack, {
+          source: Track.Source.Camera,
+          name: 'camera-with-background'
+        });
+
+        setProcessedStream(newProcessedStream);
+
+        // Attach to video element - use the published track from LiveKit
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Get the published track from LiveKit (it wraps our track)
+        const publishedTrack = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (publishedTrack && publishedTrack.track) {
+          attachVideoStream(publishedTrack.track);
+        } else {
+          // Fallback: use the processed track directly
+          const displayStream = new MediaStream([processedTrack]);
+          if (videoRef.current) {
+            videoRef.current.srcObject = displayStream;
+            videoRef.current.muted = true;
+            videoRef.current.style.objectFit = 'cover';
+            videoRef.current.style.objectPosition = 'center';
+            await videoRef.current.play().catch(e => console.error('Error playing processed video:', e));
+          }
+        }
+
+        console.log('Background filter: Applied successfully');
+      } else {
+        throw new Error('Failed to create processed stream with video tracks');
+      }
+    } catch (error) {
+      console.error('Error applying background filter:', error);
+
+      // On error, restore original camera
+      try {
+        backgroundProcessingRef.current = false;
+        if (backgroundAnimationFrameRef.current) {
+          cancelAnimationFrame(backgroundAnimationFrameRef.current);
+          backgroundAnimationFrameRef.current = null;
+        }
+
+        if (processedStream) {
+          if (processedStream._cleanup) {
+            processedStream._cleanup();
+          }
+          processedStream.getTracks().forEach(track => track.stop());
+          setProcessedStream(null);
+        }
+
+        // Unpublish processed track
+        const currentPubs = Array.from(liveKitRoom.localParticipant.trackPublications.values());
+        for (const pub of currentPubs) {
+          if (pub.track && pub.track.name === 'camera-with-background') {
+            await liveKitRoom.localParticipant.unpublishTrack(pub.track);
+          }
+        }
+
+        // Re-publish original track
+        if (originalMediaStreamTrackRef.current) {
+          await liveKitRoom.localParticipant.publishTrack(originalMediaStreamTrackRef.current, {
+            source: Track.Source.Camera,
+            name: 'camera'
+          });
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (publication && publication.track) {
+          attachVideoStream(publication.track);
+        }
+      } catch (e) {
+        console.error('Error restoring camera:', e);
+      }
     }
-  }
-}, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
+  }, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
 
   // Update background when selection changes
   useEffect(() => {
@@ -2668,12 +2761,22 @@ const applyBackgroundFilter = React.useCallback(async () => {
     const timer = setTimeout(() => {
       applyBackgroundFilter();
     }, 500);
-    
+
     return () => {
       clearTimeout(timer);
     };
   }, [selectedBackground, backgroundColor, backgroundBlur, selectedBackgroundImage, isLive, liveKitRoom, applyBackgroundFilter, processedStream]);
 
+  useEffect(() => {
+    if (!isLive) return;
+  
+    if (selectedBackground === 'none') {
+      restoreOriginalCamera();
+    } else {
+      applyBackground();
+    }
+  }, [selectedBackground]);
+  
   // Detect iOS device
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -2935,22 +3038,22 @@ const applyBackgroundFilter = React.useCallback(async () => {
   useEffect(() => {
     const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isChrome = /CriOS|Chrome/.test(navigator.userAgent);
-    
+
     if (!isFullscreen || !isIPhone || !fullscreenInputContainerRef.current) return;
 
     const inputContainer = fullscreenInputContainerRef.current;
     const input = fullscreenInputRef.current;
-    
+
     // Store initial viewport height
     let initialViewportHeight = window.visualViewport?.height || window.innerHeight;
     let isKeyboardVisible = false;
-    
+
     // Enhanced handler for Chrome and Safari
     const handleKeyboardToggle = () => {
       if (!inputContainer) return;
-      
+
       let viewportHeight, windowHeight, keyboardHeight;
-      
+
       if (window.visualViewport) {
         viewportHeight = window.visualViewport.height;
         windowHeight = window.innerHeight;
@@ -2961,11 +3064,11 @@ const applyBackgroundFilter = React.useCallback(async () => {
         windowHeight = window.screen.height;
         keyboardHeight = windowHeight - viewportHeight;
       }
-      
+
       // Detect keyboard visibility (keyboard is typically 200-400px on iPhone)
       const keyboardThreshold = 150;
       isKeyboardVisible = keyboardHeight > keyboardThreshold;
-      
+
       if (isKeyboardVisible) {
         // Keyboard is visible - position input above keyboard
         if (window.visualViewport) {
@@ -2984,27 +3087,27 @@ const applyBackgroundFilter = React.useCallback(async () => {
         inputContainer.style.position = 'fixed';
       }
     };
-    
+
     // Chrome-specific: Use multiple event listeners for better detection
     if (isChrome && window.visualViewport) {
       // Chrome supports visual viewport but may need more aggressive handling
       const handleViewportResize = () => {
         requestAnimationFrame(handleKeyboardToggle);
       };
-      
+
       const handleViewportScroll = () => {
         requestAnimationFrame(handleKeyboardToggle);
       };
-      
+
       window.visualViewport.addEventListener('resize', handleViewportResize);
       window.visualViewport.addEventListener('scroll', handleViewportScroll);
-      
+
       // Also listen to window resize as backup
       window.addEventListener('resize', handleKeyboardToggle);
-      
+
       // Initial call
       handleKeyboardToggle();
-      
+
       return () => {
         window.visualViewport.removeEventListener('resize', handleViewportResize);
         window.visualViewport.removeEventListener('scroll', handleViewportScroll);
@@ -3015,12 +3118,12 @@ const applyBackgroundFilter = React.useCallback(async () => {
       const handleViewportResize = () => {
         handleKeyboardToggle();
       };
-      
+
       window.visualViewport.addEventListener('resize', handleViewportResize);
       window.visualViewport.addEventListener('scroll', handleViewportResize);
-      
+
       handleKeyboardToggle();
-      
+
       return () => {
         window.visualViewport.removeEventListener('resize', handleViewportResize);
         window.visualViewport.removeEventListener('scroll', handleViewportResize);
@@ -3030,7 +3133,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
       const handleResize = () => {
         setTimeout(handleKeyboardToggle, 100);
       };
-      
+
       if (input) {
         const handleFocus = () => {
           // Multiple timeouts to catch keyboard animation
@@ -3038,19 +3141,19 @@ const applyBackgroundFilter = React.useCallback(async () => {
           setTimeout(handleKeyboardToggle, 300);
           setTimeout(handleKeyboardToggle, 500);
         };
-        
+
         const handleBlur = () => {
           setTimeout(handleKeyboardToggle, 100);
           setTimeout(handleKeyboardToggle, 300);
         };
-        
+
         input.addEventListener('focus', handleFocus);
         input.addEventListener('blur', handleBlur);
         window.addEventListener('resize', handleResize);
-        
+
         // Also listen to orientation change
         window.addEventListener('orientationchange', handleResize);
-        
+
         return () => {
           input.removeEventListener('focus', handleFocus);
           input.removeEventListener('blur', handleBlur);
@@ -3518,6 +3621,19 @@ const applyBackgroundFilter = React.useCallback(async () => {
                   }}
                 />
                 <video
+                  ref={backgroundVideoRef}
+                  playsInline
+                  muted
+                  autoPlay
+                  style={{ display: 'none' }}
+                />
+
+                <canvas
+                  ref={backgroundCanvasRef}
+                  style={{ display: 'none' }}
+                />
+
+                <video
                   ref={localVideoRef}
                   autoPlay
                   playsInline
@@ -3595,9 +3711,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                           <button
                             onClick={() => setSelectedBackground('none')}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'none'
-                                ? 'border-pink-500 bg-pink-500/20'
-                                : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
+                              ? 'border-pink-500 bg-pink-500/20'
+                              : 'border-white/20 bg-white/5 hover:bg-white/10'
+                              }`}
                           >
                             <X className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.none')}</span>
@@ -3605,9 +3721,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                           <button
                             onClick={() => setSelectedBackground('blur')}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'blur'
-                                ? 'border-pink-500 bg-pink-500/20'
-                                : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
+                              ? 'border-pink-500 bg-pink-500/20'
+                              : 'border-white/20 bg-white/5 hover:bg-white/10'
+                              }`}
                           >
                             <Sparkles className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.blur')}</span>
@@ -3615,9 +3731,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                           <button
                             onClick={() => setSelectedBackground('color')}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'color'
-                                ? 'border-pink-500 bg-pink-500/20'
-                                : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
+                              ? 'border-pink-500 bg-pink-500/20'
+                              : 'border-white/20 bg-white/5 hover:bg-white/10'
+                              }`}
                           >
                             <Palette className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.color')}</span>
@@ -3625,9 +3741,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                           <button
                             onClick={() => setSelectedBackground('image')}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
-                                ? 'border-pink-500 bg-pink-500/20'
-                                : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
+                              ? 'border-pink-500 bg-pink-500/20'
+                              : 'border-white/20 bg-white/5 hover:bg-white/10'
+                              }`}
                           >
                             <Image className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">Image</span>
@@ -3657,11 +3773,10 @@ const applyBackgroundFilter = React.useCallback(async () => {
                             />
                             <label
                               htmlFor="background-image-upload"
-                              className={`block w-full p-3 rounded-lg border-2 border-dashed border-white/30 text-center cursor-pointer transition-all ${
-                                uploadingImage
+                              className={`block w-full p-3 rounded-lg border-2 border-dashed border-white/30 text-center cursor-pointer transition-all ${uploadingImage
                                   ? 'opacity-50 cursor-not-allowed'
                                   : 'hover:border-white/50 hover:bg-white/5'
-                              }`}
+                                }`}
                             >
                               {uploadingImage ? 'Uploading...' : '+ Upload Image'}
                             </label>
@@ -3677,11 +3792,10 @@ const applyBackgroundFilter = React.useCallback(async () => {
                                 {backgroundImages.map((img) => (
                                   <div
                                     key={img.id}
-                                    className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                                      selectedBackgroundImage?.id === img.id
+                                    className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedBackgroundImage?.id === img.id
                                         ? 'border-pink-500 ring-2 ring-pink-500'
                                         : 'border-white/20 hover:border-white/40'
-                                    }`}
+                                      }`}
                                   >
                                     <img
                                       src={img.imageUrl}
@@ -3776,9 +3890,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                                 key={color}
                                 onClick={() => setBackgroundColor(color)}
                                 className={`w-full h-12 rounded-lg border-2 transition-all ${backgroundColor === color
-                                    ? 'border-pink-500 scale-110'
-                                    : 'border-white/20'
-                                }`}
+                                  ? 'border-pink-500 scale-110'
+                                  : 'border-white/20'
+                                  }`}
                                 style={{ backgroundColor: color }}
                                 title={color}
                               />
@@ -3918,104 +4032,104 @@ const applyBackgroundFilter = React.useCallback(async () => {
                 {/* iPhone Fullscreen Controls Panel */}
                 {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <>
-                
-         {/* Floating Comment Input - Always Visible with Keyboard */}
-<div 
-  ref={fullscreenInputContainerRef}
-                      className="absolute left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/10 p-3 z-50"
-  style={{ 
-    zIndex: 2147483647,
-    bottom: 'env(safe-area-inset-bottom, 0px)',
-    position: 'fixed',
-    width: '100%',
-    maxWidth: '100dvw',
-    left: '0',
-    right: '0',
-    willChange: 'bottom',
-    transform: 'translateZ(0)',
-    WebkitTransform: 'translateZ(0)'
-  }}
-  // Make whole bar tappable → focuses input → opens keyboard
-  onClick={(e) => {
-    if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
-      fullscreenInputRef.current.focus();
-      fullscreenInputRef.current.click();
-    }
-  }}
->
-  <div className="flex items-center gap-2">
-    <input
-      ref={fullscreenInputRef}
-      type="text"
-      inputMode="text"
-      enterKeyHint="send"
-      autoComplete="off"
-      autoCapitalize="off"
-      autoCorrect="off"
-      spellCheck="false"
-      value={fullscreenComment}
-      onChange={(e) => setFullscreenComment(e.target.value)}
-      onKeyPress={(e) => {
-        if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
-          e.preventDefault();
-          socket.emit('send-comment', {
-            streamId: streamData.streamId,
-            text: fullscreenComment.trim()
-          });
-          setFullscreenComment('');
-        }
-      }}
-                          placeholder={t('chat.typeMessage')}
-      className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-      // Remove autoFocus – it can interfere on iOS
-    />
-    <button
-      onClick={(e) => {
-        e.stopPropagation(); // Prevent parent onClick from re-focusing
-        if (fullscreenComment.trim() && socket) {
-          socket.emit('send-comment', {
-            streamId: streamData.streamId,
-            text: fullscreenComment.trim()
-          });
-          setFullscreenComment('');
-          // Refocus after sending
-          setTimeout(() => fullscreenInputRef.current?.focus(), 100);
-        }
-      }}
-      disabled={!fullscreenComment.trim()}
-      className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
-    >
-      <Send className="w-5 h-5" />
-    </button>
-  </div>
-</div>
 
-    {/* Rest of iPhone controls continue here... */}
+                    {/* Floating Comment Input - Always Visible with Keyboard */}
+                    <div
+                      ref={fullscreenInputContainerRef}
+                      className="absolute left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/10 p-3 z-50"
+                      style={{
+                        zIndex: 2147483647,
+                        bottom: 'env(safe-area-inset-bottom, 0px)',
+                        position: 'fixed',
+                        width: '100%',
+                        maxWidth: '100dvw',
+                        left: '0',
+                        right: '0',
+                        willChange: 'bottom',
+                        transform: 'translateZ(0)',
+                        WebkitTransform: 'translateZ(0)'
+                      }}
+                      // Make whole bar tappable → focuses input → opens keyboard
+                      onClick={(e) => {
+                        if (fullscreenInputRef.current && e.target !== fullscreenInputRef.current) {
+                          fullscreenInputRef.current.focus();
+                          fullscreenInputRef.current.click();
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={fullscreenInputRef}
+                          type="text"
+                          inputMode="text"
+                          enterKeyHint="send"
+                          autoComplete="off"
+                          autoCapitalize="off"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          value={fullscreenComment}
+                          onChange={(e) => setFullscreenComment(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
+                              e.preventDefault();
+                              socket.emit('send-comment', {
+                                streamId: streamData.streamId,
+                                text: fullscreenComment.trim()
+                              });
+                              setFullscreenComment('');
+                            }
+                          }}
+                          placeholder={t('chat.typeMessage')}
+                          className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        // Remove autoFocus – it can interfere on iOS
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent parent onClick from re-focusing
+                            if (fullscreenComment.trim() && socket) {
+                              socket.emit('send-comment', {
+                                streamId: streamData.streamId,
+                                text: fullscreenComment.trim()
+                              });
+                              setFullscreenComment('');
+                              // Refocus after sending
+                              setTimeout(() => fullscreenInputRef.current?.focus(), 100);
+                            }
+                          }}
+                          disabled={!fullscreenComment.trim()}
+                          className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                        >
+                          <Send className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Rest of iPhone controls continue here... */}
                     {/* Floating Menu Button */}
                     <button
-  onClick={() => {
-    const willShow = !showFullscreenControls;
-    setShowFullscreenControls(willShow);
-    
-    // Clear timeout when manually closing
-    if (!willShow && fullscreenControlsTimeoutRef.current) {
-      clearTimeout(fullscreenControlsTimeoutRef.current);
-      fullscreenControlsTimeoutRef.current = null;
-    }
-    
-    // When opening chat, immediately focus the input to trigger keyboard
-    if (willShow && fullscreenInputRef.current) {
-      setTimeout(() => {
-        fullscreenInputRef.current?.focus();
-        fullscreenInputRef.current?.click(); // Extra trigger for iOS
-      }, 100);
-    }
-  }}
-  className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
-  style={{ zIndex: 2147483646 }}
->
-  {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
-</button>
+                      onClick={() => {
+                        const willShow = !showFullscreenControls;
+                        setShowFullscreenControls(willShow);
+
+                        // Clear timeout when manually closing
+                        if (!willShow && fullscreenControlsTimeoutRef.current) {
+                          clearTimeout(fullscreenControlsTimeoutRef.current);
+                          fullscreenControlsTimeoutRef.current = null;
+                        }
+
+                        // When opening chat, immediately focus the input to trigger keyboard
+                        if (willShow && fullscreenInputRef.current) {
+                          setTimeout(() => {
+                            fullscreenInputRef.current?.focus();
+                            fullscreenInputRef.current?.click(); // Extra trigger for iOS
+                          }, 100);
+                        }
+                      }}
+                      className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                      style={{ zIndex: 2147483646 }}
+                    >
+                      {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+                    </button>
 
                     {/* Camera/Mic Controls - Always Visible */}
                     {/* <div className="absolute top-10 left-4 z-50 flex flex-col gap-3" style={{ zIndex: 2147483647 }}>
@@ -4040,45 +4154,45 @@ const applyBackgroundFilter = React.useCallback(async () => {
                     </div> */}
 
                     {/* Camera/Mic Controls - Prominent & Always Visible on iPhone Fullscreen */}
-<div 
-  className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4"
-  style={{ 
-    zIndex: 2147483648  // Higher than input bar (2147483647)
-  }}
->
-  <button
-    onClick={toggleCamera}
+                    <div
+                      className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4"
+                      style={{
+                        zIndex: 2147483648  // Higher than input bar (2147483647)
+                      }}
+                    >
+                      <button
+                        onClick={toggleCamera}
                         className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isCameraOn
-        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
-        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
-    }`}
+                          ? 'bg-white/90 border-white text-gray-900 hover:bg-white'
+                          : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+                          }`}
                         title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
-  >
-    {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
-  </button>
+                      >
+                        {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
+                      </button>
 
-  <button
-    onClick={toggleMic}
+                      <button
+                        onClick={toggleMic}
                         className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isMicOn
-        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
-        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
-    }`}
+                          ? 'bg-white/90 border-white text-gray-900 hover:bg-white'
+                          : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+                          }`}
                         title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
-  >
-    {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
-  </button>
+                      >
+                        {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
+                      </button>
 
-  <button
-    onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
+                      <button
+                        onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
                         className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${selectedBackground !== 'none'
-        ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700' 
-        : 'bg-white/90 border-white text-gray-900 hover:bg-white'
-    }`}
+                          ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700'
+                          : 'bg-white/90 border-white text-gray-900 hover:bg-white'
+                          }`}
                         title={t('background.backgroundFilters')}
-  >
-    <Sparkles className="w-8 h-8" />
-  </button>
-</div>
+                      >
+                        <Sparkles className="w-8 h-8" />
+                      </button>
+                    </div>
 
                     {/* End Stream Button - More Prominent */}
                     <button
@@ -4115,7 +4229,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
                         e.stopPropagation();
                       }}
                       className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
-                      style={{ 
+                      style={{
                         zIndex: 2147483647,
                         pointerEvents: 'auto',
                         WebkitTapHighlightColor: 'transparent',
@@ -4131,7 +4245,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
                       <span className="text-sm">{t('stream.endStream')}</span>
                     </button>
 
-                        {/* Background Filter Panel */}
+                    {/* Background Filter Panel */}
                     {showBackgroundPanel && (
                       <div
                         className="absolute top-0 right-0 h-full w-full max-w-sm bg-black/95 backdrop-blur-xl text-white z-50 flex flex-col"
@@ -4166,9 +4280,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                               <button
                                 onClick={() => setSelectedBackground('none')}
                                 className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'none'
-                                    ? 'border-pink-500 bg-pink-500/20'
-                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                }`}
+                                  ? 'border-pink-500 bg-pink-500/20'
+                                  : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                  }`}
                               >
                                 <X className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.none')}</span>
@@ -4176,9 +4290,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                               <button
                                 onClick={() => setSelectedBackground('blur')}
                                 className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'blur'
-                                    ? 'border-pink-500 bg-pink-500/20'
-                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                }`}
+                                  ? 'border-pink-500 bg-pink-500/20'
+                                  : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                  }`}
                               >
                                 <Sparkles className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.blur')}</span>
@@ -4186,9 +4300,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                               <button
                                 onClick={() => setSelectedBackground('color')}
                                 className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'color'
-                                    ? 'border-pink-500 bg-pink-500/20'
-                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                }`}
+                                  ? 'border-pink-500 bg-pink-500/20'
+                                  : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                  }`}
                               >
                                 <Palette className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.color')}</span>
@@ -4223,9 +4337,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
                                     key={color}
                                     onClick={() => setBackgroundColor(color)}
                                     className={`w-full h-12 rounded-lg border-2 transition-all ${backgroundColor === color
-                                        ? 'border-pink-500 scale-110'
-                                        : 'border-white/20'
-                                    }`}
+                                      ? 'border-pink-500 scale-110'
+                                      : 'border-white/20'
+                                      }`}
                                     style={{ backgroundColor: color }}
                                     title={color}
                                   />
@@ -4249,7 +4363,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
                       </div>
                     )}
 
-                        {/* Control Panel - Slides in from right */}
+                    {/* Control Panel - Slides in from right */}
                     {/* Control Panel - Slides in from right */}
                     {showFullscreenControls && (
                       <div
@@ -4313,7 +4427,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
                           <button
                             onClick={() => setActiveFullscreenTab('chat')}
                             className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'chat' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                              }`}
                           >
                             <MessageCircle className="w-4 h-4 inline mr-2" />
                             {t('chat.chat')}
@@ -4321,7 +4435,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
                           <button
                             onClick={() => setActiveFullscreenTab('products')}
                             className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'products' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                              }`}
                           >
                             <Gift className="w-4 h-4 inline mr-2" />
                             {t('products.products')}
@@ -4329,297 +4443,297 @@ const applyBackgroundFilter = React.useCallback(async () => {
                           <button
                             onClick={() => setActiveFullscreenTab('orders')}
                             className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'orders' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                              }`}
                           >
                             📦 {t('orders.orders')}
                           </button>
                           <button
                             onClick={() => setActiveFullscreenTab('gifts')}
                             className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
-                            }`}
+                              }`}
                           >
                             🎁 {t('gifts.gifts')}
                           </button>
                         </div>
 
                         {/* Tab Content */}
-                        <div className="flex-1 overflow-y-auto" style={{ 
+                        <div className="flex-1 overflow-y-auto" style={{
                           WebkitOverflowScrolling: 'touch',
                           paddingBottom: 'env(safe-area-inset-bottom)'
                         }}>
                           <div className="p-4">
-                          {/* Chat Tab */}
-                          {activeFullscreenTab === 'chat' && (
-                            <div className="space-y-4 h-full flex flex-col">
-                              <div className="flex-1 overflow-y-auto space-y-3" style={{ 
-                                maxHeight: 'calc(100vh - 350px)',
-                                WebkitOverflowScrolling: 'touch'
-                              }}>
-                                {comments.map((c) => (
-                                  <div key={c.id} className="space-y-2">
-                                    <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
-                                      <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1">
-                                          <span className="font-semibold text-pink-300">@{c.username}: </span>
-                                          <span className="text-white/90 text-sm">{c.text}</span>
-                                        </div>
-                                        <button
-                                          onClick={() => setReplyingTo(c)}
-                                          className="flex-shrink-0 text-pink-400 hover:text-pink-300 p-1 rounded transition"
-                                        >
-                                          <Reply className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                    {c.replies && c.replies.length > 0 && (
-                                      <div className="ml-6 space-y-2">
-                                        {c.replies.map((reply) => (
-                                          <div
-                                            key={reply._id || reply.id}
-                                              className={`text-sm rounded-xl px-3 py-2 ${reply.isHost ? 'bg-pink-500/20 border border-pink-500/50' : 'bg-white/5'
-                                            }`}
-                                          >
-                                            <div className="flex items-start gap-1">
-                                              {reply.isHost && <span>👑</span>}
-                                              <span className="font-semibold text-pink-300">@{reply.username}:</span>
-                                              <span className="text-white/90">{reply.text}</span>
-                                            </div>
+                            {/* Chat Tab */}
+                            {activeFullscreenTab === 'chat' && (
+                              <div className="space-y-4 h-full flex flex-col">
+                                <div className="flex-1 overflow-y-auto space-y-3" style={{
+                                  maxHeight: 'calc(100vh - 350px)',
+                                  WebkitOverflowScrolling: 'touch'
+                                }}>
+                                  {comments.map((c) => (
+                                    <div key={c.id} className="space-y-2">
+                                      <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1">
+                                            <span className="font-semibold text-pink-300">@{c.username}: </span>
+                                            <span className="text-white/90 text-sm">{c.text}</span>
                                           </div>
-                                        ))}
+                                          <button
+                                            onClick={() => setReplyingTo(c)}
+                                            className="flex-shrink-0 text-pink-400 hover:text-pink-300 p-1 rounded transition"
+                                          >
+                                            <Reply className="w-4 h-4" />
+                                          </button>
+                                        </div>
                                       </div>
-                                    )}
-                                  </div>
-                                ))}
-                                {comments.length === 0 && (
-                                  <div className="text-center text-white/50 py-8">
-                                    <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                      {c.replies && c.replies.length > 0 && (
+                                        <div className="ml-6 space-y-2">
+                                          {c.replies.map((reply) => (
+                                            <div
+                                              key={reply._id || reply.id}
+                                              className={`text-sm rounded-xl px-3 py-2 ${reply.isHost ? 'bg-pink-500/20 border border-pink-500/50' : 'bg-white/5'
+                                                }`}
+                                            >
+                                              <div className="flex items-start gap-1">
+                                                {reply.isHost && <span>👑</span>}
+                                                <span className="font-semibold text-pink-300">@{reply.username}:</span>
+                                                <span className="text-white/90">{reply.text}</span>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {comments.length === 0 && (
+                                    <div className="text-center text-white/50 py-8">
+                                      <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
                                       <p className="text-sm">{t('chat.waitingForComments')}</p>
+                                    </div>
+                                  )}
+                                  <div ref={commentsEndRef} />
+                                </div>
+
+                                {replyingTo && (
+                                  <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
+                                    <span className="text-sm text-pink-300">
+                                      {t('chat.replyingTo')} <span className="font-semibold">@{replyingTo.username}</span>
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        setReplyingTo(null);
+                                        setReplyText('');
+                                      }}
+                                      className="text-pink-300 hover:text-pink-200"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
                                   </div>
                                 )}
-                                <div ref={commentsEndRef} />
-                              </div>
 
-                              {replyingTo && (
-                                <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
-                                  <span className="text-sm text-pink-300">
-                                      {t('chat.replyingTo')} <span className="font-semibold">@{replyingTo.username}</span>
-                                  </span>
-                                  <button
-                                    onClick={() => {
-                                      setReplyingTo(null);
-                                      setReplyText('');
+                                <div className="flex items-center gap-2 sticky bottom-0 bg-black/95 py-3 px-4 -mx-4">
+                                  <input
+                                    ref={replyInputRef}
+                                    type="text"
+                                    inputMode="text"
+                                    autoComplete="off"
+                                    autoCapitalize="off"
+                                    autoCorrect="off"
+                                    spellCheck="false"
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    onKeyPress={(e) => {
+                                      if (e.key === 'Enter' && replyingTo) {
+                                        handleSendReply();
+                                      }
                                     }}
-                                    className="text-pink-300 hover:text-pink-200"
+                                    onFocus={(e) => {
+                                      // Scroll input into view when focused on iPhone
+                                      setTimeout(() => {
+                                        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      }, 300);
+                                    }}
+                                    placeholder={replyingTo ? t('chat.typeReply') : t('chat.clickReply')}
+                                    disabled={!replyingTo}
+                                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                  />
+                                  <button
+                                    onClick={handleSendReply}
+                                    disabled={!replyText.trim() || !replyingTo}
+                                    className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                   >
-                                    <X className="w-4 h-4" />
+                                    <Send className="w-5 h-5" />
                                   </button>
                                 </div>
-                              )}
+                              </div>
+                            )}
 
-                              <div className="flex items-center gap-2 sticky bottom-0 bg-black/95 py-3 px-4 -mx-4">
+                            {/* Products Tab */}
+                            {activeFullscreenTab === 'products' && (
+                              <div className="space-y-4 pb-8">
+                                <h4 className="font-semibold text-lg mb-4">{t('products.addProduct')}</h4>
+
+                                <select
+                                  value={newProduct.type}
+                                  onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                >
+                                  <option value="product" className="bg-black">{t('products.product')}</option>
+                                  <option value="ad" className="bg-black">{t('products.ad')}</option>
+                                </select>
+
                                 <input
-                                  ref={replyInputRef}
-                                  type="text"
+                                  placeholder={t('products.name')}
                                   inputMode="text"
                                   autoComplete="off"
-                                  autoCapitalize="off"
-                                  autoCorrect="off"
-                                  spellCheck="false"
-                                  value={replyText}
-                                  onChange={(e) => setReplyText(e.target.value)}
-                                  onKeyPress={(e) => {
-                                    if (e.key === 'Enter' && replyingTo) {
-                                      handleSendReply();
-                                    }
-                                  }}
+                                  value={newProduct.name}
+                                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                                   onFocus={(e) => {
-                                    // Scroll input into view when focused on iPhone
                                     setTimeout(() => {
                                       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     }, 300);
                                   }}
-                                    placeholder={replyingTo ? t('chat.typeReply') : t('chat.clickReply')}
-                                  disabled={!replyingTo}
-                                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
                                 />
-                                <button
-                                  onClick={handleSendReply}
-                                  disabled={!replyText.trim() || !replyingTo}
-                                  className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                >
-                                  <Send className="w-5 h-5" />
-                                </button>
-                              </div>
-                            </div>
-                          )}
 
-                          {/* Products Tab */}
-                          {activeFullscreenTab === 'products' && (
-                            <div className="space-y-4 pb-8">
-                                <h4 className="font-semibold text-lg mb-4">{t('products.addProduct')}</h4>
-                              
-                              <select
-                                value={newProduct.type}
-                                onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              >
-                                  <option value="product" className="bg-black">{t('products.product')}</option>
-                                  <option value="ad" className="bg-black">{t('products.ad')}</option>
-                              </select>
-
-                              <input
-                                  placeholder={t('products.name')}
-                                inputMode="text"
-                                autoComplete="off"
-                                value={newProduct.name}
-                                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
-
-                              <input
-                                  placeholder={t('products.description')}
-                                inputMode="text"
-                                autoComplete="off"
-                                value={newProduct.description}
-                                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
-
-                              <input
-                                type="number"
-                                inputMode="decimal"
-                                  placeholder={t('products.price')}
-                                value={newProduct.price}
-                                onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
-
-                              <div className="mb-2">
-                                  <label className="block text-sm font-medium mb-1 text-white/80">{t('products.image')}</label>
                                 <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    setNewProduct({ ...newProduct, imageFile: file });
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
-                                    };
-                                    reader.readAsDataURL(file);
+                                  placeholder={t('products.description')}
+                                  inputMode="text"
+                                  autoComplete="off"
+                                  value={newProduct.description}
+                                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                                  onFocus={(e) => {
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
                                   }}
-                                  className="w-full text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-600 file:text-white"
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
                                 />
-                                {newProduct.imagePreview && (
-                                  <img
-                                    src={newProduct.imagePreview}
-                                    alt="Preview"
-                                    className="mt-2 w-full h-48 object-cover rounded-lg"
+
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  placeholder={t('products.price')}
+                                  value={newProduct.price}
+                                  onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
+                                  onFocus={(e) => {
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
+                                  }}
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                />
+
+                                <div className="mb-2">
+                                  <label className="block text-sm font-medium mb-1 text-white/80">{t('products.image')}</label>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      setNewProduct({ ...newProduct, imageFile: file });
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }}
+                                    className="w-full text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-600 file:text-white"
                                   />
-                                )}
-                              </div>
+                                  {newProduct.imagePreview && (
+                                    <img
+                                      src={newProduct.imagePreview}
+                                      alt="Preview"
+                                      className="mt-2 w-full h-48 object-cover rounded-lg"
+                                    />
+                                  )}
+                                </div>
 
-                              <input
+                                <input
                                   placeholder={`${t('products.link')} (${t('common.cancel')})`}
-                                inputMode="url"
-                                autoComplete="off"
-                                value={newProduct.link}
-                                onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
-                                onFocus={(e) => {
-                                  setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }, 300);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                              />
+                                  inputMode="url"
+                                  autoComplete="off"
+                                  value={newProduct.link}
+                                  onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
+                                  onFocus={(e) => {
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
+                                  }}
+                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                />
 
-                              <button
-                                onClick={async () => {
-                                  if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
-                                    setError("Name, price and image are required");
-                                    return;
-                                  }
-                                  const formData = new FormData();
-                                  formData.append("type", newProduct.type);
-                                  formData.append("name", newProduct.name);
-                                  formData.append("description", newProduct.description);
-                                  formData.append("price", newProduct.price.toString());
-                                  formData.append("file", newProduct.imageFile);
-                                  if (newProduct.link) formData.append("link", newProduct.link);
-                                  try {
-                                    const token = localStorage.getItem("token");
-                                    const response = await fetch(`${API_BASE_URL}/live/${streamData.streamId}/add-product`, {
-                                      method: "POST",
-                                      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-                                      body: formData,
-                                    });
-                                    const data = await response.json();
-                                    if (response.ok) {
-                                      setProducts([...products, data.product]);
-                                      setNewProduct({
-                                        type: "product",
-                                        name: "",
-                                        description: "",
-                                        price: 0,
-                                        imageFile: null,
-                                        imagePreview: "",
-                                        link: "",
-                                      });
-                                      setError("");
-                                    } else {
-                                      setError(data.msg || "Failed to add product");
+                                <button
+                                  onClick={async () => {
+                                    if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
+                                      setError("Name, price and image are required");
+                                      return;
                                     }
-                                  } catch {
-                                    setError("Failed to add product");
-                                  }
-                                }}
-                                className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
-                              >
+                                    const formData = new FormData();
+                                    formData.append("type", newProduct.type);
+                                    formData.append("name", newProduct.name);
+                                    formData.append("description", newProduct.description);
+                                    formData.append("price", newProduct.price.toString());
+                                    formData.append("file", newProduct.imageFile);
+                                    if (newProduct.link) formData.append("link", newProduct.link);
+                                    try {
+                                      const token = localStorage.getItem("token");
+                                      const response = await fetch(`${API_BASE_URL}/live/${streamData.streamId}/add-product`, {
+                                        method: "POST",
+                                        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+                                        body: formData,
+                                      });
+                                      const data = await response.json();
+                                      if (response.ok) {
+                                        setProducts([...products, data.product]);
+                                        setNewProduct({
+                                          type: "product",
+                                          name: "",
+                                          description: "",
+                                          price: 0,
+                                          imageFile: null,
+                                          imagePreview: "",
+                                          link: "",
+                                        });
+                                        setError("");
+                                      } else {
+                                        setError(data.msg || "Failed to add product");
+                                      }
+                                    } catch {
+                                      setError("Failed to add product");
+                                    }
+                                  }}
+                                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+                                >
                                   {t('products.addProductBtn')}
-                              </button>
+                                </button>
 
-                              <div className="mt-4">
-                                <h5 className="font-semibold mb-2 text-white/80">Added Items ({products.length})</h5>
-                                {products.length === 0 ? (
-                                  <p className="text-white/50 text-sm">No items added yet</p>
-                                ) : (
-                                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                                    {products.map((p, i) => (
-                                      <div key={i} className="bg-white/10 rounded-lg p-2 flex items-center gap-3">
-                                        {p.imageUrl && (
-                                          <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                                        )}
-                                        <div className="flex-1">
-                                          <p className="font-medium text-white">{p.name}</p>
-                                          <p className="text-sm text-white/70">${p.price}</p>
+                                <div className="mt-4">
+                                  <h5 className="font-semibold mb-2 text-white/80">Added Items ({products.length})</h5>
+                                  {products.length === 0 ? (
+                                    <p className="text-white/50 text-sm">No items added yet</p>
+                                  ) : (
+                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                      {products.map((p, i) => (
+                                        <div key={i} className="bg-white/10 rounded-lg p-2 flex items-center gap-3">
+                                          {p.imageUrl && (
+                                            <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                                          )}
+                                          <div className="flex-1">
+                                            <p className="font-medium text-white">{p.name}</p>
+                                            <p className="text-sm text-white/70">${p.price}</p>
+                                          </div>
                                         </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
-                          {/* Orders Tab - Keep as is */}
-                          {/* Gifts Tab - Keep as is */}
-                        </div>
+                            {/* Orders Tab - Keep as is */}
+                            {/* Gifts Tab - Keep as is */}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -5116,11 +5230,11 @@ const applyBackgroundFilter = React.useCallback(async () => {
             )}
 
             <div className="absolute top-4 right-4 flex space-x-2 z-10">
-                <button
-                  onClick={toggleCamera}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isCameraOn
-                    ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
-                    : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
+              <button
+                onClick={toggleCamera}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isCameraOn
+                  ? 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
+                  : 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
                   }`}
               >
 
@@ -5139,9 +5253,9 @@ const applyBackgroundFilter = React.useCallback(async () => {
               <button
                 onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition ${selectedBackground !== 'none'
-                    ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
-                    : 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
-                }`}
+                  ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg'
+                  : 'bg-white/20 border border-white/30 text-white hover:bg-white/30'
+                  }`}
                 title={t('background.backgroundFilters')}
               >
                 <Sparkles className="w-5 h-5" />
