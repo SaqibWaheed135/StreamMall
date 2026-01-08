@@ -1909,6 +1909,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
     
+    // Check if track is active before using it
+    if (videoTrack.readyState === 'ended') {
+      console.error('❌ Cannot use ended track for MediaPipe processing');
+      throw new Error('Video track has ended and cannot be used for processing');
+    }
+    
     // Create MediaStream from track
     const sourceStream = new MediaStream([videoTrack]);
     video.srcObject = sourceStream;
@@ -2644,13 +2650,26 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         return;
       }
 
-      // Get the original MediaStreamTrack (store first time only)
-      if (!originalMediaStreamTrackRef.current) {
-        originalMediaStreamTrackRef.current = cameraPublication.track.mediaStreamTrack;
-        console.log('Stored original track reference');
+      // Get the original MediaStreamTrack - always use the current active track
+      // Don't store it because tracks can end and become unusable
+      let originalTrack = cameraPublication.track.mediaStreamTrack;
+      
+      // Check if track is active
+      if (originalTrack.readyState === 'ended') {
+        console.warn('⚠️ Track is ended, trying to get fresh track from camera...');
+        // Try to get a fresh track by checking if there's a new publication
+        const freshPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (freshPublication && freshPublication.track && freshPublication.track.mediaStreamTrack.readyState !== 'ended') {
+          originalTrack = freshPublication.track.mediaStreamTrack;
+          console.log('✅ Got fresh active track');
+        } else {
+          throw new Error('Camera track is ended and no fresh track available. Please restart the camera.');
+        }
       }
-
-      const originalTrack = originalMediaStreamTrackRef.current;
+      
+      // Store reference for restoration (but we'll always check if it's active)
+      originalMediaStreamTrackRef.current = originalTrack;
+      console.log('Using track with readyState:', originalTrack.readyState);
       
       if (selectedBackground === 'none') {
         console.log('Background filter: Removing filter');
