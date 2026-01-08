@@ -45,6 +45,7 @@ import ConfirmEndModal from './globalComponents/hostStreamComponents/ConfirmEndM
 import { API_BASE_URL, SOCKET_URL } from '../config/api';
 import { Room, RoomEvent, Track } from 'livekit-client';
 import { SelfieSegmentation } from '@mediapipe/selfie_segmentation';
+import { FaceDetection } from '@mediapipe/face_detection';
 
 const isMobile = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -1951,6 +1952,58 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       throw err;
     }
 
+    // Initialize MediaPipe Face Detection
+    let faceDetection;
+    try {
+      faceDetection = new FaceDetection({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+        }
+      });
+      
+      faceDetection.setOptions({
+        model: 'short', // 'short' for faster processing, 'full' for better accuracy
+        minDetectionConfidence: 0.5,
+      });
+      console.log('✅ MediaPipe Face Detection initialized');
+    } catch (err) {
+      console.error('❌ Failed to initialize Face Detection:', err);
+      // Don't throw - face detection is optional
+    }
+
+    // Face detection callback
+    let lastFaceDetectionLog = 0;
+    const processFaceDetection = (results) => {
+      if (!results || !results.detections) {
+        return;
+      }
+
+      const now = Date.now();
+      // Log face detection every 2 seconds to avoid spam
+      if (now - lastFaceDetectionLog > 2000) {
+        const faceCount = results.detections.length;
+        if (faceCount > 0) {
+          console.log(`👤 Face detected! Count: ${faceCount}`);
+          results.detections.forEach((detection, index) => {
+            const bbox = detection.boundingBox;
+            if (bbox) {
+              console.log(`  Face ${index + 1}: Confidence: ${(detection.score * 100).toFixed(1)}%, ` +
+                `Position: (${bbox.xCenter.toFixed(0)}, ${bbox.yCenter.toFixed(0)}), ` +
+                `Size: ${bbox.width.toFixed(0)}x${bbox.height.toFixed(0)}`);
+            }
+          });
+        } else {
+          console.log('👤 No face detected');
+        }
+        lastFaceDetectionLog = now;
+      }
+    };
+
+    // Set up face detection results handler
+    if (faceDetection) {
+      faceDetection.onResults(processFaceDetection);
+    }
+
     // MediaPipe processing function
     const processFrameWithMediaPipe = (results) => {
       if (!results) {
@@ -2212,8 +2265,21 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               await video.play();
             }
             
-            // Send frame to MediaPipe
+            // Send frame to MediaPipe for selfie segmentation
             await selfieSegmentation.send({ image: video });
+            
+            // Also send frame to face detection (if initialized)
+            if (faceDetection) {
+              try {
+                await faceDetection.send({ image: video });
+              } catch (faceErr) {
+                // Face detection errors are non-critical, just log
+                if (framesProcessed === 1) {
+                  console.warn('⚠️ Face detection error (non-critical):', faceErr);
+                }
+              }
+            }
+            
             framesProcessed++;
             lastFrameTime = Date.now();
             
@@ -2237,7 +2303,18 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                   const continueProcessing = async () => {
                     if (isProcessing && backgroundProcessingRef.current && video.readyState >= video.HAVE_CURRENT_DATA) {
                       try {
+                        // Process selfie segmentation
                         await selfieSegmentation.send({ image: video });
+                        
+                        // Also process face detection (if initialized)
+                        if (faceDetection) {
+                          try {
+                            await faceDetection.send({ image: video });
+                          } catch (faceErr) {
+                            // Face detection errors are non-critical
+                          }
+                        }
+                        
                         animationFrameId = requestAnimationFrame(continueProcessing);
                         backgroundAnimationFrameRef.current = animationFrameId;
                       } catch (err) {
@@ -2264,6 +2341,13 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                     }
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     selfieSegmentation.close();
+                    if (faceDetection) {
+                      try {
+                        faceDetection.close();
+                      } catch (err) {
+                        console.warn('Error closing face detection:', err);
+                      }
+                    }
                   };
                   stream._videoElement = video;
                   stream._selfieSegmentation = selfieSegmentation;
