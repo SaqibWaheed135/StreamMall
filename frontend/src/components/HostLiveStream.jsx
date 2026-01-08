@@ -1953,69 +1953,130 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
     // MediaPipe processing function
     const processFrameWithMediaPipe = (results) => {
-      if (!results || !results.segmentationMask) {
+      if (!results) {
+        console.warn('⚠️ MediaPipe results is null/undefined');
+        return;
+      }
+
+      if (!results.segmentationMask) {
         console.warn('⚠️ MediaPipe results missing segmentation mask');
         return;
       }
 
-      if (canvas.width === 0 || canvas.height === 0) {
-        console.warn('⚠️ Canvas dimensions not set yet');
+      if (!results.image) {
+        console.warn('⚠️ MediaPipe results missing image');
         return;
       }
 
-      ctx.save();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw background first
-      if (bgType === 'blur') {
-        // Draw blurred video as background
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(video, 0, 0);
-        
-        ctx.save();
-        ctx.filter = `blur(${bgBlur}px)`;
-        ctx.drawImage(tempCanvas, 0, 0);
-        ctx.filter = 'none';
-        ctx.restore();
-      } else if (bgType === 'color') {
-        // Fill with solid color
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      } else if (bgType === 'image' && backgroundImageRef.current) {
-        // Draw background image
-        const bgImg = backgroundImageRef.current;
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        const rotation = selectedBackgroundImage?.rotation || 0;
-        ctx.rotate((rotation * Math.PI) / 180);
-        const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-        ctx.drawImage(
-          bgImg,
-          -bgImg.width * scale / 2,
-          -bgImg.height * scale / 2,
-          bgImg.width * scale,
-          bgImg.height * scale
-        );
-        ctx.restore();
-      } else {
-        // No background (transparent or default)
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (canvas.width === 0 || canvas.height === 0) {
+        console.warn('⚠️ Canvas dimensions not set yet:', canvas.width, 'x', canvas.height);
+        // Try to set dimensions from results
+        if (results.image && results.image.width && results.image.height) {
+          canvas.width = results.image.width;
+          canvas.height = results.image.height;
+          console.log('✅ Set canvas dimensions from MediaPipe results:', canvas.width, 'x', canvas.height);
+        } else {
+          return;
+        }
       }
 
-      // Draw segmentation mask
-      ctx.globalCompositeOperation = 'source-in';
-      ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+      try {
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw original video on top (foreground)
-      ctx.globalCompositeOperation = 'destination-atop';
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        // Draw background first
+        if (bgType === 'blur') {
+          // Draw blurred video as background
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          ctx.save();
+          ctx.filter = `blur(${bgBlur}px)`;
+          ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+          ctx.filter = 'none';
+          ctx.restore();
+        } else if (bgType === 'color') {
+          // Fill with solid color
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (bgType === 'image' && backgroundImageRef.current) {
+          // Draw background image
+          const bgImg = backgroundImageRef.current;
+          ctx.save();
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          const rotation = selectedBackgroundImage?.rotation || 0;
+          ctx.rotate((rotation * Math.PI) / 180);
+          const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+          ctx.drawImage(
+            bgImg,
+            -bgImg.width * scale / 2,
+            -bgImg.height * scale / 2,
+            bgImg.width * scale,
+            bgImg.height * scale
+          );
+          ctx.restore();
+        } else {
+          // No background (transparent or default)
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
-      ctx.restore();
-      framesDrawn++;
+        // CORRECT MediaPipe compositing (from official docs):
+        // 1. Draw segmentation mask
+        // 2. Use source-in to fill with color/image
+        // 3. Draw original image with destination-atop
+        
+        // Draw segmentation mask first
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+        
+        // Fill with background color/image where mask is
+        ctx.globalCompositeOperation = 'source-in';
+        if (bgType === 'blur') {
+          const blurTemp = document.createElement('canvas');
+          blurTemp.width = canvas.width;
+          blurTemp.height = canvas.height;
+          const blurTempCtx = blurTemp.getContext('2d');
+          blurTempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          ctx.save();
+          ctx.filter = `blur(${bgBlur}px)`;
+          ctx.drawImage(blurTemp, 0, 0);
+          ctx.filter = 'none';
+          ctx.restore();
+        } else if (bgType === 'color') {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (bgType === 'image' && backgroundImageRef.current) {
+          const bgImg = backgroundImageRef.current;
+          ctx.save();
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          const rotation = selectedBackgroundImage?.rotation || 0;
+          ctx.rotate((rotation * Math.PI) / 180);
+          const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+          ctx.drawImage(bgImg, -bgImg.width * scale / 2, -bgImg.height * scale / 2, bgImg.width * scale, bgImg.height * scale);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Draw original image on top (foreground)
+        ctx.globalCompositeOperation = 'destination-atop';
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+        ctx.restore();
+        framesDrawn++;
+        
+        // Log first few frames to verify drawing
+        if (framesDrawn <= 3) {
+          console.log(`✅ Frame ${framesDrawn} drawn to canvas, dimensions:`, canvas.width, 'x', canvas.height);
+        }
+      } catch (err) {
+        console.error('❌ Error drawing MediaPipe frame:', err);
+      }
     };
 
     // Set up MediaPipe results handler
@@ -2162,19 +2223,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
               if (framesProcessed >= 30 && !stream) {
                 console.log('✅ Step 6: Created canvas stream after', framesProcessed, 'MediaPipe frames');
                 
-                // Verify canvas has content before creating stream
-                const testCtx = canvas.getContext('2d');
-                const testData = testCtx.getImageData(0, 0, Math.min(10, canvas.width), Math.min(10, canvas.height));
-                const hasContent = testData.data.some((val, idx) => idx % 4 !== 3 && val > 5);
+                // Wait a moment for MediaPipe callback to draw
+                await new Promise(r => setTimeout(r, 500));
                 
-                if (!hasContent) {
-                  console.warn('⚠️ Canvas appears empty, waiting for more frames...');
-                  if (framesProcessed < 100) {
-                    requestAnimationFrame(processInitialFrames);
-                  }
-                  return;
-                }
-                
+                // Create stream - MediaPipe should have drawn frames by now
                 stream = canvas.captureStream(30);
 
                 // Verify stream has tracks
