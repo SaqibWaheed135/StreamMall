@@ -311,30 +311,30 @@ const AddFriendsScreen = ({ onBack }) => {
           >
             <div className="flex items-center gap-1 flex-wrap">
               <p className="font-bold text-pink-700 truncate">{user.username}</p>
-              {user.isVerified && (
+                {user.isVerified && (
                 <Shield className="w-4 h-4 text-pink-600 flex-shrink-0" />
-              )}
-              {isFriend && (
+                )}
+                {isFriend && (
                 <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full flex-shrink-0">
-                  <Users className="w-3 h-3 inline mr-1" />
+                    <Users className="w-3 h-3 inline mr-1" />
                   {t('addFriends.friendsLabel')}
-                </span>
-              )}
-              {followStatus.relationship === 'following' && (
+                  </span>
+                )}
+                {followStatus.relationship === 'following' && (
                 <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full flex-shrink-0">
                   {t('addFriends.following')}
-                </span>
-              )}
-              {followStatus.relationship === 'follower' && (
+                  </span>
+                )}
+                {followStatus.relationship === 'follower' && (
                 <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full flex-shrink-0">
                   {t('addFriends.followsYou')}
-                </span>
-              )}
-            </div>
+                  </span>
+                )}
+              </div>
             <p className="text-gray-700 text-sm mt-1 truncate">
               {formatNumber(user.followersCount || 0)} {t('addFriends.followers')}
-              {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
-            </p>
+                {user.bio && <span> • {user.bio.substring(0, 30)}{user.bio.length > 30 ? '...' : ''}</span>}
+              </p>
           </button>
 
           {/* Action Buttons - Fixed Width */}

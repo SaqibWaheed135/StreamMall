@@ -18,9 +18,9 @@ createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <LanguageProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>
   </React.StrictMode>

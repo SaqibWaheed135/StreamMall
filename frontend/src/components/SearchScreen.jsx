@@ -721,16 +721,16 @@ const SearchScreen = () => {
               else if (filter === t('search.top')) filterKey = 'Top';
               
               return (
-                <button
-                  key={filter}
-                  onClick={() => handleFilterChange(filter)}
+              <button
+                key={filter}
+                onClick={() => handleFilterChange(filter)}
                   className={`px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-colors ${activeFilter === filterKey
-                    ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-[#ffb3c6]'
-                    }`}
-                >
-                  {filter}
-                </button>
+                  ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white'
+                  : 'bg-white text-gray-700 hover:bg-[#ffb3c6]'
+                  }`}
+              >
+                {filter}
+              </button>
               );
             })}
           </div>
