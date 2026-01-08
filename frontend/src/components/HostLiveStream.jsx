@@ -152,6 +152,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const isBlockingNavigationRef = useRef(false);
   const fullscreenControlsTimeoutRef = useRef(null); // For auto-hiding fullscreen controls
   const isFullscreenRef = useRef(isFullscreen); // Ref to track current fullscreen state
+  const isNavigatingAwayRef = useRef(false); // Track if we're navigating away to prevent unnecessary operations
   const iPhoneChatPanelRef = useRef(null); // Ref for iPhone chat panel auto-scroll
 
   // Handle iOS viewport height changes
@@ -707,6 +708,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
   useEffect(() => {
     if (!isLive) {
+      // Reset navigation flag when back on start page
+      isNavigatingAwayRef.current = false;
       startCameraPreview();
     }
   }, [isLive]);
@@ -1222,6 +1225,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', blockBackNavigation);
       window.removeEventListener('pagehide', handlePageHide);
+      // Reset navigation blocking flag when cleanup runs
+      isBlockingNavigationRef.current = false;
     };
   }, [isLive]);
 
@@ -1436,6 +1441,13 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         setSocket(null);
       }
 
+      // Mark that we're navigating away FIRST to prevent camera preview from starting
+      // This must be set before setIsLive(false) to avoid race condition
+      isNavigatingAwayRef.current = true;
+      
+      // Reset navigation blocking flag
+      isBlockingNavigationRef.current = false;
+
       // Reset all state
       setIsLive(false);
       setStreamData(null);
@@ -1454,10 +1466,20 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       // Clear saved host session so the app stops showing the "return to live" UI
       clearActiveHostStream();
 
+      // Clean up history state - remove the extra history entry that was pushed when going live
+      // This prevents navigation from being blocked
+      if (window.history.state !== null) {
+        // Replace current state to clean up the history manipulation
+        window.history.replaceState(null, '', window.location.href);
+      }
+
       // Navigate back after a small delay to ensure cleanup completes
-      setTimeout(() => {
-        onBack();
-      }, 200);
+      // Use requestAnimationFrame to ensure state updates are processed
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          onBack();
+        }, 100);
+      });
 
     } catch (err) {
       console.error('Error ending stream:', err);
