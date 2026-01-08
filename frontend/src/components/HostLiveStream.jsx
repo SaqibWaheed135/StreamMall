@@ -1938,6 +1938,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     // MediaPipe processing function
     const processFrameWithMediaPipe = (results) => {
       if (!results || !results.segmentationMask) {
+        console.warn('⚠️ MediaPipe results missing segmentation mask');
+        return;
+      }
+
+      if (canvas.width === 0 || canvas.height === 0) {
+        console.warn('⚠️ Canvas dimensions not set yet');
         return;
       }
 
@@ -2003,21 +2009,32 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     return new Promise(async (resolve, reject) => {
       try {
         console.log('📹 Step 1: Starting video playback...');
+        
+        // Start video playback first
         await video.play();
         console.log('✅ Video playback started');
-
-        // Wait for video to have valid dimensions
+        
+        // Wait for video to have valid dimensions with polling
         console.log('📹 Step 2: Waiting for video dimensions...');
         let attempts = 0;
-        while (attempts < 100 && (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0)) {
+        const maxAttempts = 100;
+        
+        while (attempts < maxAttempts) {
+          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+            console.log('✅ Video is ready with dimensions:', video.videoWidth, 'x', video.videoHeight);
+            break;
+          }
           await new Promise(r => setTimeout(r, 50));
           attempts++;
         }
-
+        
         if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
-          throw new Error('Video failed to initialize after waiting');
+          throw new Error(`Video not ready after ${maxAttempts * 50}ms. readyState: ${video.readyState}, dimensions: ${video.videoWidth}x${video.videoHeight}`);
         }
-
+        
+        // Additional wait to ensure video is actually playing and has frames
+        await new Promise(r => setTimeout(r, 500));
+        
         // Set canvas dimensions
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -2050,15 +2067,48 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
         // Process initial frames through MediaPipe
         let framesProcessed = 0;
+        let lastFrameTime = Date.now();
+        
         const processInitialFrames = async () => {
-          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-            try {
-              await selfieSegmentation.send({ image: video });
-              framesProcessed++;
+          // Check if video is still ready
+          if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
+            console.warn('⚠️ Video not ready, retrying...');
+            if (framesProcessed < 200) {
+              requestAnimationFrame(processInitialFrames);
+            }
+            return;
+          }
+          
+          try {
+            // Ensure video is playing
+            if (video.paused) {
+              await video.play();
+            }
+            
+            // Send frame to MediaPipe
+            await selfieSegmentation.send({ image: video });
+            framesProcessed++;
+            lastFrameTime = Date.now();
+            
+            console.log(`📊 Processed frame ${framesProcessed}/30 through MediaPipe`);
 
               // After processing 30 frames, create the stream
               if (framesProcessed >= 30 && !stream) {
                 console.log('✅ Step 6: Created canvas stream after', framesProcessed, 'MediaPipe frames');
+                
+                // Verify canvas has content before creating stream
+                const testCtx = canvas.getContext('2d');
+                const testData = testCtx.getImageData(0, 0, Math.min(10, canvas.width), Math.min(10, canvas.height));
+                const hasContent = testData.data.some((val, idx) => idx % 4 !== 3 && val > 5);
+                
+                if (!hasContent) {
+                  console.warn('⚠️ Canvas appears empty, waiting for more frames...');
+                  if (framesProcessed < 100) {
+                    requestAnimationFrame(processInitialFrames);
+                  }
+                  return;
+                }
+                
                 stream = canvas.captureStream(30);
 
                 // Verify stream has tracks
@@ -2117,10 +2167,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                 requestAnimationFrame(processInitialFrames);
               }
             }
-          } else {
-            // Video not ready yet, retry
-            requestAnimationFrame(processInitialFrames);
-          }
         };
 
         // Start processing initial frames
