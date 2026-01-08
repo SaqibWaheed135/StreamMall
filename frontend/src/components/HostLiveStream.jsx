@@ -44,6 +44,7 @@ import OrderDetailsModal from './globalComponents/hostStreamComponents/OrderDeta
 import ConfirmEndModal from './globalComponents/hostStreamComponents/ConfirmEndModal';
 import { API_BASE_URL, SOCKET_URL } from '../config/api';
 import { Room, RoomEvent, Track } from 'livekit-client';
+import { SelfieSegmentation } from '@mediapipe/selfie_segmentation';
 
 const isMobile = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -1885,7 +1886,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
   };
 
-  // Background processing functions - COMPLETELY REWRITTEN with reliable approach
+  // Background processing with MediaPipe Selfie Segmentation
   const processVideoWithBackground = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
     if (!canvas || !videoTrack) {
       console.error('Missing canvas or video track');
@@ -1898,7 +1899,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       return null;
     }
 
-    console.log('🎬 Starting background processing with type:', bgType);
+    console.log('🎬 Starting MediaPipe background processing with type:', bgType);
 
     // Create video element
     const video = document.createElement('video');
@@ -1916,222 +1917,95 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     let framesDrawn = 0;
     let stream = null;
 
-    // Simple, reliable frame processing
-    const processFrame = () => {
-      if (!isProcessing || !backgroundProcessingRef.current) {
-        if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
-          animationFrameId = null;
+    // Initialize MediaPipe Selfie Segmentation
+    let selfieSegmentation;
+    try {
+      selfieSegmentation = new SelfieSegmentation({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
         }
+      });
+      
+      selfieSegmentation.setOptions({
+        modelSelection: 1, // 0: General, 1: Landscape (better for video)
+      });
+      console.log('✅ MediaPipe Selfie Segmentation initialized');
+    } catch (err) {
+      console.error('❌ Failed to initialize MediaPipe:', err);
+      throw err;
+    }
+
+    // MediaPipe processing function
+    const processFrameWithMediaPipe = (results) => {
+      if (!results || !results.segmentationMask) {
         return;
       }
 
-      // Check if video has frames
-      if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
-        // Set canvas size to match video (only once)
-        if (!videoReady) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          videoReady = true;
-          console.log('✅ Video ready, canvas size:', canvas.width, 'x', canvas.height);
-        }
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Always draw the video frame first - this ensures canvas has content
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        framesDrawn++;
-
-        if (bgType === 'blur') {
-          // Apply blur effect
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = canvas.height;
-          const tempCtx = tempCanvas.getContext('2d');
-          
-          tempCtx.drawImage(video, 0, 0);
-          
-          ctx.save();
-          ctx.filter = `blur(${bgBlur}px)`;
-          ctx.drawImage(tempCanvas, 0, 0);
-          ctx.filter = 'none';
-          ctx.restore();
-          
-          // Keep center region sharp
-          const centerX = canvas.width / 2;
-          const centerY = canvas.height / 2;
-          const keepWidth = canvas.width * 0.7;
-          const keepHeight = canvas.height * 0.7;
-          
-          ctx.drawImage(
-            video,
-            centerX - keepWidth / 2,
-            centerY - keepHeight / 2,
-            keepWidth,
-            keepHeight,
-            centerX - keepWidth / 2,
-            centerY - keepHeight / 2,
-            keepWidth,
-            keepHeight
-          );
-        } else if (bgType === 'color') {
-          // Chroma key background replacement
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-          
-          // Parse replacement color
-          const replaceColor = bgColor.startsWith('#') ? bgColor.substring(1) : bgColor;
-          const replaceR = parseInt(replaceColor.substring(0, 2), 16);
-          const replaceG = parseInt(replaceColor.substring(2, 4), 16);
-          const replaceB = parseInt(replaceColor.substring(4, 6), 16);
-          
-          // Chroma key (green screen)
-          const chromaR = 0, chromaG = 255, chromaB = 0;
-          const threshold = 80;
-
-          for (let i = 0; i < data.length; i += 4) {
-            const pixelR = data[i];
-            const pixelG = data[i + 1];
-            const pixelB = data[i + 2];
-            
-            const distance = Math.sqrt(
-              Math.pow(pixelR - chromaR, 2) + 
-              Math.pow(pixelG - chromaG, 2) + 
-              Math.pow(pixelB - chromaB, 2)
-            );
-            
-            if (distance < threshold) {
-              data[i] = replaceR;
-              data[i + 1] = replaceG;
-              data[i + 2] = replaceB;
-            }
-          }
-          
-          ctx.putImageData(imageData, 0, 0);
-        } else if (bgType === 'image' && backgroundImageRef.current) {
-          // Background image replacement with chroma key
-          const bgImg = backgroundImageRef.current;
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-
-          // Chroma key (green screen)
-          const chromaR = 0, chromaG = 255, chromaB = 0;
-          const threshold = 80;
-
-          // Create temporary canvas for background image
-          const bgCanvas = document.createElement('canvas');
-          bgCanvas.width = canvas.width;
-          bgCanvas.height = canvas.height;
-          const bgCtx = bgCanvas.getContext('2d');
-
-          // Apply rotation to background image
-          bgCtx.save();
-          bgCtx.translate(canvas.width / 2, canvas.height / 2);
-          const rotation = selectedBackgroundImage?.rotation || 0;
-          bgCtx.rotate((rotation * Math.PI) / 180);
-
-          // Scale to cover entire canvas
-          const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-          bgCtx.drawImage(
-            bgImg,
-            -bgImg.width * scale / 2,
-            -bgImg.height * scale / 2,
-            bgImg.width * scale,
-            bgImg.height * scale
-          );
-          bgCtx.restore();
-
-          // Get background image data
-          const bgImageData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
-          const bgData = bgImageData.data;
-
-          // Replace green screen pixels with background image
-          for (let i = 0; i < data.length; i += 4) {
-            const pixelR = data[i];
-            const pixelG = data[i + 1];
-            const pixelB = data[i + 2];
-
-            const distance = Math.sqrt(
-              Math.pow(pixelR - chromaR, 2) +
-              Math.pow(pixelG - chromaG, 2) +
-              Math.pow(pixelB - chromaB, 2)
-            );
-
-            if (distance < threshold) {
-              // Replace with background image pixel
-              data[i] = bgData[i];
-              data[i + 1] = bgData[i + 1];
-              data[i + 2] = bgData[i + 2];
-              // Keep original alpha
-            }
-          }
-
-          ctx.putImageData(imageData, 0, 0);
-        }
+      // Draw background first
+      if (bgType === 'blur') {
+        // Draw blurred video as background
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(video, 0, 0);
         
-        // Continue processing loop
-      if (isProcessing && backgroundProcessingRef.current) {
-        animationFrameId = requestAnimationFrame(processFrame);
-        backgroundAnimationFrameRef.current = animationFrameId;
-        }
-      } else if (!videoReady) {
-        // Video not ready yet, keep trying
-        if (isProcessing && backgroundProcessingRef.current) {
-          animationFrameId = requestAnimationFrame(processFrame);
-          backgroundAnimationFrameRef.current = animationFrameId;
-        }
+        ctx.save();
+        ctx.filter = `blur(${bgBlur}px)`;
+        ctx.drawImage(tempCanvas, 0, 0);
+        ctx.filter = 'none';
+        ctx.restore();
+      } else if (bgType === 'color') {
+        // Fill with solid color
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (bgType === 'image' && backgroundImageRef.current) {
+        // Draw background image
+        const bgImg = backgroundImageRef.current;
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        const rotation = selectedBackgroundImage?.rotation || 0;
+        ctx.rotate((rotation * Math.PI) / 180);
+        const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+        ctx.drawImage(
+          bgImg,
+          -bgImg.width * scale / 2,
+          -bgImg.height * scale / 2,
+          bgImg.width * scale,
+          bgImg.height * scale
+        );
+        ctx.restore();
+      } else {
+        // No background (transparent or default)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
+
+      // Draw segmentation mask
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+
+      // Draw original video on top (foreground)
+      ctx.globalCompositeOperation = 'destination-atop';
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+      ctx.restore();
+      framesDrawn++;
     };
 
-    // Start video playback and processing
-    const startProcessing = async () => {
-      try {
-        await video.play();
-        console.log('✅ Video playing, starting frame processing');
-        
-        // Wait a moment for video to start
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Start processing
-          isProcessing = true;
-        backgroundProcessingRef.current = true;
-            processFrame();
-      } catch (err) {
-        console.error('❌ Failed to start video:', err);
-          isProcessing = false;
-        backgroundProcessingRef.current = false;
-      }
-    };
+    // Set up MediaPipe results handler
+    selfieSegmentation.onResults(processFrameWithMediaPipe);
 
-    // Set up video event listeners
-    video.addEventListener('loadedmetadata', () => {
-      console.log('📹 Video metadata loaded');
-      if (video.videoWidth > 0 && video.videoHeight > 0) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        videoReady = true;
-      }
-    });
-
-    video.addEventListener('canplay', () => {
-      console.log('▶️ Video can play');
-      if (!isProcessing) {
-        startProcessing();
-      }
-    });
-
-    video.addEventListener('playing', () => {
-      console.log('🎬 Video is playing');
-      if (!isProcessing) {
-        startProcessing();
-      }
-    });
-
-    // NEW APPROACH: Initialize video, draw frames, THEN create stream
+    // Initialize and start processing
     return new Promise(async (resolve, reject) => {
       try {
         console.log('📹 Step 1: Starting video playback...');
         await video.play();
         console.log('✅ Video playback started');
-        
+
         // Wait for video to have valid dimensions
         console.log('📹 Step 2: Waiting for video dimensions...');
         let attempts = 0;
@@ -2139,125 +2013,75 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           await new Promise(r => setTimeout(r, 50));
           attempts++;
         }
-        
+
         if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
           throw new Error('Video failed to initialize after waiting');
         }
-        
+
         // Set canvas dimensions
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         videoReady = true;
         console.log('✅ Step 3: Canvas dimensions set:', canvas.width, 'x', canvas.height);
-        
-        // CRITICAL: Draw frames continuously BEFORE creating stream
-        console.log('📹 Step 4: Drawing initial frames to canvas...');
+
+        // Wait for background image to load if needed
+        if (bgType === 'image' && selectedBackgroundImage && !backgroundImageRef.current) {
+          console.log('📹 Step 4: Loading background image...');
+          await new Promise((imgResolve, imgReject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              backgroundImageRef.current = img;
+              console.log('✅ Background image loaded');
+              imgResolve();
+            };
+            img.onerror = () => {
+              console.error('Failed to load background image');
+              imgReject(new Error('Failed to load background image'));
+            };
+            img.src = selectedBackgroundImage.imageUrl;
+          });
+        }
+
+        // Start MediaPipe processing
+        console.log('📹 Step 5: Starting MediaPipe processing...');
         isProcessing = true;
         backgroundProcessingRef.current = true;
-        
-        // Draw at least 30 frames (1 second) to ensure canvas has content
-        let framesDrawnBeforeStream = 0;
-        const drawInitialFrames = () => {
+
+        // Process initial frames through MediaPipe
+        let framesProcessed = 0;
+        const processInitialFrames = async () => {
           if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-            // Draw video frame
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Apply background effect if needed
-            if (bgType === 'blur') {
-              const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = canvas.width;
-              tempCanvas.height = canvas.height;
-              const tempCtx = tempCanvas.getContext('2d');
-              tempCtx.drawImage(video, 0, 0);
-              
-              ctx.save();
-              ctx.filter = `blur(${bgBlur}px)`;
-              ctx.drawImage(tempCanvas, 0, 0);
-              ctx.filter = 'none';
-              ctx.restore();
-              
-              const centerX = canvas.width / 2;
-              const centerY = canvas.height / 2;
-              const keepWidth = canvas.width * 0.7;
-              const keepHeight = canvas.height * 0.7;
-              ctx.drawImage(video, centerX - keepWidth / 2, centerY - keepHeight / 2, keepWidth, keepHeight, centerX - keepWidth / 2, centerY - keepHeight / 2, keepWidth, keepHeight);
-            } else if (bgType === 'color') {
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const data = imageData.data;
-              const replaceColor = bgColor.startsWith('#') ? bgColor.substring(1) : bgColor;
-              const replaceR = parseInt(replaceColor.substring(0, 2), 16);
-              const replaceG = parseInt(replaceColor.substring(2, 4), 16);
-              const replaceB = parseInt(replaceColor.substring(4, 6), 16);
-              const chromaR = 0, chromaG = 255, chromaB = 0;
-              const threshold = 80;
-              
-              for (let i = 0; i < data.length; i += 4) {
-                const pixelR = data[i];
-                const pixelG = data[i + 1];
-                const pixelB = data[i + 2];
-                const distance = Math.sqrt(Math.pow(pixelR - chromaR, 2) + Math.pow(pixelG - chromaG, 2) + Math.pow(pixelB - chromaB, 2));
-                if (distance < threshold) {
-                  data[i] = replaceR;
-                  data[i + 1] = replaceG;
-                  data[i + 2] = replaceB;
-                }
-              }
-              ctx.putImageData(imageData, 0, 0);
-            } else if (bgType === 'image' && backgroundImageRef.current) {
-              const bgImg = backgroundImageRef.current;
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const data = imageData.data;
-              const chromaR = 0, chromaG = 255, chromaB = 0;
-              const threshold = 80;
-              
-              const bgCanvas = document.createElement('canvas');
-              bgCanvas.width = canvas.width;
-              bgCanvas.height = canvas.height;
-              const bgCtx = bgCanvas.getContext('2d');
-              bgCtx.save();
-              bgCtx.translate(canvas.width / 2, canvas.height / 2);
-              const rotation = selectedBackgroundImage?.rotation || 0;
-              bgCtx.rotate((rotation * Math.PI) / 180);
-              const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-              bgCtx.drawImage(bgImg, -bgImg.width * scale / 2, -bgImg.height * scale / 2, bgImg.width * scale, bgImg.height * scale);
-              bgCtx.restore();
-              
-              const bgImageData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
-              const bgData = bgImageData.data;
-              
-              for (let i = 0; i < data.length; i += 4) {
-                const pixelR = data[i];
-                const pixelG = data[i + 1];
-                const pixelB = data[i + 2];
-                const distance = Math.sqrt(Math.pow(pixelR - chromaR, 2) + Math.pow(pixelG - chromaG, 2) + Math.pow(pixelB - chromaB, 2));
-                if (distance < threshold) {
-                  data[i] = bgData[i];
-                  data[i + 1] = bgData[i + 1];
-                  data[i + 2] = bgData[i + 2];
-                }
-              }
-              ctx.putImageData(imageData, 0, 0);
-            }
-            
-            framesDrawnBeforeStream++;
-            
-            // After drawing 30 frames, create the stream
-            if (framesDrawnBeforeStream >= 30 && !stream) {
-              console.log('✅ Step 5: Created canvas stream after', framesDrawnBeforeStream, 'frames');
-              stream = canvas.captureStream(30);
-              
-              // Verify stream has tracks
-              if (stream && stream.getVideoTracks().length > 0) {
-                console.log('✅ Step 6: Stream created successfully with', stream.getVideoTracks().length, 'track(s)');
-                
-                // Wait a bit more to ensure stream is capturing (use setTimeout instead of await)
-                setTimeout(() => {
-                  // Start continuous processing
-                  processFrame();
-                  
+            try {
+              await selfieSegmentation.send({ image: video });
+              framesProcessed++;
+
+              // After processing 30 frames, create the stream
+              if (framesProcessed >= 30 && !stream) {
+                console.log('✅ Step 6: Created canvas stream after', framesProcessed, 'MediaPipe frames');
+                stream = canvas.captureStream(30);
+
+                // Verify stream has tracks
+                if (stream && stream.getVideoTracks().length > 0) {
+                  console.log('✅ Step 7: Stream created successfully with', stream.getVideoTracks().length, 'track(s)');
+
+                  // Continue processing frames
+                  const continueProcessing = async () => {
+                    if (isProcessing && backgroundProcessingRef.current && video.readyState >= video.HAVE_CURRENT_DATA) {
+                      try {
+                        await selfieSegmentation.send({ image: video });
+                        animationFrameId = requestAnimationFrame(continueProcessing);
+                        backgroundAnimationFrameRef.current = animationFrameId;
+                      } catch (err) {
+                        console.error('MediaPipe processing error:', err);
+                      }
+                    }
+                  };
+                  continueProcessing();
+
                   // Store cleanup
                   stream._cleanup = () => {
-                    console.log('🧹 Cleaning up background processing');
+                    console.log('🧹 Cleaning up MediaPipe background processing');
                     isProcessing = false;
                     backgroundProcessingRef.current = false;
                     videoReady = false;
@@ -2271,47 +2095,51 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
                       video.srcObject = null;
                     }
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    selfieSegmentation.close();
                   };
                   stream._videoElement = video;
-                  
+                  stream._selfieSegmentation = selfieSegmentation;
+
+                  // Wait a bit for stream to stabilize
+                  await new Promise(r => setTimeout(r, 300));
                   resolve(stream);
-                }, 200);
-                return; // Stop the loop
-              } else {
-                console.error('❌ Stream created but has no video tracks');
-                // Continue trying
-                if (framesDrawnBeforeStream < 100) {
-                  requestAnimationFrame(drawInitialFrames);
+                  return;
+                } else {
+                  console.error('❌ Stream created but has no video tracks');
                 }
+              } else if (framesProcessed < 30) {
+                // Continue processing initial frames
+                requestAnimationFrame(processInitialFrames);
               }
-            } else if (framesDrawnBeforeStream < 30) {
-              // Continue drawing frames
-              requestAnimationFrame(drawInitialFrames);
+            } catch (err) {
+              console.error('MediaPipe send error:', err);
+              if (framesProcessed < 100) {
+                requestAnimationFrame(processInitialFrames);
+              }
             }
           } else {
             // Video not ready yet, retry
-            requestAnimationFrame(drawInitialFrames);
+            requestAnimationFrame(processInitialFrames);
           }
         };
-        
-        // Start drawing frames
-        drawInitialFrames();
-        
-        // Timeout after 5 seconds
+
+        // Start processing initial frames
+        processInitialFrames();
+
+        // Timeout after 10 seconds
         setTimeout(() => {
           if (!stream) {
-            console.error('❌ Timeout: Failed to create stream after 5 seconds');
+            console.error('❌ Timeout: Failed to create stream after 10 seconds');
             // Create stream anyway as fallback
             stream = canvas.captureStream(30);
             isProcessing = true;
             backgroundProcessingRef.current = true;
-            processFrame();
             resolve(stream);
           }
-        }, 5000);
-        
+        }, 10000);
+
       } catch (err) {
-        console.error('❌ Initialization error:', err);
+        console.error('❌ MediaPipe initialization error:', err);
         reject(err);
       }
     });
