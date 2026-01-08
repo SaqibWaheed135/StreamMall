@@ -1885,7 +1885,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
   };
 
-  // Background processing functions - Returns Promise that resolves when stream is ready
+  // Background processing functions - COMPLETELY REWRITTEN with reliable approach
   const processVideoWithBackground = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
     if (!canvas || !videoTrack) {
       console.error('Missing canvas or video track');
@@ -1898,7 +1898,9 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       return null;
     }
 
-    // Create video element - simpler setup
+    console.log('🎬 Starting background processing with type:', bgType);
+
+    // Create video element
     const video = document.createElement('video');
     video.playsInline = true;
     video.muted = true;
@@ -1912,6 +1914,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     let isProcessing = false;
     let videoReady = false;
     let framesDrawn = 0;
+    let stream = null;
 
     // Simple, reliable frame processing
     const processFrame = () => {
@@ -2122,56 +2125,194 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       }
     });
 
-    // CRITICAL: Wait for video to be ready and draw first frame BEFORE creating stream
-    return new Promise(async (resolve) => {
+    // NEW APPROACH: Initialize video, draw frames, THEN create stream
+    return new Promise(async (resolve, reject) => {
       try {
-        // Start video playback
+        console.log('📹 Step 1: Starting video playback...');
         await video.play();
-        console.log('✅ Video playing');
+        console.log('✅ Video playback started');
         
-        // Wait for video to have dimensions
+        // Wait for video to have valid dimensions
+        console.log('📹 Step 2: Waiting for video dimensions...');
         let attempts = 0;
-        while (attempts < 50 && (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0)) {
-          await new Promise(r => setTimeout(r, 100));
+        while (attempts < 100 && (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0)) {
+          await new Promise(r => setTimeout(r, 50));
           attempts++;
         }
         
-        if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
-          // Set canvas dimensions
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          videoReady = true;
-          console.log('✅ Canvas dimensions:', canvas.width, 'x', canvas.height);
-          
-          // CRITICAL: Draw multiple frames to canvas BEFORE creating stream
-          // This ensures the stream has content from the start
-          for (let i = 0; i < 10; i++) {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            await new Promise(r => setTimeout(r, 33)); // Wait ~30fps
-          }
-          
-          console.log('✅ Initial frames drawn to canvas');
-          
-          // NOW create the stream after we have frames
-    const stream = canvas.captureStream(30);
-          
-          // Start continuous processing
-          isProcessing = true;
-          backgroundProcessingRef.current = true;
-          processFrame();
-          
-          resolve(stream);
-        } else {
-          throw new Error('Video not ready');
+        if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
+          throw new Error('Video failed to initialize after waiting');
         }
-      } catch (err) {
-        console.error('❌ Initialization error:', err);
-        // Fallback: create stream anyway
-        const stream = canvas.captureStream(30);
+        
+        // Set canvas dimensions
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        videoReady = true;
+        console.log('✅ Step 3: Canvas dimensions set:', canvas.width, 'x', canvas.height);
+        
+        // CRITICAL: Draw frames continuously BEFORE creating stream
+        console.log('📹 Step 4: Drawing initial frames to canvas...');
         isProcessing = true;
         backgroundProcessingRef.current = true;
-        processFrame();
-        resolve(stream);
+        
+        // Draw at least 30 frames (1 second) to ensure canvas has content
+        let framesDrawnBeforeStream = 0;
+        const drawInitialFrames = () => {
+          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+            // Draw video frame
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Apply background effect if needed
+            if (bgType === 'blur') {
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = canvas.width;
+              tempCanvas.height = canvas.height;
+              const tempCtx = tempCanvas.getContext('2d');
+              tempCtx.drawImage(video, 0, 0);
+              
+              ctx.save();
+              ctx.filter = `blur(${bgBlur}px)`;
+              ctx.drawImage(tempCanvas, 0, 0);
+              ctx.filter = 'none';
+              ctx.restore();
+              
+              const centerX = canvas.width / 2;
+              const centerY = canvas.height / 2;
+              const keepWidth = canvas.width * 0.7;
+              const keepHeight = canvas.height * 0.7;
+              ctx.drawImage(video, centerX - keepWidth / 2, centerY - keepHeight / 2, keepWidth, keepHeight, centerX - keepWidth / 2, centerY - keepHeight / 2, keepWidth, keepHeight);
+            } else if (bgType === 'color') {
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const data = imageData.data;
+              const replaceColor = bgColor.startsWith('#') ? bgColor.substring(1) : bgColor;
+              const replaceR = parseInt(replaceColor.substring(0, 2), 16);
+              const replaceG = parseInt(replaceColor.substring(2, 4), 16);
+              const replaceB = parseInt(replaceColor.substring(4, 6), 16);
+              const chromaR = 0, chromaG = 255, chromaB = 0;
+              const threshold = 80;
+              
+              for (let i = 0; i < data.length; i += 4) {
+                const pixelR = data[i];
+                const pixelG = data[i + 1];
+                const pixelB = data[i + 2];
+                const distance = Math.sqrt(Math.pow(pixelR - chromaR, 2) + Math.pow(pixelG - chromaG, 2) + Math.pow(pixelB - chromaB, 2));
+                if (distance < threshold) {
+                  data[i] = replaceR;
+                  data[i + 1] = replaceG;
+                  data[i + 2] = replaceB;
+                }
+              }
+              ctx.putImageData(imageData, 0, 0);
+            } else if (bgType === 'image' && backgroundImageRef.current) {
+              const bgImg = backgroundImageRef.current;
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const data = imageData.data;
+              const chromaR = 0, chromaG = 255, chromaB = 0;
+              const threshold = 80;
+              
+              const bgCanvas = document.createElement('canvas');
+              bgCanvas.width = canvas.width;
+              bgCanvas.height = canvas.height;
+              const bgCtx = bgCanvas.getContext('2d');
+              bgCtx.save();
+              bgCtx.translate(canvas.width / 2, canvas.height / 2);
+              const rotation = selectedBackgroundImage?.rotation || 0;
+              bgCtx.rotate((rotation * Math.PI) / 180);
+              const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+              bgCtx.drawImage(bgImg, -bgImg.width * scale / 2, -bgImg.height * scale / 2, bgImg.width * scale, bgImg.height * scale);
+              bgCtx.restore();
+              
+              const bgImageData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
+              const bgData = bgImageData.data;
+              
+              for (let i = 0; i < data.length; i += 4) {
+                const pixelR = data[i];
+                const pixelG = data[i + 1];
+                const pixelB = data[i + 2];
+                const distance = Math.sqrt(Math.pow(pixelR - chromaR, 2) + Math.pow(pixelG - chromaG, 2) + Math.pow(pixelB - chromaB, 2));
+                if (distance < threshold) {
+                  data[i] = bgData[i];
+                  data[i + 1] = bgData[i + 1];
+                  data[i + 2] = bgData[i + 2];
+                }
+              }
+              ctx.putImageData(imageData, 0, 0);
+            }
+            
+            framesDrawnBeforeStream++;
+            
+            // After drawing 30 frames, create the stream
+            if (framesDrawnBeforeStream >= 30 && !stream) {
+              console.log('✅ Step 5: Created canvas stream after', framesDrawnBeforeStream, 'frames');
+              stream = canvas.captureStream(30);
+              
+              // Verify stream has tracks
+              if (stream && stream.getVideoTracks().length > 0) {
+                console.log('✅ Step 6: Stream created successfully with', stream.getVideoTracks().length, 'track(s)');
+                
+                // Wait a bit more to ensure stream is capturing (use setTimeout instead of await)
+                setTimeout(() => {
+                  // Start continuous processing
+                  processFrame();
+                  
+                  // Store cleanup
+                  stream._cleanup = () => {
+                    console.log('🧹 Cleaning up background processing');
+                    isProcessing = false;
+                    backgroundProcessingRef.current = false;
+                    videoReady = false;
+                    framesDrawn = 0;
+                    if (animationFrameId) {
+                      cancelAnimationFrame(animationFrameId);
+                      animationFrameId = null;
+                    }
+                    video.pause();
+                    if (video.srcObject) {
+                      video.srcObject = null;
+                    }
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                  };
+                  stream._videoElement = video;
+                  
+                  resolve(stream);
+                }, 200);
+                return; // Stop the loop
+              } else {
+                console.error('❌ Stream created but has no video tracks');
+                // Continue trying
+                if (framesDrawnBeforeStream < 100) {
+                  requestAnimationFrame(drawInitialFrames);
+                }
+              }
+            } else if (framesDrawnBeforeStream < 30) {
+              // Continue drawing frames
+              requestAnimationFrame(drawInitialFrames);
+            }
+          } else {
+            // Video not ready yet, retry
+            requestAnimationFrame(drawInitialFrames);
+          }
+        };
+        
+        // Start drawing frames
+        drawInitialFrames();
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          if (!stream) {
+            console.error('❌ Timeout: Failed to create stream after 5 seconds');
+            // Create stream anyway as fallback
+            stream = canvas.captureStream(30);
+            isProcessing = true;
+            backgroundProcessingRef.current = true;
+            processFrame();
+            resolve(stream);
+          }
+        }, 5000);
+        
+      } catch (err) {
+        console.error('❌ Initialization error:', err);
+        reject(err);
       }
     });
     
