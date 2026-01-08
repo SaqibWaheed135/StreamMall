@@ -138,11 +138,15 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const [backgroundBlur, setBackgroundBlur] = useState(10);
   const [showBackgroundPanel, setShowBackgroundPanel] = useState(false);
   const [processedStream, setProcessedStream] = useState(null);
+  const [backgroundImages, setBackgroundImages] = useState([]);
+  const [selectedBackgroundImage, setSelectedBackgroundImage] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const backgroundCanvasRef = useRef(null);
   const backgroundVideoRef = useRef(null);
   const backgroundProcessingRef = useRef(false);
   const backgroundAnimationFrameRef = useRef(null);
   const originalMediaStreamTrackRef = useRef(null); // Store original track reference
+  const backgroundImageRef = useRef(null); // Ref to store loaded background image
 
   const videoRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -980,6 +984,132 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     setReplyText('');
     setReplyingTo(null);
   };
+  // Fetch available background images
+  const fetchBackgroundImages = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/live/background-images`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBackgroundImages(data.backgroundImages || []);
+      }
+    } catch (error) {
+      console.error('Error fetching background images:', error);
+    }
+  };
+
+  // Upload background image
+  const handleUploadBackgroundImage = async (file) => {
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Invalid file type. Only JPEG, PNG, and WebP are allowed');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${API_BASE_URL}/live/background-images/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBackgroundImages(prev => [data.backgroundImage, ...prev]);
+        setSelectedBackgroundImage(data.backgroundImage);
+        setSelectedBackground('image');
+        setError('');
+      } else {
+        const errorData = await response.json();
+        setError(errorData.msg || 'Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Error uploading background image:', error);
+      setError('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Rotate background image
+  const handleRotateBackgroundImage = async (imageId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/live/background-images/${imageId}/rotate`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBackgroundImages(prev => 
+          prev.map(img => img.id === imageId ? data.backgroundImage : img)
+        );
+        if (selectedBackgroundImage && selectedBackgroundImage.id === imageId) {
+          setSelectedBackgroundImage(data.backgroundImage);
+          // Reload the image to apply rotation
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            backgroundImageRef.current = img;
+          };
+          img.src = data.backgroundImage.imageUrl;
+        }
+      }
+    } catch (error) {
+      console.error('Error rotating background image:', error);
+    }
+  };
+
+  // Delete background image
+  const handleDeleteBackgroundImage = async (imageId) => {
+    if (!window.confirm('Are you sure you want to delete this background image?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/live/background-images/${imageId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setBackgroundImages(prev => prev.filter(img => img.id !== imageId));
+        if (selectedBackgroundImage && selectedBackgroundImage.id === imageId) {
+          setSelectedBackgroundImage(null);
+          setSelectedBackground('none');
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting background image:', error);
+    }
+  };
+
   const fetchInitialOrders = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -1737,35 +1867,94 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           // Chroma key background replacement
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
-  
+
           // Parse replacement color
           const replaceColor = bgColor.startsWith('#') ? bgColor.substring(1) : bgColor;
           const replaceR = parseInt(replaceColor.substring(0, 2), 16);
           const replaceG = parseInt(replaceColor.substring(2, 4), 16);
           const replaceB = parseInt(replaceColor.substring(4, 6), 16);
-  
+
           // Chroma key (green screen)
           const chromaR = 0, chromaG = 255, chromaB = 0;
           const threshold = 80;
-  
+
           for (let i = 0; i < data.length; i += 4) {
             const pixelR = data[i];
             const pixelG = data[i + 1];
             const pixelB = data[i + 2];
-  
+
             const distance = Math.sqrt(
               Math.pow(pixelR - chromaR, 2) +
               Math.pow(pixelG - chromaG, 2) +
               Math.pow(pixelB - chromaB, 2)
             );
-  
+
             if (distance < threshold) {
               data[i] = replaceR;
               data[i + 1] = replaceG;
               data[i + 2] = replaceB;
             }
           }
-  
+
+          ctx.putImageData(imageData, 0, 0);
+        } else if (bgType === 'image' && backgroundImageRef.current) {
+          // Background image replacement with chroma key
+          const bgImg = backgroundImageRef.current;
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          // Chroma key (green screen)
+          const chromaR = 0, chromaG = 255, chromaB = 0;
+          const threshold = 80;
+
+          // Create temporary canvas for background image
+          const bgCanvas = document.createElement('canvas');
+          bgCanvas.width = canvas.width;
+          bgCanvas.height = canvas.height;
+          const bgCtx = bgCanvas.getContext('2d');
+
+          // Apply rotation to background image
+          bgCtx.save();
+          bgCtx.translate(canvas.width / 2, canvas.height / 2);
+          const rotation = selectedBackgroundImage?.rotation || 0;
+          bgCtx.rotate((rotation * Math.PI) / 180);
+          
+          // Scale to cover entire canvas
+          const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+          bgCtx.drawImage(
+            bgImg,
+            -bgImg.width * scale / 2,
+            -bgImg.height * scale / 2,
+            bgImg.width * scale,
+            bgImg.height * scale
+          );
+          bgCtx.restore();
+
+          // Get background image data
+          const bgImageData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
+          const bgData = bgImageData.data;
+
+          // Replace green screen pixels with background image
+          for (let i = 0; i < data.length; i += 4) {
+            const pixelR = data[i];
+            const pixelG = data[i + 1];
+            const pixelB = data[i + 2];
+
+            const distance = Math.sqrt(
+              Math.pow(pixelR - chromaR, 2) +
+              Math.pow(pixelG - chromaG, 2) +
+              Math.pow(pixelB - chromaB, 2)
+            );
+
+            if (distance < threshold) {
+              // Replace with background image pixel
+              data[i] = bgData[i];
+              data[i + 1] = bgData[i + 1];
+              data[i + 2] = bgData[i + 2];
+              // Keep original alpha
+            }
+          }
+
           ctx.putImageData(imageData, 0, 0);
         }
       }
@@ -2283,6 +2472,21 @@ const applyBackgroundFilter = React.useCallback(async () => {
     canvas.height = settings.height || 720;
     console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
 
+    // Load background image if image type is selected
+    if (selectedBackground === 'image' && selectedBackgroundImage) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        backgroundImageRef.current = img;
+      };
+      img.onerror = () => {
+        console.error('Failed to load background image');
+      };
+      img.src = selectedBackgroundImage.imageUrl;
+    } else {
+      backgroundImageRef.current = null;
+    }
+
     // Process video with background
     const newProcessedStream = processVideoWithBackground(
       originalTrack,
@@ -2409,7 +2613,7 @@ const applyBackgroundFilter = React.useCallback(async () => {
     return () => {
       clearTimeout(timer);
     };
-  }, [selectedBackground, backgroundColor, backgroundBlur, isLive, liveKitRoom, applyBackgroundFilter, processedStream]);
+  }, [selectedBackground, backgroundColor, backgroundBlur, selectedBackgroundImage, isLive, liveKitRoom, applyBackgroundFilter, processedStream]);
 
   // Detect iOS device
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -3359,8 +3563,132 @@ const applyBackgroundFilter = React.useCallback(async () => {
                             <Palette className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.color')}</span>
                           </button>
+                          <button
+                            onClick={() => setSelectedBackground('image')}
+                            className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
+                                ? 'border-pink-500 bg-pink-500/20'
+                                : 'border-white/20 bg-white/5 hover:bg-white/10'
+                            }`}
+                          >
+                            <Image className="w-5 h-5 mx-auto mb-1" />
+                            <span className="text-xs">Image</span>
+                          </button>
                         </div>
                       </div>
+
+                      {/* Image Background Settings */}
+                      {selectedBackground === 'image' && (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium mb-2 text-white/80">
+                              Upload Background Image
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/jpg,image/png,image/webp"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleUploadBackgroundImage(file);
+                                }
+                              }}
+                              className="hidden"
+                              id="background-image-upload"
+                              disabled={uploadingImage}
+                            />
+                            <label
+                              htmlFor="background-image-upload"
+                              className={`block w-full p-3 rounded-lg border-2 border-dashed border-white/30 text-center cursor-pointer transition-all ${
+                                uploadingImage
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : 'hover:border-white/50 hover:bg-white/5'
+                              }`}
+                            >
+                              {uploadingImage ? 'Uploading...' : '+ Upload Image'}
+                            </label>
+                          </div>
+
+                          {/* Available Background Images */}
+                          {backgroundImages.length > 0 && (
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-white/80">
+                                Select Background Image
+                              </label>
+                              <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                                {backgroundImages.map((img) => (
+                                  <div
+                                    key={img.id}
+                                    className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                                      selectedBackgroundImage?.id === img.id
+                                        ? 'border-pink-500 ring-2 ring-pink-500'
+                                        : 'border-white/20 hover:border-white/40'
+                                    }`}
+                                  >
+                                    <img
+                                      src={img.imageUrl}
+                                      alt="Background"
+                                      className="w-full h-20 object-cover"
+                                      onClick={() => {
+                                        setSelectedBackgroundImage(img);
+                                        setSelectedBackground('image');
+                                      }}
+                                    />
+                                    {selectedBackgroundImage?.id === img.id && (
+                                      <div className="absolute top-1 right-1 bg-pink-500 rounded-full p-1">
+                                        <X className="w-3 h-3 text-white" />
+                                      </div>
+                                    )}
+                                    {/* Rotation and Delete buttons */}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRotateBackgroundImage(img.id);
+                                        }}
+                                        className="flex-1 bg-white/20 hover:bg-white/30 rounded text-xs py-1"
+                                        title="Rotate"
+                                      >
+                                        ↻
+                                      </button>
+                                      {img.isOwner && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteBackgroundImage(img.id);
+                                          }}
+                                          className="flex-1 bg-red-500/80 hover:bg-red-500 rounded text-xs py-1"
+                                          title="Delete"
+                                        >
+                                          ×
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedBackgroundImage && (
+                            <div className="pt-2 border-t border-white/20">
+                              <p className="text-xs text-white/60 mb-2">
+                                💡 Tip: Use a green screen behind you for best results with image backgrounds.
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleRotateBackgroundImage(selectedBackgroundImage.id)}
+                                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm"
+                                >
+                                  Rotate Image
+                                </button>
+                                <span className="text-xs text-white/60">
+                                  Rotation: {selectedBackgroundImage.rotation}°
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Blur Settings */}
                       {selectedBackground === 'blur' && (
