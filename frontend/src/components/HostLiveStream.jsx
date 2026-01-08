@@ -1624,20 +1624,22 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  const attachVideoStream = (track) => {
+  const attachVideoStream = (track, forceUpdate = false) => {
     if (!videoRef.current || !track || !track.mediaStreamTrack) return false;
 
     try {
       const mediaStream = new MediaStream([track.mediaStreamTrack]);
 
-      // Check if this is the same track already attached
-      const currentSrc = videoRef.current.srcObject;
-      if (currentSrc && currentSrc.getTracks().length > 0) {
-        const currentTrackId = currentSrc.getTracks()[0].id;
-        const newTrackId = track.mediaStreamTrack.id;
-        if (currentTrackId === newTrackId) {
-          console.log('✅ Same track already attached, skipping');
-          return true;
+      // Check if this is the same track already attached (but allow force update)
+      if (!forceUpdate) {
+        const currentSrc = videoRef.current.srcObject;
+        if (currentSrc && currentSrc.getTracks().length > 0) {
+          const currentTrackId = currentSrc.getTracks()[0].id;
+          const newTrackId = track.mediaStreamTrack.id;
+          if (currentTrackId === newTrackId) {
+            console.log('✅ Same track already attached, skipping');
+            return true;
+          }
         }
       }
 
@@ -1883,8 +1885,8 @@ const HostLiveStream = ({ onBack }) => {
     }
   };
 
-  // Background processing functions - COMPLETELY NEW APPROACH using simpler method
-  const processVideoWithBackground = (videoTrack, canvas, bgType, bgColor, bgBlur) => {
+  // Background processing functions - Returns Promise that resolves when stream is ready
+  const processVideoWithBackground = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
     if (!canvas || !videoTrack) {
       console.error('Missing canvas or video track');
       return null;
@@ -2120,13 +2122,58 @@ const HostLiveStream = ({ onBack }) => {
       }
     });
 
-    // Start video immediately
-    video.play().catch(err => {
-      console.warn('Initial play failed, will retry:', err);
+    // CRITICAL: Wait for video to be ready and draw first frame BEFORE creating stream
+    return new Promise(async (resolve) => {
+      try {
+        // Start video playback
+        await video.play();
+        console.log('✅ Video playing');
+        
+        // Wait for video to have dimensions
+        let attempts = 0;
+        while (attempts < 50 && (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0)) {
+          await new Promise(r => setTimeout(r, 100));
+          attempts++;
+        }
+        
+        if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+          // Set canvas dimensions
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          videoReady = true;
+          console.log('✅ Canvas dimensions:', canvas.width, 'x', canvas.height);
+          
+          // CRITICAL: Draw multiple frames to canvas BEFORE creating stream
+          // This ensures the stream has content from the start
+          for (let i = 0; i < 10; i++) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            await new Promise(r => setTimeout(r, 33)); // Wait ~30fps
+          }
+          
+          console.log('✅ Initial frames drawn to canvas');
+          
+          // NOW create the stream after we have frames
+          const stream = canvas.captureStream(30);
+          
+          // Start continuous processing
+          isProcessing = true;
+          backgroundProcessingRef.current = true;
+          processFrame();
+          
+          resolve(stream);
+        } else {
+          throw new Error('Video not ready');
+        }
+      } catch (err) {
+        console.error('❌ Initialization error:', err);
+        // Fallback: create stream anyway
+        const stream = canvas.captureStream(30);
+        isProcessing = true;
+        backgroundProcessingRef.current = true;
+        processFrame();
+        resolve(stream);
+      }
     });
-
-    // Create canvas stream - it will capture frames as we draw them
-    const stream = canvas.captureStream(30);
 
     // Store cleanup function
     const cleanup = () => {
@@ -2640,8 +2687,8 @@ const HostLiveStream = ({ onBack }) => {
         backgroundImageRef.current = null;
       }
 
-      // Process video with background
-      const newProcessedStream = processVideoWithBackground(
+      // Process video with background (now returns a Promise)
+      const newProcessedStream = await processVideoWithBackground(
         originalTrack,
         canvas,
         selectedBackground,
@@ -2652,6 +2699,8 @@ const HostLiveStream = ({ onBack }) => {
       if (!newProcessedStream || newProcessedStream.getVideoTracks().length === 0) {
         throw new Error('Failed to create processed stream');
       }
+      
+      console.log('✅ Processed stream created and ready with frames');
 
       const processedTrack = newProcessedStream.getVideoTracks()[0];
       processedTrack.enabled = true;
@@ -2723,10 +2772,10 @@ const HostLiveStream = ({ onBack }) => {
           // Attach to video element immediately
           await new Promise(resolve => setTimeout(resolve, 200));
           
-          // Get the updated track and attach it
+          // Get the updated track and attach it (force update for processed track)
           const updatedPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
           if (updatedPublication && updatedPublication.track) {
-            attachVideoStream(updatedPublication.track);
+            attachVideoStream(updatedPublication.track, true); // Force update
           } else {
             // Fallback: use the processed track directly
             const displayStream = new MediaStream([processedTrack]);
@@ -2766,7 +2815,7 @@ const HostLiveStream = ({ onBack }) => {
           await new Promise(resolve => setTimeout(resolve, 500));
           const publishedTrack = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
           if (publishedTrack && publishedTrack.track) {
-            attachVideoStream(publishedTrack.track);
+            attachVideoStream(publishedTrack.track, true); // Force update
           }
         }
       } else {
