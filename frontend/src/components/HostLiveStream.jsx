@@ -1906,10 +1906,20 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     video.playsInline = true;
     video.muted = true;
     video.autoplay = true;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
     
     // Create MediaStream from track
     const sourceStream = new MediaStream([videoTrack]);
     video.srcObject = sourceStream;
+    
+    // Verify track is enabled
+    if (videoTrack.enabled === false) {
+      console.warn('⚠️ Video track is disabled, enabling it...');
+      videoTrack.enabled = true;
+    }
+    
+    console.log('📹 Video element created, track enabled:', videoTrack.enabled, 'readyState:', videoTrack.readyState);
     
     let animationFrameId = null;
     let isProcessing = false;
@@ -2008,11 +2018,61 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     // Initialize and start processing
     return new Promise(async (resolve, reject) => {
       try {
-        console.log('📹 Step 1: Starting video playback...');
+        console.log('📹 Step 1: Setting up video element...');
         
-        // Start video playback first
-        await video.play();
-        console.log('✅ Video playback started');
+        // Ensure video has srcObject set
+        if (!video.srcObject) {
+          video.srcObject = sourceStream;
+        }
+        
+        // Set up error handler
+        video.onerror = (err) => {
+          console.error('❌ Video element error:', err);
+          reject(new Error('Video element error'));
+        };
+        
+        console.log('📹 Step 1b: Starting video playback...');
+        console.log('📹 Video track state:', {
+          enabled: videoTrack.enabled,
+          readyState: videoTrack.readyState,
+          muted: videoTrack.muted,
+          id: videoTrack.id
+        });
+        console.log('📹 Video element state:', {
+          srcObject: !!video.srcObject,
+          paused: video.paused,
+          readyState: video.readyState
+        });
+        
+        // Start video playback with timeout and better error handling
+        try {
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            await Promise.race([
+              playPromise,
+              new Promise((_, timeoutReject) => 
+                setTimeout(() => timeoutReject(new Error('Video play timeout after 3 seconds')), 3000)
+              )
+            ]);
+            console.log('✅ Video playback started successfully');
+          } else {
+            console.log('⚠️ play() returned undefined, checking if video is playing...');
+            // Wait a bit and check if video started
+            await new Promise(r => setTimeout(r, 500));
+            if (video.paused) {
+              throw new Error('Video is still paused after play() call');
+            }
+            console.log('✅ Video appears to be playing');
+          }
+        } catch (playErr) {
+          console.error('❌ Video play error:', playErr);
+          // Check if video has frames anyway
+          if (video.readyState >= video.HAVE_METADATA) {
+            console.log('⚠️ Play failed but video has metadata, continuing...');
+          } else {
+            throw new Error(`Video play failed: ${playErr.message}`);
+          }
+        }
         
         // Wait for video to have valid dimensions with polling
         console.log('📹 Step 2: Waiting for video dimensions...');
