@@ -771,61 +771,24 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🎯 HOST: Setting up socket listeners');
     console.log('Socket ID:', socket.id);
-    console.log('Socket connected:', socket.connected);
-    console.log('Socket readyState:', socket.readyState);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    
-    // Remove any existing listeners first to avoid duplicates
-    socket.off('new-comment');
-    
-    // Verify listener was removed
-    console.log('🔍 After removing listener, hasListeners:', socket.hasListeners('new-comment'));
-    
     // In the socket listener setup
-    const newCommentHandler = (data) => {
+    socket.on('new-comment', (data) => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📨 HOST: New comment received - LISTENER FIRED!');
+      console.log('📨 HOST: New comment received');
       console.log('Comment data:', JSON.stringify(data, null, 2));
-      console.log('Comment type:', typeof data);
-      console.log('Comment keys:', data ? Object.keys(data) : 'null');
-      console.log('Socket ID:', socket.id);
-      console.log('Socket connected:', socket.connected);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      
-      if (!data) {
-        console.error('❌ No data received');
-        return;
-      }
-      
-      if (!data.text && !data.message) {
-        console.error('❌ Invalid comment data - no text or message:', data);
-        return;
-      }
-      
-      const commentText = data.text || data.message || '';
-      if (!commentText.trim()) {
-        console.error('❌ Empty comment text');
-        return;
-      }
-      
       const newComment = {
         _id: data._id || data.id, // ✅ Use _id or fall back to id
         id: data.id || data._id,   // ✅ Include both for compatibility
-        username: data.username || data.user?.username || 'Viewer',
-        text: commentText,
-        timestamp: new Date(data.timestamp || Date.now()),
+        username: data.username || 'Viewer',
+        text: data.text,
+        timestamp: new Date(),
         replies: [] // ✅ Initialize replies array
       };
 
-      console.log('✅ Adding comment to UI:', newComment);
-
       // Add to sidebar comments
-      setComments(prev => {
-        const updated = [...prev, newComment];
-        console.log('📝 Comments updated. Total:', updated.length);
-        console.log('📝 Latest comment:', updated[updated.length - 1]);
-        return updated;
-      });
+      setComments(prev => [...prev, newComment]);
 
       // Add to overlay comments (for video screen display)
       setOverlayComments(prev => {
@@ -851,11 +814,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           fullscreenControlsTimeoutRef.current = null;
         }, 60000); // 60 seconds
       }
-    };
-    
-    // Attach the listener
-    socket.on('new-comment', newCommentHandler);
-    console.log('✅ HOST: new-comment listener attached');
+    });
 
     // ✅ ENHANCED reply listener with debugging
     socket.on('new-reply', (data) => {
@@ -932,35 +891,23 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     });
 
     socket.on('tip-received', (data) => {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🎁 HOST: Tip received - LISTENER FIRED!');
-      console.log('Tip data:', JSON.stringify(data, null, 2));
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      
-      if (!data) {
-        console.error('❌ No tip data received');
-        return;
-      }
-      
       setTips(prev => [...prev, {
         id: Date.now() + Math.random(),
-        username: data.tipper?.username || data.username || 'Viewer',
+        username: data.tipper.username,
         amount: data.amount,
         giftType: data.giftType,
-        timestamp: data.timestamp || Date.now()
+        timestamp: data.timestamp
       }]);
-      setCoinBalance(prev => prev + (data.amount || 0));
+      setCoinBalance(prev => prev + data.amount);
 
       setShowTipNotification({
-        username: data.tipper?.username || data.username || 'Viewer',
+        username: data.tipper.username,
         amount: data.amount,
         giftType: data.giftType
       });
 
       setTimeout(() => setShowTipNotification(null), 4000);
     });
-    
-    console.log('✅ HOST: tip-received listener attached');
 
     socket.on('coins-updated', (data) => {
       if (data.streamId === streamData?.streamId) {
@@ -971,16 +918,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     });
 
     socket.on('error', (error) => {
-      console.error('❌ HOST Socket error:', error);
+      console.error('Socket error:', error);
     });
-
-    // Test listener to verify socket is working
-    socket.on('joined-stream', (data) => {
-      console.log('✅ HOST: Successfully joined stream via socket:', data);
-    });
-
-    // Log all registered event listeners for debugging
-    console.log('📋 HOST Socket event listeners registered:', socket._callbacks ? Object.keys(socket._callbacks) : 'No callbacks object');
   };
 
   useEffect(() => {
@@ -988,84 +927,21 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       const newSocket = io(SOCKET_URL, {
         auth: {
           token: localStorage.getItem('token')
-        },
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        reconnectionAttempts: 5,
-        transports: ['websocket', 'polling']
+        }
       });
 
-      // Set up listeners BEFORE connect to ensure they're ready
-      setupSocketListeners(newSocket);
-
       newSocket.on('connect', () => {
-        console.log('✅ HOST Socket connected, ID:', newSocket.id);
-        console.log('🔍 Socket ready state:', newSocket.readyState);
-        console.log('🔍 Stream ID for join:', streamData.streamId);
-        
-        // Re-setup listeners after connection to ensure they're active
-        console.log('🔍 Re-setting up socket listeners after connection...');
-        setupSocketListeners(newSocket);
-        
-        // Verify listeners are attached
-        console.log('🔍 Verifying new-comment listener:', newSocket.hasListeners('new-comment'));
-        
-        // Join the stream room
-        console.log('📤 HOST: Emitting join-stream with:', {
-          streamId: streamData.streamId,
-          isStreamer: true
-        });
+        console.log('Socket connected');
         newSocket.emit('join-stream', {
           streamId: streamData.streamId,
           isStreamer: true
         });
-        
         newSocket.emit('subscribe-to-stream-earnings', {
           streamId: streamData.streamId
         });
-        
-        console.log('✅ HOST: Joined stream and subscribed to earnings');
-        
-        // Test: Listen for ANY socket events to debug (this will catch all events)
-        newSocket.onAny((eventName, ...args) => {
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.log('🔍 HOST: Received socket event via onAny:', eventName);
-          console.log('Event args:', args);
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          
-          if (eventName === 'new-comment') {
-            console.log('🎉 HOST: new-comment event received via onAny!');
-            console.log('This means the event IS being received but the listener might not be firing');
-            // Manually trigger the handler if needed
-            if (newSocket.listeners('new-comment').length > 0) {
-              console.log('⚠️ Listener exists but didn\'t fire - manually calling handler');
-              const handler = newSocket.listeners('new-comment')[0];
-              if (typeof handler === 'function') {
-                handler(args[0]);
-              }
-            }
-          }
-          
-          if (eventName === 'tip-received') {
-            console.log('🎁 HOST: tip-received event received via onAny!');
-          }
-        });
-        
-        // Listen for join confirmation
-        newSocket.once('joined-stream', (data) => {
-          console.log('✅ HOST: Confirmed joined stream:', data);
-        });
       });
 
-      newSocket.on('disconnect', (reason) => {
-        console.log('⚠️ HOST Socket disconnected:', reason);
-      });
-
-      newSocket.on('connect_error', (error) => {
-        console.error('❌ HOST Socket connection error:', error);
-      });
-
+      setupSocketListeners(newSocket);
       setSocket(newSocket);
       fetchInitialOrders();
       setProducts(streamData.stream.products?.map((p, i) => ({ ...p, index: i })) || []);
@@ -1078,8 +954,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           clearTimeout(fullscreenControlsTimeoutRef.current);
           fullscreenControlsTimeoutRef.current = null;
         }
-        console.log('🧹 Cleaning up HOST socket...');
-        newSocket.removeAllListeners(); // Remove all listeners before disconnect
         newSocket.disconnect();
       };
     }
