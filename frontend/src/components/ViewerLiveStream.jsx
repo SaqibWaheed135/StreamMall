@@ -719,12 +719,22 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     });
 
     newSocket.on('connect', () => {
+      console.log('✅ VIEWER Socket connected, ID:', newSocket.id);
+      console.log('✅ VIEWER Socket readyState:', newSocket.readyState);
       setSocketConnected(true);
 
       // Always try to join the stream - backend will handle access checks
+      console.log('📤 VIEWER: Emitting join-stream with streamId:', streamId);
       newSocket.emit('join-stream', {
         streamId,
         isStreamer: false
+      });
+      
+      // Listen for any socket events to debug
+      newSocket.onAny((eventName, ...args) => {
+        if (eventName === 'new-comment') {
+          console.log('🔍 VIEWER: Received new-comment event via onAny:', args);
+        }
       });
     });
 
@@ -1323,7 +1333,16 @@ newSocket.on('product-added', (data) => {
       return;
     }
 
-    console.log('📤 Sending comment from viewer:', comment.trim());
+    const commentText = comment.trim();
+    console.log('📤 Sending comment from viewer:', commentText);
+    console.log('📤 Socket state:', { 
+      socket: !!socket, 
+      connected: socket?.connected, 
+      id: socket?.id,
+      readyState: socket?.readyState 
+    });
+    console.log('📤 Stream ID:', streamId);
+    console.log('📤 Has access:', hasAccess);
 
     // Optimistically add comment to UI
     const newComment = {
@@ -1343,11 +1362,31 @@ newSocket.on('product-added', (data) => {
     
     setComment('');
 
-    // Emit comment to server
-    socket.emit('send-comment', {
-      streamId,
-      text: comment.trim()
-    });
+    // Emit comment to server with error handling
+    try {
+      console.log('📤 Emitting send-comment event...');
+      socket.emit('send-comment', {
+        streamId,
+        text: commentText
+      });
+      console.log('✅ send-comment event emitted successfully');
+      
+      // Add listener to check if server acknowledges
+      socket.once('comment-sent', (data) => {
+        console.log('✅ Server acknowledged comment:', data);
+      });
+      
+      // Check for errors
+      socket.once('comment-error', (error) => {
+        console.error('❌ Server returned comment error:', error);
+        setError(error.message || 'Failed to send comment');
+        setTimeout(() => setError(''), 3000);
+      });
+    } catch (error) {
+      console.error('❌ Error emitting send-comment:', error);
+      setError('Failed to send comment. Please try again.');
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
   // Detect iOS device
