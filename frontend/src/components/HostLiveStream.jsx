@@ -134,6 +134,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const [overlayComments, setOverlayComments] = useState([]);
   const [showFullscreenControls, setShowFullscreenControls] = useState(false);
   const [activeFullscreenTab, setActiveFullscreenTab] = useState('chat'); // 'chat', 'products', 'orders'
+  const [expandedOrderIndex, setExpandedOrderIndex] = useState(null); // Track expanded order in iPhone mode
   const videoContainerRef = useRef(null);
 
   // Background filter state
@@ -5481,35 +5482,128 @@ useEffect(() => {
                                 </div>
                               ) : (
                                 <div className="space-y-3">
-                                  {orders.map((order, i) => (
-                                    <div key={i} className="bg-white/10 border border-white/20 rounded-xl p-3 shadow-sm">
-                                      <button
-                                        onClick={() => {
-                                          const product = products[order.productIndex];
-                                          setSelectedOrderDetails({
-                                            order,
-                                            product
-                                          });
-                                        }}
-                                        className="w-full text-left hover:bg-white/20 p-3 rounded-xl transition"
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex-1">
-                                            <p className="font-semibold text-white">
-                                              {products[order.productIndex]?.name || 'Unknown Product'}
-                                            </p>
-                                            <p className="text-xs text-white/70 mt-1">
-                                              By: {order.buyer?.username || order.buyerUsername || 'Unknown Buyer'}
-                                            </p>
-                                            <p className="text-xs text-yellow-400 mt-1">
-                                              +{Math.ceil((products[order.productIndex]?.price || 0) * 100)} coins
-                                            </p>
+                                  {orders.map((order, i) => {
+                                    const product = products[order.productIndex];
+                                    const isExpanded = expandedOrderIndex === i;
+                                    const deliveryInfo = order.deliveryInfo || {};
+                                    
+                                    return (
+                                      <div key={i} className="bg-white/10 border border-white/20 rounded-xl shadow-sm overflow-hidden">
+                                        <button
+                                          onClick={() => {
+                                            setExpandedOrderIndex(isExpanded ? null : i);
+                                          }}
+                                          className="w-full text-left hover:bg-white/20 p-3 transition"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                              <p className="font-semibold text-white">
+                                                {product?.name || 'Unknown Product'}
+                                              </p>
+                                              <p className="text-xs text-white/70 mt-1">
+                                                By: {order.buyer?.username || order.buyerUsername || 'Unknown Buyer'}
+                                              </p>
+                                              <p className="text-xs text-yellow-400 mt-1">
+                                                +{Math.ceil((product?.price || 0) * 100)} coins
+                                              </p>
+                                            </div>
+                                            <ChevronDown 
+                                              className={`w-4 h-4 text-white/50 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`} 
+                                            />
                                           </div>
-                                          <ChevronDown className="w-4 h-4 text-white/50" />
-                                        </div>
-                                      </button>
-                                    </div>
-                                  ))}
+                                        </button>
+                                        
+                                        {/* Expanded Order Details */}
+                                        {isExpanded && product && (
+                                          <div className="px-3 pb-3 space-y-3 border-t border-white/20 pt-3 mt-2">
+                                            {/* Product Information */}
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                              <h5 className="font-semibold text-pink-300 mb-2 text-sm">Product Information</h5>
+                                              <div className="space-y-1.5 text-xs">
+                                                <p className="break-words"><span className="text-white/70">Product:</span> <span className="text-white font-semibold">{product.name}</span></p>
+                                                {product.description && (
+                                                  <p className="break-words"><span className="text-white/70">Description:</span> <span className="text-white">{product.description}</span></p>
+                                                )}
+                                                <p><span className="text-white/70">Price:</span> <span className="font-bold text-pink-400">${product.price}</span></p>
+                                                <p><span className="text-white/70">Quantity:</span> <span className="font-semibold text-white">{order.quantity || 1}</span></p>
+                                              </div>
+                                            </div>
+
+                                            {/* Buyer Information */}
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                              <h5 className="font-semibold text-blue-300 mb-2 text-sm">Buyer Information</h5>
+                                              <div className="space-y-1.5 text-xs">
+                                                <p className="break-words"><span className="text-white/70">Name:</span> <span className="text-white font-semibold">{order.buyer?.username || 'Unknown'}</span></p>
+                                                {order.buyer?.email && (
+                                                  <p className="break-words"><span className="text-white/70">Email:</span> <span className="text-white break-all">{order.buyer.email}</span></p>
+                                                )}
+                                                <p>
+                                                  <span className="text-white/70">Status:</span>{' '}
+                                                  <span
+                                                    className={`font-semibold ${
+                                                      order.status === 'completed'
+                                                        ? 'text-green-400'
+                                                        : order.status === 'pending'
+                                                        ? 'text-yellow-400'
+                                                        : 'text-red-400'
+                                                    }`}
+                                                  >
+                                                    {order.status || 'pending'}
+                                                  </span>
+                                                </p>
+                                                {order.orderedAt && (
+                                                  <p className="break-words"><span className="text-white/70">Order Date:</span> <span className="text-white">{new Date(order.orderedAt).toLocaleString()}</span></p>
+                                                )}
+                                              </div>
+                                            </div>
+
+                                            {/* Delivery Address */}
+                                            {deliveryInfo && Object.keys(deliveryInfo).length > 0 && (
+                                              <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                <h5 className="font-semibold text-emerald-300 mb-2 text-sm">Delivery Address</h5>
+                                                <div className="space-y-1.5 text-xs">
+                                                  {deliveryInfo.firstName && (
+                                                    <p className="break-words"><span className="text-white/70">Name:</span> <span className="text-white font-semibold">{deliveryInfo.firstName} {deliveryInfo.lastName}</span></p>
+                                                  )}
+                                                  {deliveryInfo.address && (
+                                                    <p className="break-words"><span className="text-white/70">Address:</span> <span className="text-white">{deliveryInfo.address}</span></p>
+                                                  )}
+                                                  {deliveryInfo.city && (
+                                                    <p className="break-words"><span className="text-white/70">City:</span> <span className="text-white">{deliveryInfo.city}</span></p>
+                                                  )}
+                                                  {deliveryInfo.state && (
+                                                    <p className="break-words"><span className="text-white/70">State/Province:</span> <span className="text-white">{deliveryInfo.state}</span></p>
+                                                  )}
+                                                  {deliveryInfo.zipCode && (
+                                                    <p className="break-words"><span className="text-white/70">ZIP/Postal Code:</span> <span className="text-white font-semibold">{deliveryInfo.zipCode}</span></p>
+                                                  )}
+                                                  {deliveryInfo.country && (
+                                                    <p className="break-words"><span className="text-white/70">Country:</span> <span className="text-white">{deliveryInfo.country}</span></p>
+                                                  )}
+                                                  {deliveryInfo.phone && (
+                                                    <p className="break-words"><span className="text-white/70">Phone:</span> <span className="text-white">{deliveryInfo.phone}</span></p>
+                                                  )}
+                                                  {deliveryInfo.email && (
+                                                    <p className="break-words"><span className="text-white/70">Email:</span> <span className="text-white break-all">{deliveryInfo.email}</span></p>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+
+                                            {/* Payment Information */}
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                              <h5 className="font-semibold text-amber-300 mb-2 text-sm">Payment Information</h5>
+                                              <div className="space-y-1.5 text-xs">
+                                                <p><span className="text-white/70">Amount:</span> <span className="font-bold text-pink-400">${product.price}</span></p>
+                                                <p><span className="text-white/70">Coins Earned:</span> <span className="font-bold text-yellow-400">{Math.ceil(product.price * 100)} coins</span></p>
+                                                <p><span className="text-white/70">Payment Method:</span> <span className="text-white">Coins</span></p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
@@ -5939,7 +6033,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {selectedOrderDetails && (
+        {selectedOrderDetails && !(isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
           <OrderDetailsModal
             order={selectedOrderDetails.order}
             product={selectedOrderDetails.product}
