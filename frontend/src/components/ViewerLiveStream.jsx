@@ -649,6 +649,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const videoContainerRef = useRef(null);
   const videoRef = useRef(null);
+  const fullscreenInputRef = useRef(null);
 
   const commentsEndRef = useRef(null);
 
@@ -1294,46 +1295,133 @@ newSocket.on('product-added', (data) => {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   const toggleFullscreen = async () => {
-    if (!videoContainerRef.current) return;
+    const container = videoContainerRef.current;
+    const videoEl = videoRef.current;
+
+    if (!container && !videoEl) return;
+
+    // More specific iOS detection (excludes iPad and Mac with touchscreen)
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isIPad = /iPad/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     try {
       if (!isFullscreen) {
-        // For iOS, use CSS-based fullscreen since container fullscreen API doesn't work
-        if (isIOS) {
-          // iOS doesn't support container fullscreen API, use CSS approach
+        // iPhone-specific: Use enhanced CSS fullscreen
+        if (isIPhone) {
+          // Scroll to top first to hide address bar
+          window.scrollTo(0, 1);
+
+          // Add fullscreen classes
+          container.classList.add('ios-fullscreen');
           document.body.classList.add('ios-fullscreen-active');
-          videoContainerRef.current.classList.add('ios-fullscreen');
+          document.documentElement.classList.add('ios-fullscreen-active');
+
+          // Apply aggressive inline styles to container to break out of parent
+          container.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: calc(var(--vh, 1vh) * 100) !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 2147483647 !important;
+            border-radius: 0 !important;
+            background: #000 !important;
+            transform: none !important;
+            -webkit-transform: translate3d(0,0,0) !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          `;
+
+          // Force viewport height calculation
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+          // Prevent body scroll
+          document.body.style.position = 'fixed';
+          document.body.style.top = '0';
+          document.body.style.left = '0';
+          document.body.style.right = '0';
+          document.body.style.bottom = '0';
+          document.body.style.width = '100%';
+          document.body.style.height = '100%';
           document.body.style.overflow = 'hidden';
+
+          // Also set on html
+          document.documentElement.style.position = 'fixed';
+          document.documentElement.style.width = '100%';
+          document.documentElement.style.height = '100%';
           document.documentElement.style.overflow = 'hidden';
-          // Force repaint to ensure styles apply
-          videoContainerRef.current.offsetHeight;
+
           setIsFullscreen(true);
+
+          // Request orientation lock if available
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {
+              console.log('Orientation lock not available');
+            });
+          }
+
           return;
         }
 
-        // For other browsers, use native fullscreen API
-        if (videoContainerRef.current.requestFullscreen) {
-          await videoContainerRef.current.requestFullscreen();
-        } else if (videoContainerRef.current.webkitRequestFullscreen) {
-          await videoContainerRef.current.webkitRequestFullscreen();
-        } else if (videoContainerRef.current.mozRequestFullScreen) {
-          await videoContainerRef.current.mozRequestFullScreen();
-        } else if (videoContainerRef.current.msRequestFullscreen) {
-          await videoContainerRef.current.msRequestFullscreen();
+        // iPad and desktop: Use native fullscreen API
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+          await container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+          await container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+          await container.msRequestFullscreen();
         } else {
           // Fallback to CSS-based fullscreen if API not available
-          videoContainerRef.current.classList.add('ios-fullscreen');
+          container.classList.add('ios-fullscreen');
+          document.body.classList.add('ios-fullscreen-active');
           document.body.style.overflow = 'hidden';
         }
+
         setIsFullscreen(true);
+
       } else {
         // Exit fullscreen
-        if (isIOS) {
-          // Remove CSS-based fullscreen for iOS
+        if (isIPhone) {
+          container.classList.remove('ios-fullscreen');
           document.body.classList.remove('ios-fullscreen-active');
-          videoContainerRef.current.classList.remove('ios-fullscreen');
+          document.documentElement.classList.remove('ios-fullscreen-active');
+
+          // Reset inline styles
+          container.style.cssText = '';
+
+          // Restore body scroll
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.left = '';
+          document.body.style.right = '';
+          document.body.style.bottom = '';
+          document.body.style.width = '';
+          document.body.style.height = '';
           document.body.style.overflow = '';
+
+          // Restore html styles
+          document.documentElement.style.position = '';
+          document.documentElement.style.width = '';
+          document.documentElement.style.height = '';
           document.documentElement.style.overflow = '';
+
+          // Unlock orientation
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+
           setIsFullscreen(false);
           return;
         }
@@ -1349,31 +1437,15 @@ newSocket.on('product-added', (data) => {
           await document.msExitFullscreen();
         } else {
           // Fallback: remove CSS-based fullscreen
-          videoContainerRef.current.classList.remove('ios-fullscreen');
+          container.classList.remove('ios-fullscreen');
+          document.body.classList.remove('ios-fullscreen-active');
           document.body.style.overflow = '';
         }
+
         setIsFullscreen(false);
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
-      // Fallback to CSS-based fullscreen on error
-      if (!isFullscreen) {
-        if (isIOS) {
-          document.body.classList.add('ios-fullscreen-active');
-        }
-        videoContainerRef.current.classList.add('ios-fullscreen');
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        setIsFullscreen(true);
-      } else {
-        if (isIOS) {
-          document.body.classList.remove('ios-fullscreen-active');
-        }
-        videoContainerRef.current.classList.remove('ios-fullscreen');
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        setIsFullscreen(false);
-      }
     }
   };
 
@@ -1457,7 +1529,274 @@ newSocket.on('product-added', (data) => {
     };
   }, [overlayComments.length]);
 
-  // Removed iPhone-specific auto-fullscreen - now works same as Android/other browsers
+  // Auto-fullscreen for iPhone users when stream is ready
+  useEffect(() => {
+    // Only detect iPhone specifically (not iPad or other iOS devices)
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const streamReady = stream && liveKitRoom && !loading;
+    console.log('🔍 Auto-fullscreen check:', { streamReady, isIPhone, isFullscreen });
+
+    // Only auto-fullscreen on iPhone when stream is ready
+    if (streamReady && isIPhone && !isFullscreen) {
+      console.log('📱 iPhone detected - attempting auto-fullscreen');
+      // Show toast notification
+      setShowFullscreenToast(true);
+
+      // Function to attempt fullscreen with retries
+      const attemptFullscreen = (attempts = 0) => {
+        const container = videoContainerRef.current;
+        console.log(`🔄 Fullscreen attempt ${attempts}:`, { container: !!container });
+        
+        // Check if already in fullscreen to avoid duplicate calls
+        if (container && container.classList.contains('ios-fullscreen')) {
+          console.log('✅ Already in fullscreen');
+          setIsFullscreen(true);
+          return;
+        }
+        
+        if (!container && attempts < 20) {
+          // Retry if container not ready yet (up to 4 seconds)
+          setTimeout(() => attemptFullscreen(attempts + 1), 200);
+          return;
+        }
+
+        if (container && !container.classList.contains('ios-fullscreen')) {
+          console.log('🎬 Applying iPhone fullscreen');
+          
+          // Use requestAnimationFrame to ensure DOM is ready
+          requestAnimationFrame(() => {
+            // Apply iPhone fullscreen directly
+            window.scrollTo(0, 1);
+
+            // Add fullscreen classes
+            container.classList.add('ios-fullscreen');
+            document.body.classList.add('ios-fullscreen-active');
+            document.documentElement.classList.add('ios-fullscreen-active');
+
+            // Apply aggressive inline styles to container to break out of parent
+            container.style.cssText = `
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              height: calc(var(--vh, 1vh) * 100) !important;
+              max-width: 100vw !important;
+              max-height: 100vh !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              z-index: 2147483647 !important;
+              border-radius: 0 !important;
+              background: #000 !important;
+              transform: none !important;
+              -webkit-transform: translate3d(0,0,0) !important;
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+            `;
+
+            // Force viewport height calculation
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+            // Prevent body scroll
+            document.body.style.position = 'fixed';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.bottom = '0';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.overflow = 'hidden';
+
+            // Also set on html
+            document.documentElement.style.position = 'fixed';
+            document.documentElement.style.width = '100%';
+            document.documentElement.style.height = '100%';
+            document.documentElement.style.overflow = 'hidden';
+
+            setIsFullscreen(true);
+            console.log('✅ Fullscreen applied with inline styles');
+
+            // Focus input to open keyboard immediately on iPhone - using multiple techniques
+            const triggerKeyboard = () => {
+              const input = fullscreenInputRef.current;
+              if (!input) return;
+
+              // Technique 1: Temporarily change input type to 'tel' (always shows keyboard on iOS), then change back
+              const originalType = input.type;
+              if (originalType === 'text') {
+                input.type = 'tel';
+                // Force reflow
+                void input.offsetHeight;
+                input.type = 'text';
+              }
+
+              // Technique 2: Programmatic click event (iOS responds better to this)
+              try {
+                const clickEvent = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window
+                });
+                input.dispatchEvent(clickEvent);
+              } catch (e) {
+                console.log('Click event dispatch failed:', e);
+              }
+
+              // Technique 3: Direct focus
+              input.focus();
+              
+              // Technique 4: Click method (iOS sometimes needs this)
+              if (input.click) {
+                input.click();
+              }
+              
+              // Technique 5: Set selection range (makes input more "active" on iOS)
+              if (input.setSelectionRange) {
+                try {
+                  const len = input.value.length || 0;
+                  input.setSelectionRange(len, len);
+                } catch (e) {
+                  // Ignore errors for inputs that don't support selection
+                }
+              }
+
+              // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
+              setTimeout(() => {
+                input.blur();
+                setTimeout(() => {
+                  try {
+                    const clickEvent = new MouseEvent('click', {
+                      bubbles: true,
+                      cancelable: true,
+                      view: window
+                    });
+                    input.dispatchEvent(clickEvent);
+                  } catch (e) { }
+                  input.focus();
+                  if (input.click) {
+                    input.click();
+                  }
+                }, 10);
+              }, 50);
+              
+              console.log('⌨️ Attempted to show keyboard with multiple techniques');
+            };
+
+            // Try multiple times with increasing delays
+            setTimeout(triggerKeyboard, 100);
+            setTimeout(triggerKeyboard, 300);
+            setTimeout(triggerKeyboard, 500);
+            setTimeout(triggerKeyboard, 800);
+            setTimeout(triggerKeyboard, 1000);
+
+            // Request orientation lock if available
+            if (screen.orientation && screen.orientation.lock) {
+              screen.orientation.lock('landscape').catch(() => {
+                console.log('Orientation lock not available');
+              });
+            }
+
+            // Hide toast after fullscreen is activated
+            setTimeout(() => {
+              setShowFullscreenToast(false);
+            }, 2000);
+          });
+        } else if (!container) {
+          console.warn('⚠️ Container not found after all retries');
+        }
+      };
+
+      // Start attempting fullscreen after a delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        attemptFullscreen();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [stream, liveKitRoom, loading]); // Trigger when stream becomes ready
+
+  // Auto-focus input to show keyboard when iPhone enters fullscreen mode
+  useEffect(() => {
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const streamReady = stream && liveKitRoom && !loading;
+    
+    if (isFullscreen && isIPhone && streamReady) {
+      // Aggressive focus with multiple techniques for iOS
+      const triggerKeyboard = () => {
+        const input = fullscreenInputRef.current;
+        if (!input) return;
+
+        // Technique 1: Temporarily change input type to 'tel' (always shows keyboard on iOS), then change back
+        const originalType = input.type;
+        if (originalType === 'text') {
+          input.type = 'tel';
+          // Force reflow
+          void input.offsetHeight;
+          input.type = 'text';
+        }
+
+        // Technique 2: Programmatic click event (iOS responds better to this)
+        try {
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          });
+          input.dispatchEvent(clickEvent);
+        } catch (e) {
+          console.log('Click event dispatch failed:', e);
+        }
+
+        // Technique 3: Direct focus
+        input.focus();
+        
+        // Technique 4: Click method (iOS sometimes needs this)
+        if (typeof input.click === 'function') {
+          input.click();
+        }
+        
+        // Technique 5: Set selection range
+        if (typeof input.setSelectionRange === 'function') {
+          try {
+            const len = input.value.length || 0;
+            input.setSelectionRange(len, len);
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+        
+        // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
+        setTimeout(() => {
+          input.blur();
+          setTimeout(() => {
+            try {
+              const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+              });
+              input.dispatchEvent(clickEvent);
+            } catch (e) {
+              // Ignore errors
+            }
+            input.focus();
+            if (typeof input.click === 'function') {
+              input.click();
+            }
+          }, 10);
+        }, 50);
+      };
+
+      // Try multiple times with increasing delays
+      setTimeout(triggerKeyboard, 100);
+      setTimeout(triggerKeyboard, 300);
+      setTimeout(triggerKeyboard, 500);
+    }
+  }, [isFullscreen, stream, liveKitRoom, loading]);
 
   if (loading) {
     return (
@@ -1987,6 +2326,7 @@ newSocket.on('product-added', (data) => {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
+                      ref={fullscreenInputRef}
                       type="text"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
