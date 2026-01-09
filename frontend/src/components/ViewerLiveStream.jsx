@@ -647,6 +647,24 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   const [showFullscreenControls, setShowFullscreenControls] = useState(false);
   const [activeFullscreenTab, setActiveFullscreenTab] = useState('comment'); // 'comment', 'products', 'gifts'
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
+  
+  // Inline checkout state for iPhone mode
+  const [expandedProductIndex, setExpandedProductIndex] = useState(null);
+  const [checkoutStep, setCheckoutStep] = useState('delivery');
+  const [deliveryInfo, setDeliveryInfo] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: ''
+  });
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [purchaseError, setPurchaseError] = useState('');
+  
   const videoContainerRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -1004,6 +1022,137 @@ newSocket.on('product-added', (data) => {
       crown: '👑'
     };
     return icons[type] || '🎁';
+  };
+
+  // Inline checkout handlers for iPhone mode
+  const validateDeliveryInfo = () => {
+    const { firstName, lastName, email, phone, address, city, state, zipCode, country } = deliveryInfo;
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setPurchaseError('First and last name are required');
+      return false;
+    }
+
+    if (!email.trim() || !email.includes('@')) {
+      setPurchaseError('Valid email is required');
+      return false;
+    }
+
+    if (!phone.trim()) {
+      setPurchaseError('Phone number is required');
+      return false;
+    }
+
+    if (!address.trim()) {
+      setPurchaseError('Address is required');
+      return false;
+    }
+
+    if (!city.trim()) {
+      setPurchaseError('City is required');
+      return false;
+    }
+
+    if (!state.trim()) {
+      setPurchaseError('State/Province is required');
+      return false;
+    }
+
+    if (!zipCode.trim()) {
+      setPurchaseError('ZIP/Postal code is required');
+      return false;
+    }
+
+    if (!country.trim()) {
+      setPurchaseError('Country is required');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleDeliveryChange = (field, value) => {
+    setDeliveryInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setPurchaseError('');
+  };
+
+  const handleContinueCheckout = () => {
+    if (validateDeliveryInfo()) {
+      setCheckoutStep('confirmation');
+      setPurchaseError('');
+    }
+  };
+
+  const handleInlinePurchase = async (product) => {
+    setPurchaseLoading(true);
+    setPurchaseError('');
+
+    const coinCost = Math.ceil(product.price * 100);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/live/${streamId}/purchase-with-coins`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify({
+          productIndex: product.index,
+          coinCost,
+          deliveryInfo: deliveryInfo
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        // Reset checkout state
+        setExpandedProductIndex(null);
+        setCheckoutStep('delivery');
+        setDeliveryInfo({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: ''
+        });
+        
+        // Refresh coin balance
+        const fetchUserCoinBalance = async () => {
+          try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/live/user/coin-balance`, {
+              headers: {
+                ...(token && { Authorization: `Bearer ${token}` })
+              }
+            });
+            const data = await response.json();
+            if (response.ok) {
+              setUserCoinBalance(data.balance || 0);
+            }
+          } catch (err) {
+            console.error('Error fetching coin balance:', err);
+          }
+        };
+        fetchUserCoinBalance();
+        
+        setError('Purchase successful! Your order has been placed. Check your email for confirmation.');
+        setTimeout(() => setError(''), 5000);
+      } else {
+        setPurchaseError(data.msg || 'Failed to complete purchase');
+      }
+    } catch (err) {
+      setPurchaseError('Purchase failed: ' + err.message);
+    } finally {
+      setPurchaseLoading(false);
+    }
   };
 
   const fetchStream = async () => {
@@ -2043,7 +2192,7 @@ newSocket.on('product-added', (data) => {
         </div>
       )}
 
-      {showCartModal && selectedProduct && (
+      {showCartModal && selectedProduct && !(isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
         <CheckoutModal
           product={selectedProduct}
           streamId={streamId}
@@ -2402,50 +2551,279 @@ newSocket.on('product-added', (data) => {
                               </div>
                             ) : (
                               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                                {products.map((p, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20"
-                                  >
-                                    {p.imageUrl && (
-                                      <img
-                                        src={p.imageUrl}
-                                        alt={p.name}
-                                        className="w-full h-32 object-cover rounded-lg mb-3"
-                                      />
-                                    )}
-                                    <h4 className="font-semibold text-white mb-1">{p.name}</h4>
-                                    <p className="text-white/70 text-sm mb-2 line-clamp-2">{p.description}</p>
-                                    <p className="font-bold text-pink-400 mb-3">${p.price}</p>
-                                    {p.type === 'product' ? (
-                                      <button
-                                        onClick={() => {
-                                          const token = localStorage.getItem('token');
-                                          if (!token) {
-                                            setError('Please log in to purchase');
-                                            setTimeout(() => setError(''), 3000);
-                                            return;
-                                          }
-                                          setSelectedProduct({ ...p, index: i });
-                                          setShowCartModal(true);
-                                          setShowFullscreenControls(false);
-                                        }}
-                                        className="w-full bg-pink-600 hover:bg-pink-700 py-2.5 rounded-xl text-sm font-semibold text-white transition"
-                                      >
-                                        {t('viewerStream.buyNow')}
-                                      </button>
-                                    ) : (
-                                      <a
-                                        href={p.link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full bg-white/10 text-white border border-white/20 hover:bg-white/20 py-2.5 rounded-xl text-sm font-semibold transition block text-center"
-                                      >
-                                        {t('viewerStream.viewAd')}
-                                      </a>
-                                    )}
-                                  </div>
-                                ))}
+                                {products.map((p, i) => {
+                                  const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                                  const isExpanded = expandedProductIndex === i;
+                                  const coinCost = Math.ceil(p.price * 100);
+                                  
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden"
+                                    >
+                                      <div className="p-4">
+                                        {p.imageUrl && (
+                                          <img
+                                            src={p.imageUrl}
+                                            alt={p.name}
+                                            className="w-full h-32 object-cover rounded-lg mb-3"
+                                          />
+                                        )}
+                                        <h4 className="font-semibold text-white mb-1">{p.name}</h4>
+                                        <p className="text-white/70 text-sm mb-2 line-clamp-2">{p.description}</p>
+                                        <p className="font-bold text-pink-400 mb-3">${p.price}</p>
+                                        {p.type === 'product' ? (
+                                          <button
+                                            onClick={() => {
+                                              const token = localStorage.getItem('token');
+                                              if (!token) {
+                                                setError('Please log in to purchase');
+                                                setTimeout(() => setError(''), 3000);
+                                                return;
+                                              }
+                                              
+                                              // On iPhone, show inline checkout; otherwise use modal
+                                              if (isIPhone && isFullscreen) {
+                                                setExpandedProductIndex(isExpanded ? null : i);
+                                                setCheckoutStep('delivery');
+                                                setDeliveryInfo({
+                                                  firstName: '',
+                                                  lastName: '',
+                                                  email: '',
+                                                  phone: '',
+                                                  address: '',
+                                                  city: '',
+                                                  state: '',
+                                                  zipCode: '',
+                                                  country: ''
+                                                });
+                                                setPurchaseError('');
+                                              } else {
+                                                setSelectedProduct({ ...p, index: i });
+                                                setShowCartModal(true);
+                                                setShowFullscreenControls(false);
+                                              }
+                                            }}
+                                            className="w-full bg-pink-600 hover:bg-pink-700 py-2.5 rounded-xl text-sm font-semibold text-white transition"
+                                          >
+                                            {t('viewerStream.buyNow')}
+                                          </button>
+                                        ) : (
+                                          <a
+                                            href={p.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full bg-white/10 text-white border border-white/20 hover:bg-white/20 py-2.5 rounded-xl text-sm font-semibold transition block text-center"
+                                          >
+                                            {t('viewerStream.viewAd')}
+                                          </a>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Inline Checkout Form for iPhone */}
+                                      {isExpanded && isIPhone && isFullscreen && p.type === 'product' && (
+                                        <div className="px-4 pb-4 space-y-4 border-t border-white/20 pt-4 mt-2">
+                                          {checkoutStep === 'delivery' ? (
+                                            <>
+                                              <div className="bg-white/5 border border-white/10 rounded-lg p-3 mb-3">
+                                                <p className="text-xs text-white/70 mb-1">Product</p>
+                                                <p className="font-semibold text-white text-sm">{p.name}</p>
+                                                <p className="text-white/70 text-xs mt-1">{p.description}</p>
+                                                <p className="font-bold text-pink-400 mt-2">${p.price} ({coinCost} coins)</p>
+                                              </div>
+
+                                              <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                  <label className="block text-xs font-medium mb-1 text-white/70">First Name *</label>
+                                                  <input
+                                                    type="text"
+                                                    value={deliveryInfo.firstName}
+                                                    onChange={(e) => handleDeliveryChange('firstName', e.target.value)}
+                                                    placeholder="First name"
+                                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <label className="block text-xs font-medium mb-1 text-white/70">Last Name *</label>
+                                                  <input
+                                                    type="text"
+                                                    value={deliveryInfo.lastName}
+                                                    onChange={(e) => handleDeliveryChange('lastName', e.target.value)}
+                                                    placeholder="Last name"
+                                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                  />
+                                                </div>
+                                              </div>
+
+                                              <div>
+                                                <label className="block text-xs font-medium mb-1 text-white/70">Email *</label>
+                                                <input
+                                                  type="email"
+                                                  value={deliveryInfo.email}
+                                                  onChange={(e) => handleDeliveryChange('email', e.target.value)}
+                                                  placeholder="your@email.com"
+                                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                />
+                                              </div>
+
+                                              <div>
+                                                <label className="block text-xs font-medium mb-1 text-white/70">Phone *</label>
+                                                <input
+                                                  type="tel"
+                                                  value={deliveryInfo.phone}
+                                                  onChange={(e) => handleDeliveryChange('phone', e.target.value)}
+                                                  placeholder="+1 (555) 000-0000"
+                                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                />
+                                              </div>
+
+                                              <div>
+                                                <label className="block text-xs font-medium mb-1 text-white/70">Address *</label>
+                                                <input
+                                                  type="text"
+                                                  value={deliveryInfo.address}
+                                                  onChange={(e) => handleDeliveryChange('address', e.target.value)}
+                                                  placeholder="123 Main Street"
+                                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                />
+                                              </div>
+
+                                              <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                  <label className="block text-xs font-medium mb-1 text-white/70">City *</label>
+                                                  <input
+                                                    type="text"
+                                                    value={deliveryInfo.city}
+                                                    onChange={(e) => handleDeliveryChange('city', e.target.value)}
+                                                    placeholder="City"
+                                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <label className="block text-xs font-medium mb-1 text-white/70">State *</label>
+                                                  <input
+                                                    type="text"
+                                                    value={deliveryInfo.state}
+                                                    onChange={(e) => handleDeliveryChange('state', e.target.value)}
+                                                    placeholder="State"
+                                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                  />
+                                                </div>
+                                              </div>
+
+                                              <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                  <label className="block text-xs font-medium mb-1 text-white/70">ZIP *</label>
+                                                  <input
+                                                    type="text"
+                                                    value={deliveryInfo.zipCode}
+                                                    onChange={(e) => handleDeliveryChange('zipCode', e.target.value)}
+                                                    placeholder="12345"
+                                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <label className="block text-xs font-medium mb-1 text-white/70">Country *</label>
+                                                  <input
+                                                    type="text"
+                                                    value={deliveryInfo.country}
+                                                    onChange={(e) => handleDeliveryChange('country', e.target.value)}
+                                                    placeholder="Country"
+                                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-pink-500"
+                                                  />
+                                                </div>
+                                              </div>
+
+                                              {purchaseError && (
+                                                <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-2 rounded-lg text-xs">
+                                                  {purchaseError}
+                                                </div>
+                                              )}
+
+                                              <div className="flex gap-2 pt-2">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setExpandedProductIndex(null)}
+                                                  className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg text-sm font-semibold transition"
+                                                >
+                                                  Cancel
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={handleContinueCheckout}
+                                                  className="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-2 rounded-lg text-sm font-semibold transition"
+                                                >
+                                                  Continue
+                                                </button>
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <div className="bg-white/5 border border-white/10 rounded-lg p-3 mb-3">
+                                                <p className="text-xs text-white/70 mb-2">Order Summary</p>
+                                                <p className="font-semibold text-white text-sm">{p.name}</p>
+                                                <div className="flex justify-between text-xs mt-2">
+                                                  <span className="text-white/70">Price:</span>
+                                                  <span className="text-white font-semibold">${p.price}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs mt-1">
+                                                  <span className="text-white/70">Coins:</span>
+                                                  <span className="text-yellow-400 font-semibold">{coinCost} coins</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs mt-1">
+                                                  <span className="text-white/70">Your Balance:</span>
+                                                  <span className={userCoinBalance >= coinCost ? 'text-green-400 font-semibold' : 'text-red-400 font-semibold'}>
+                                                    {userCoinBalance} coins
+                                                  </span>
+                                                </div>
+                                              </div>
+
+                                              <div className="bg-white/5 border border-white/10 rounded-lg p-3 mb-3">
+                                                <p className="text-xs text-white/70 mb-2">Delivery To:</p>
+                                                <p className="text-white text-xs font-semibold">{deliveryInfo.firstName} {deliveryInfo.lastName}</p>
+                                                <p className="text-white/70 text-xs mt-1">{deliveryInfo.address}</p>
+                                                <p className="text-white/70 text-xs">{deliveryInfo.city}, {deliveryInfo.state} {deliveryInfo.zipCode}</p>
+                                                <p className="text-white/70 text-xs">{deliveryInfo.country}</p>
+                                                <p className="text-white/50 text-xs mt-2">Email: {deliveryInfo.email}</p>
+                                                <p className="text-white/50 text-xs">Phone: {deliveryInfo.phone}</p>
+                                              </div>
+
+                                              {purchaseError && (
+                                                <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-2 rounded-lg text-xs">
+                                                  {purchaseError}
+                                                </div>
+                                              )}
+
+                                              {userCoinBalance < coinCost && (
+                                                <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-2 rounded-lg text-xs">
+                                                  Insufficient coins. You need {coinCost - userCoinBalance} more coins.
+                                                </div>
+                                              )}
+
+                                              <div className="flex gap-2 pt-2">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setCheckoutStep('delivery')}
+                                                  className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg text-sm font-semibold transition"
+                                                >
+                                                  Back
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleInlinePurchase(p)}
+                                                  disabled={purchaseLoading || userCoinBalance < coinCost}
+                                                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white py-2 rounded-lg text-sm font-semibold transition"
+                                                >
+                                                  {purchaseLoading ? 'Processing...' : 'Confirm Purchase'}
+                                                </button>
+                                              </div>
+                                            </>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
