@@ -4849,7 +4849,7 @@ useEffect(() => {
                   </div>
                 )}
 
-                {/* Comments Overlay - Instagram style - Show for non-iPhone fullscreen */}
+                {/* Comments Overlay - Instagram style - Show for non-iPhone fullscreen when controls panel is closed */}
                 {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && !showFullscreenControls && (
                   <div
                     className="comment-overlay"
@@ -4890,6 +4890,530 @@ useEffect(() => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Floating Menu Button for Android/Desktop Fullscreen */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <button
+                    onClick={() => {
+                      const willShow = !showFullscreenControls;
+                      setShowFullscreenControls(willShow);
+                      
+                      // Clear timeout when manually closing
+                      if (!willShow && fullscreenControlsTimeoutRef.current) {
+                        clearTimeout(fullscreenControlsTimeoutRef.current);
+                        fullscreenControlsTimeoutRef.current = null;
+                      }
+                    }}
+                    className="absolute top-4 right-4 z-50 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/20"
+                    style={{ zIndex: 2147483646 }}
+                  >
+                    {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+                  </button>
+                )}
+
+                {/* Fullscreen Controls Panel for Android/Desktop - Same as iPhone */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && showFullscreenControls && (
+                  <div
+                    className="absolute top-0 right-0 h-full w-full max-w-md bg-black/95 backdrop-blur-xl text-white z-50 flex flex-col"
+                    style={{
+                      zIndex: 2147483647,
+                      animation: 'slideInRight 0.3s ease-out',
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div className="p-4 border-b border-white/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold">{t('stream.streamControls')}</h3>
+                        <button
+                          onClick={() => {
+                            // Clear auto-hide timeout when manually closing
+                            if (fullscreenControlsTimeoutRef.current) {
+                              clearTimeout(fullscreenControlsTimeoutRef.current);
+                              fullscreenControlsTimeoutRef.current = null;
+                            }
+                            setShowFullscreenControls(false);
+                          }}
+                          className="p-2 hover:bg-white/10 rounded-full transition"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                      {/* Coins Earned Display */}
+                      <div className="bg-white/10 border border-white/20 rounded-lg p-2 mt-2">
+                        <p className="text-xs text-white/70">{t('stream.totalCoinsEarned')}</p>
+                        <p className="text-lg font-semibold text-yellow-400">{coinBalance} {t('common.coins')}</p>
+                      </div>
+                    </div>
+
+                    {/* Share Button */}
+                    <div className="px-4 py-3 border-b border-white/20">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleShareClick();
+                        }}
+                        className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all shadow-lg"
+                      >
+                        <Share2 className="w-5 h-5" />
+                        {t('stream.shareStream')}
+                      </button>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex border-b border-white/20">
+                      <button
+                        onClick={() => setActiveFullscreenTab('chat')}
+                        className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'chat' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                          }`}
+                      >
+                        <MessageCircle className="w-4 h-4 inline mr-2" />
+                        {t('chat.chat')}
+                      </button>
+                      <button
+                        onClick={() => setActiveFullscreenTab('products')}
+                        className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'products' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                          }`}
+                      >
+                        <Gift className="w-4 h-4 inline mr-2" />
+                        {t('products.products')}
+                      </button>
+                      <button
+                        onClick={() => setActiveFullscreenTab('orders')}
+                        className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'orders' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                          }`}
+                      >
+                        📦 {t('orders.orders')}
+                      </button>
+                      <button
+                        onClick={() => setActiveFullscreenTab('gifts')}
+                        className={`flex-1 px-4 py-3 text-sm font-semibold transition ${activeFullscreenTab === 'gifts' ? 'bg-white/10 border-b-2 border-pink-500' : 'hover:bg-white/5'
+                          }`}
+                      >
+                        🎁 {t('gifts.gifts')}
+                      </button>
+                    </div>
+
+                    {/* Tab Content - Reuse the same content from iPhone section */}
+                    <div className="flex-1 overflow-y-auto" style={{ 
+                      WebkitOverflowScrolling: 'touch',
+                      paddingBottom: 'env(safe-area-inset-bottom)'
+                    }}>
+                      <div className="p-4">
+                        {/* Chat Tab */}
+                        {activeFullscreenTab === 'chat' && (
+                          <div className="space-y-4 h-full flex flex-col">
+                            <div className="flex-1 overflow-y-auto space-y-3" style={{ 
+                              maxHeight: 'calc(100vh - 350px)',
+                              WebkitOverflowScrolling: 'touch'
+                            }}>
+                              {comments.map((c) => (
+                                <div key={c.id} className="space-y-2">
+                                  <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1">
+                                        <span className="font-semibold text-pink-300">@{c.username}: </span>
+                                        <span className="text-white/90 text-sm">{c.text}</span>
+                                      </div>
+                                      <button
+                                        onClick={() => setReplyingTo(c)}
+                                        className="flex-shrink-0 text-pink-400 hover:text-pink-300 p-1 rounded transition"
+                                      >
+                                        <Reply className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  {c.replies && c.replies.length > 0 && (
+                                    <div className="ml-6 space-y-2">
+                                      {c.replies.map((reply) => (
+                                        <div
+                                          key={reply._id || reply.id}
+                                          className={`text-sm rounded-xl px-3 py-2 ${reply.isHost ? 'bg-pink-500/20 border border-pink-500/50' : 'bg-white/5'
+                                            }`}
+                                        >
+                                          <div className="flex items-start gap-1">
+                                            {reply.isHost && <span>👑</span>}
+                                            <span className="font-semibold text-pink-300">@{reply.username}:</span>
+                                            <span className="text-white/90">{reply.text}</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                              {comments.length === 0 && (
+                                <div className="text-center text-white/50 py-8">
+                                  <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                  <p className="text-sm">{t('chat.waitingForComments')}</p>
+                                </div>
+                              )}
+                              <div ref={commentsEndRef} />
+                            </div>
+
+                            {replyingTo && (
+                              <div className="mb-2 flex items-center justify-between bg-pink-500/20 border border-pink-500/50 rounded-lg px-3 py-2">
+                                <span className="text-sm text-pink-300">
+                                  {t('chat.replyingTo')} <span className="font-semibold">@{replyingTo.username}</span>
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    setReplyingTo(null);
+                                    setReplyText('');
+                                  }}
+                                  className="text-pink-300 hover:text-pink-200"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 sticky bottom-0 bg-black/95 py-3 px-4 -mx-4">
+                              <input
+                                ref={replyInputRef}
+                                type="text"
+                                inputMode="text"
+                                autoComplete="off"
+                                autoCapitalize="off"
+                                autoCorrect="off"
+                                spellCheck="false"
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter' && replyingTo) {
+                                    handleSendReply();
+                                  }
+                                }}
+                                placeholder={replyingTo ? t('chat.typeReply') : t('chat.clickReply')}
+                                disabled={!replyingTo}
+                                className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                              />
+                              <button
+                                onClick={handleSendReply}
+                                disabled={!replyText.trim() || !replyingTo}
+                                className="bg-pink-600 text-white p-2 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                              >
+                                <Send className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Products Tab - Same as iPhone */}
+                        {activeFullscreenTab === 'products' && (
+                          <div className="space-y-4 pb-8">
+                            <h4 className="font-semibold text-lg mb-4">{t('products.addProduct')}</h4>
+                            
+                            <select
+                              value={newProduct.type}
+                              onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            >
+                              <option value="product" className="bg-black">{t('products.product')}</option>
+                              <option value="ad" className="bg-black">{t('products.ad')}</option>
+                            </select>
+
+                            <input
+                              placeholder={t('products.name')}
+                              inputMode="text"
+                              autoComplete="off"
+                              value={newProduct.name}
+                              onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            />
+
+                            <input
+                              placeholder={t('products.description')}
+                              inputMode="text"
+                              autoComplete="off"
+                              value={newProduct.description}
+                              onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            />
+
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder={t('products.price')}
+                              value={newProduct.price}
+                              onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            />
+
+                            <div className="mb-2">
+                              <label className="block text-sm font-medium mb-1 text-white/80">{t('products.image')}</label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  setNewProduct({ ...newProduct, imageFile: file });
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setNewProduct((prev) => ({ ...prev, imagePreview: reader.result }));
+                                  };
+                                  reader.readAsDataURL(file);
+                                }}
+                                className="w-full text-sm text-white/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-600 file:text-white"
+                              />
+                              {newProduct.imagePreview && (
+                                <img
+                                  src={newProduct.imagePreview}
+                                  alt="Preview"
+                                  className="mt-2 w-full h-48 object-cover rounded-lg"
+                                />
+                              )}
+                            </div>
+
+                            <input
+                              placeholder={`${t('products.link')} (${t('common.cancel')})`}
+                              inputMode="url"
+                              autoComplete="off"
+                              value={newProduct.link}
+                              onChange={(e) => setNewProduct({ ...newProduct, link: e.target.value })}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 mb-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            />
+
+                            <button
+                              onClick={async () => {
+                                if (!newProduct.name || !newProduct.price || !newProduct.imageFile) {
+                                  setError("Name, price and image are required");
+                                  return;
+                                }
+                                const formData = new FormData();
+                                formData.append("type", newProduct.type);
+                                formData.append("name", newProduct.name);
+                                formData.append("description", newProduct.description);
+                                formData.append("price", newProduct.price.toString());
+                                formData.append("file", newProduct.imageFile);
+                                if (newProduct.link) formData.append("link", newProduct.link);
+                                try {
+                                  const token = localStorage.getItem("token");
+                                  const response = await fetch(`${API_BASE_URL}/live/${streamData.streamId}/add-product`, {
+                                    method: "POST",
+                                    headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+                                    body: formData,
+                                  });
+                                  const data = await response.json();
+                                  if (response.ok) {
+                                    setProducts(prev => [...prev, { ...data.product, index: prev.length }]);
+                                    setNewProduct({
+                                      type: "product",
+                                      name: "",
+                                      description: "",
+                                      price: 0,
+                                      imageFile: null,
+                                      imagePreview: "",
+                                      link: "",
+                                    });
+                                    setError("");
+                                  } else {
+                                    setError(data.msg || "Failed to add product");
+                                  }
+                                } catch {
+                                  setError("Failed to add product");
+                                }
+                              }}
+                              className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+                            >
+                              {t('products.addProductBtn')}
+                            </button>
+
+                            <div className="mt-4">
+                              <h5 className="font-semibold mb-2 text-white/80">Added Items ({products.length})</h5>
+                              {products.length === 0 ? (
+                                <p className="text-white/50 text-sm">No items added yet</p>
+                              ) : (
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {products.map((p, i) => (
+                                    <div key={i} className="bg-white/10 rounded-lg p-2 flex items-center gap-3">
+                                      {p.imageUrl && (
+                                        <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                                      )}
+                                      <div className="flex-1">
+                                        <p className="font-medium text-white">{p.name}</p>
+                                        <p className="text-sm text-white/70">${p.price}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Orders Tab - Same as iPhone */}
+                        {activeFullscreenTab === 'orders' && (
+                          <div className="space-y-4 pb-8">
+                            <h4 className="font-semibold text-lg mb-4">{t('orders.orders')} ({orders.length})</h4>
+                            {orders.length === 0 ? (
+                              <div className="text-center text-white/50 py-8">
+                                <p className="text-sm">{t('orders.noOrdersYet')}</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {orders.map((order, i) => {
+                                  const product = products[order.productIndex];
+                                  const isExpanded = expandedOrderIndex === i;
+                                  const deliveryInfo = order.deliveryInfo || {};
+                                  
+                                  return (
+                                    <div key={i} className="bg-white/10 border border-white/20 rounded-xl shadow-sm overflow-hidden">
+                                      <button
+                                        onClick={() => {
+                                          setExpandedOrderIndex(isExpanded ? null : i);
+                                        }}
+                                        className="w-full text-left hover:bg-white/20 p-3 transition"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1">
+                                            <p className="font-semibold text-white">
+                                              {product?.name || 'Unknown Product'}
+                                            </p>
+                                            <p className="text-xs text-white/70 mt-1">
+                                              By: {order.buyer?.username || order.buyerUsername || 'Unknown Buyer'}
+                                            </p>
+                                            <p className="text-xs text-yellow-400 mt-1">
+                                              +{Math.ceil((product?.price || 0) * 100)} coins
+                                            </p>
+                                          </div>
+                                          <ChevronDown 
+                                            className={`w-4 h-4 text-white/50 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`} 
+                                          />
+                                        </div>
+                                      </button>
+                                      
+                                      {/* Expanded Order Details - Same as iPhone */}
+                                      {isExpanded && product && (
+                                        <div className="px-3 pb-3 space-y-3 border-t border-white/20 pt-3 mt-2">
+                                          {/* Product Information */}
+                                          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                            <h5 className="font-semibold text-pink-300 mb-2 text-sm">Product Information</h5>
+                                            <div className="space-y-1.5 text-xs">
+                                              <p className="break-words"><span className="text-white/70">Product:</span> <span className="text-white font-semibold">{product.name}</span></p>
+                                              {product.description && (
+                                                <p className="break-words"><span className="text-white/70">Description:</span> <span className="text-white">{product.description}</span></p>
+                                              )}
+                                              <p><span className="text-white/70">Price:</span> <span className="font-bold text-pink-400">${product.price}</span></p>
+                                              <p><span className="text-white/70">Quantity:</span> <span className="font-semibold text-white">{order.quantity || 1}</span></p>
+                                            </div>
+                                          </div>
+
+                                          {/* Buyer Information */}
+                                          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                            <h5 className="font-semibold text-blue-300 mb-2 text-sm">Buyer Information</h5>
+                                            <div className="space-y-1.5 text-xs">
+                                              <p className="break-words"><span className="text-white/70">Name:</span> <span className="text-white font-semibold">{order.buyer?.username || 'Unknown'}</span></p>
+                                              {order.buyer?.email && (
+                                                <p className="break-words"><span className="text-white/70">Email:</span> <span className="text-white break-all">{order.buyer.email}</span></p>
+                                              )}
+                                              <p>
+                                                <span className="text-white/70">Status:</span>{' '}
+                                                <span
+                                                  className={`font-semibold ${
+                                                    order.status === 'completed'
+                                                      ? 'text-green-400'
+                                                      : order.status === 'pending'
+                                                      ? 'text-yellow-400'
+                                                      : 'text-red-400'
+                                                  }`}
+                                                >
+                                                  {order.status || 'pending'}
+                                                </span>
+                                              </p>
+                                              {order.orderedAt && (
+                                                <p className="break-words"><span className="text-white/70">Order Date:</span> <span className="text-white">{new Date(order.orderedAt).toLocaleString()}</span></p>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          {/* Delivery Address */}
+                                          {deliveryInfo && Object.keys(deliveryInfo).length > 0 && (
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                              <h5 className="font-semibold text-emerald-300 mb-2 text-sm">Delivery Address</h5>
+                                              <div className="space-y-1.5 text-xs">
+                                                {deliveryInfo.firstName && (
+                                                  <p className="break-words"><span className="text-white/70">Name:</span> <span className="text-white font-semibold">{deliveryInfo.firstName} {deliveryInfo.lastName}</span></p>
+                                                )}
+                                                {deliveryInfo.address && (
+                                                  <p className="break-words"><span className="text-white/70">Address:</span> <span className="text-white">{deliveryInfo.address}</span></p>
+                                                )}
+                                                {deliveryInfo.city && (
+                                                  <p className="break-words"><span className="text-white/70">City:</span> <span className="text-white">{deliveryInfo.city}</span></p>
+                                                )}
+                                                {deliveryInfo.state && (
+                                                  <p className="break-words"><span className="text-white/70">State/Province:</span> <span className="text-white">{deliveryInfo.state}</span></p>
+                                                )}
+                                                {deliveryInfo.zipCode && (
+                                                  <p className="break-words"><span className="text-white/70">ZIP/Postal Code:</span> <span className="text-white font-semibold">{deliveryInfo.zipCode}</span></p>
+                                                )}
+                                                {deliveryInfo.country && (
+                                                  <p className="break-words"><span className="text-white/70">Country:</span> <span className="text-white">{deliveryInfo.country}</span></p>
+                                                )}
+                                                {deliveryInfo.phone && (
+                                                  <p className="break-words"><span className="text-white/70">Phone:</span> <span className="text-white">{deliveryInfo.phone}</span></p>
+                                                )}
+                                                {deliveryInfo.email && (
+                                                  <p className="break-words"><span className="text-white/70">Email:</span> <span className="text-white break-all">{deliveryInfo.email}</span></p>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Payment Information */}
+                                          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                            <h5 className="font-semibold text-amber-300 mb-2 text-sm">Payment Information</h5>
+                                            <div className="space-y-1.5 text-xs">
+                                              <p><span className="text-white/70">Amount:</span> <span className="font-bold text-pink-400">${product.price}</span></p>
+                                              <p><span className="text-white/70">Coins Earned:</span> <span className="font-bold text-yellow-400">{Math.ceil(product.price * 100)} coins</span></p>
+                                              <p><span className="text-white/70">Payment Method:</span> <span className="text-white">Coins</span></p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Gifts Tab - Same as iPhone */}
+                        {activeFullscreenTab === 'gifts' && (
+                          <div className="space-y-4 pb-8">
+                            <h4 className="font-semibold text-lg mb-4">{t('gifts.gifts')} ({tips.length})</h4>
+                            {tips.length === 0 ? (
+                              <div className="text-center text-white/50 py-8">
+                                <p className="text-sm">{t('stream.noTipsYet')}</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {tips.slice(-10).reverse().map((tip) => (
+                                  <div key={tip.id} className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 flex items-center justify-between shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-3xl">{getGiftIcon(tip.giftType)}</span>
+                                      <div>
+                                        <p className="text-sm font-semibold text-white">{tip.username}</p>
+                                        <p className="text-xs text-white/70">
+                                          {tip.timestamp ? new Date(tip.timestamp).toLocaleTimeString() : ''}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <span className="text-pink-400 font-semibold text-lg">+{tip.amount}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
