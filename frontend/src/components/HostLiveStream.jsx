@@ -2655,11 +2655,25 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
   const processVideoWithBackground = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
     // For background images, use MediaPipe segmentation for proper person/background separation
     if (bgType === 'image') {
-      // Check if SelfieSegmentation is available
-      if (!SelfieSegmentation || typeof SelfieSegmentation !== 'function') {
-        console.error('❌ SelfieSegmentation is not available');
-        throw new Error('MediaPipe SelfieSegmentation is not available. Please check the import.');
+      // Wait and check if SelfieSegmentation is available - it might need time after cleanup
+      let checkAttempts = 0;
+      const maxCheckAttempts = 20;
+      
+      while ((!SelfieSegmentation || typeof SelfieSegmentation !== 'function') && checkAttempts < maxCheckAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        checkAttempts++;
       }
+      
+      if (!SelfieSegmentation || typeof SelfieSegmentation !== 'function') {
+        console.error('❌ SelfieSegmentation is not available after waiting:', {
+          exists: !!SelfieSegmentation,
+          type: typeof SelfieSegmentation,
+          isFunction: typeof SelfieSegmentation === 'function',
+          checkAttempts
+        });
+        throw new Error('MediaPipe SelfieSegmentation is not available. The library may need to be reloaded.');
+      }
+      
       console.log('🎬 Using MediaPipe segmentation for background image');
       // Continue with MediaPipe code below
     } else {
@@ -2732,38 +2746,51 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     // Clean up any existing instance first and wait for cleanup to complete
     if (selfieSegmentationRef.current) {
       try {
+        console.log('🧹 Cleaning up previous MediaPipe instance...');
         selfieSegmentationRef.current.close();
         selfieSegmentationRef.current = null;
         // Wait longer for MediaPipe to fully clean up before re-initializing
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('⏳ Waiting for MediaPipe cleanup to complete...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
       } catch (cleanupErr) {
         console.warn('Error cleaning up previous MediaPipe instance:', cleanupErr);
         selfieSegmentationRef.current = null;
         // Still wait a bit longer
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
       }
     }
     
     let selfieSegmentation;
     try {
-      // Check if SelfieSegmentation is available - wait a bit if it's not ready
+      // Double-check that SelfieSegmentation is available after cleanup
+      // Sometimes the module needs time to be ready again
+      console.log('🔍 Checking SelfieSegmentation availability...');
       let checkAttempts = 0;
-      while ((!SelfieSegmentation || typeof SelfieSegmentation !== 'function') && checkAttempts < 10) {
+      const maxCheckAttempts = 30; // Increased from 10
+      
+      while ((!SelfieSegmentation || typeof SelfieSegmentation !== 'function') && checkAttempts < maxCheckAttempts) {
         await new Promise(resolve => setTimeout(resolve, 100));
         checkAttempts++;
+        
+        // Log every 5 attempts
+        if (checkAttempts % 5 === 0) {
+          console.log(`⏳ Still waiting for SelfieSegmentation... (attempt ${checkAttempts}/${maxCheckAttempts})`);
+        }
       }
       
       if (!SelfieSegmentation || typeof SelfieSegmentation !== 'function') {
-        console.error('SelfieSegmentation check:', {
+        const errorDetails = {
           exists: !!SelfieSegmentation,
           type: typeof SelfieSegmentation,
           isFunction: typeof SelfieSegmentation === 'function',
-          checkAttempts
-        });
-        throw new Error('SelfieSegmentation is not available or not a constructor after waiting');
+          checkAttempts,
+          SelfieSegmentationValue: SelfieSegmentation
+        };
+        console.error('❌ SelfieSegmentation check failed:', errorDetails);
+        throw new Error(`SelfieSegmentation is not available or not a constructor after ${maxCheckAttempts} attempts. The MediaPipe library may need to be reloaded.`);
       }
       
-      console.log('📹 Creating new SelfieSegmentation instance...');
+      console.log('✅ SelfieSegmentation is available, creating new instance...');
       selfieSegmentation = new SelfieSegmentation({
         locateFile: (file) => {
           return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
@@ -2777,7 +2804,7 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       
       // Store reference for cleanup
       selfieSegmentationRef.current = selfieSegmentation;
-      console.log('✅ MediaPipe Selfie Segmentation initialized');
+      console.log('✅ MediaPipe Selfie Segmentation initialized successfully');
     } catch (err) {
       console.error('❌ Failed to initialize MediaPipe:', err);
       // Clean up on error
