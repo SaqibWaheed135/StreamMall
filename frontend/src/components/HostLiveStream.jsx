@@ -165,6 +165,85 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const iPhoneChatPanelRef = useRef(null); // Ref for iPhone chat panel auto-scroll
   const isApplyingFilterRef = useRef(false); // Prevent multiple simultaneous filter applications
 
+  const startBackgroundProcessing = async (inputTrack) => {
+    if (backgroundProcessingRef.current) return;
+    backgroundProcessingRef.current = true;
+  
+    const videoEl = document.createElement('video');
+    videoEl.srcObject = new MediaStream([inputTrack]);
+    videoEl.muted = true;
+    videoEl.playsInline = true;
+    await videoEl.play();
+  
+    backgroundVideoRef.current = videoEl;
+  
+    const canvas = backgroundCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+  
+    canvas.width = 1280;
+    canvas.height = 720;
+  
+    const segmentation = new SelfieSegmentation({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
+    });
+  
+    segmentation.setOptions({
+      modelSelection: 1,
+    });
+  
+    segmentation.onResults((results) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+      // Draw background
+      if (selectedBackground === 'blur') {
+        ctx.filter = `blur(${backgroundBlur}px)`;
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        ctx.filter = 'none';
+      }
+  
+      if (selectedBackground === 'color') {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+  
+      if (selectedBackground === 'image' && backgroundImageRef.current) {
+        ctx.drawImage(
+          backgroundImageRef.current,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+      }
+  
+      // Draw person
+      ctx.globalCompositeOperation = 'destination-atop';
+      ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+  
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+  
+      ctx.globalCompositeOperation = 'source-over';
+    });
+  
+    const processFrame = async () => {
+      if (!backgroundProcessingRef.current) return;
+      await segmentation.send({ image: videoEl });
+      requestAnimationFrame(processFrame);
+    };
+  
+    processFrame();
+  
+    // Capture processed stream
+    const processedStream = canvas.captureStream(30);
+    const processedTrack = processedStream.getVideoTracks()[0];
+  
+    setProcessedStream(processedStream);
+  
+    return processedTrack;
+  };
+  
   // Handle iOS viewport height changes
   useEffect(() => {
     const handleResize = () => {
@@ -1233,6 +1312,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         if (selectedBackgroundImage && selectedBackgroundImage.id === imageId) {
           setSelectedBackgroundImage(null);
           setSelectedBackground('none');
+          stopBackgroundProcessing();
         }
       }
     } catch (error) {
@@ -1361,8 +1441,17 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           const localVideoTrack = publication.track;
           if (localVideoTrack && localVideoTrack.mediaStreamTrack && videoRef.current) {
             // Use the helper function to attach video (force update on initial attach)
-            setTimeout(() => {
-              attachVideoStream(localVideoTrack, true);
+            setTimeout(async () => {
+              originalMediaStreamTrackRef.current = localVideoTrack.mediaStreamTrack;
+
+const processedTrack = await startBackgroundProcessing(
+  localVideoTrack.mediaStreamTrack
+);
+
+// 🔥 Replace LiveKit track ONCE
+await liveKitRoom.localParticipant.unpublishTrack(localVideoTrack);
+await liveKitRoom.localParticipant.publishTrack(processedTrack);
+
             }, 100);
           }
         }
@@ -1402,7 +1491,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
       // Poll for track changes when camera is toggled (LiveKit doesn't always fire events reliably)
       // Reduced interval for faster response
-      trackCheckIntervalRef.current = setInterval(updateVideoOnTrackChange, 300);
+      // trackCheckIntervalRef.current = setInterval(updateVideoOnTrackChange, 300);
 
       // Cleanup interval on disconnect
       room.on(RoomEvent.Disconnected, () => {
@@ -1434,6 +1523,19 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
   };
 
+  const stopBackgroundProcessing = () => {
+    backgroundProcessingRef.current = false;
+  
+    if (backgroundAnimationFrameRef.current) {
+      cancelAnimationFrame(backgroundAnimationFrameRef.current);
+    }
+  
+    if (processedStream) {
+      processedStream.getTracks().forEach(t => t.stop());
+      setProcessedStream(null);
+    }
+  };
+  
   useEffect(() => {
     if (!isLive) return;
 
