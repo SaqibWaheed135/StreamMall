@@ -1957,16 +1957,47 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
   const isProcessingBackgroundRef = useRef(false);
   
   const replaceLiveKitTrack = async (processedStream) => {
-    if (!liveKitRoom) return;
+    if (!liveKitRoom) {
+      console.error('No LiveKit room available');
+      return;
+    }
   
     const videoTrack = processedStream.getVideoTracks()[0];
+    if (!videoTrack) {
+      console.error('No video track in processed stream');
+      return;
+    }
+
+    // Ensure track is enabled
+    videoTrack.enabled = true;
+    console.log('📹 Processed track state:', {
+      enabled: videoTrack.enabled,
+      readyState: videoTrack.readyState,
+      id: videoTrack.id
+    });
   
-    const publication =
-      liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+    const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
   
     if (publication?.track) {
-      await publication.track.replaceTrack(videoTrack);
-      console.log('✅ Replaced LiveKit track with processed stream');
+      try {
+        await publication.track.replaceTrack(videoTrack);
+        console.log('✅ Replaced LiveKit track with processed stream');
+        
+        // Wait a bit and verify the track was replaced
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        const updatedPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (updatedPublication && updatedPublication.track) {
+          console.log('✅ Track replacement verified');
+          // Force video update
+          attachVideoStream(updatedPublication.track, true);
+        }
+      } catch (replaceErr) {
+        console.error('❌ Error replacing track:', replaceErr);
+        throw replaceErr;
+      }
+    } else {
+      console.error('No camera publication found');
     }
   };
 
@@ -2194,18 +2225,26 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
 
     console.log('🎬 Starting simple background processing (no MediaPipe) with type:', bgType);
 
-    // Create video element
+    // Create video element and add to DOM (hidden) to ensure it plays
     const video = document.createElement('video');
     video.playsInline = true;
     video.muted = true;
     video.autoplay = true;
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
+    video.style.position = 'absolute';
+    video.style.top = '-9999px';
+    video.style.width = '1px';
+    video.style.height = '1px';
+    video.style.opacity = '0';
+    // Add to DOM to ensure it plays
+    document.body.appendChild(video);
     
     backgroundVideoElementRef.current = video;
     
     if (videoTrack.readyState === 'ended') {
       console.error('❌ Cannot use ended track');
+      document.body.removeChild(video);
       throw new Error('Video track has ended');
     }
     
@@ -2216,27 +2255,61 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       videoTrack.enabled = true;
     }
     
+    // Ensure track is not muted
+    if (videoTrack.muted) {
+      videoTrack.muted = false;
+    }
+    
     let animationFrameId = null;
     let isProcessing = false;
     let stream = null;
 
     return new Promise(async (resolve, reject) => {
       try {
-        await video.play();
-        
-        // Wait for video dimensions
-        let attempts = 0;
-        while (attempts < 100) {
-          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-            break;
+        // Start video playback
+        try {
+          if (video.paused) {
+            await video.play();
+            console.log('✅ Video playback started');
           }
-          await new Promise(r => setTimeout(r, 50));
-          attempts++;
+        } catch (playErr) {
+          console.error('Video play error:', playErr);
+          if (video.parentNode) {
+            document.body.removeChild(video);
+          }
+          throw new Error('Failed to start video playback');
+        }
+        
+        // Wait for video to have frames
+        let videoReadyAttempts = 0;
+        while (videoReadyAttempts < 50 && (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0)) {
+          await new Promise(r => setTimeout(r, 100));
+          videoReadyAttempts++;
+          
+          // Try to play again if still paused
+          if (video.paused && video.readyState >= video.HAVE_METADATA) {
+            try {
+              await video.play();
+            } catch (e) {
+              // Ignore play errors during wait
+            }
+          }
         }
         
         if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
-          throw new Error('Video not ready');
+          console.error('Video not ready:', {
+            readyState: video.readyState,
+            videoWidth: video.videoWidth,
+            videoHeight: video.videoHeight,
+            paused: video.paused
+          });
+          if (video.parentNode) {
+            document.body.removeChild(video);
+          }
+          throw new Error('Video did not become ready');
         }
+        
+        console.log('✅ Video is ready:', video.videoWidth, 'x', video.videoHeight, 'paused:', video.paused);
         
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -2269,35 +2342,58 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
             return;
           }
 
-          if (video.paused && video.readyState >= video.HAVE_METADATA) {
-            video.play().catch(() => {});
+          // Ensure video is playing continuously
+          if (video.paused) {
+            if (video.readyState >= video.HAVE_METADATA) {
+              video.play().catch(err => {
+                // Only log occasionally to avoid spam
+                if (Math.random() < 0.01) {
+                  console.warn('Video play failed in loop:', err);
+                }
+              });
+            }
+          }
+          
+          // Check if video element is still in DOM
+          if (!video.parentNode && document.body) {
+            document.body.appendChild(video);
           }
 
-          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+          // Only process if video has valid dimensions and is ready
+          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
             try {
+              // Ensure canvas dimensions match video
+              if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+              }
+
               ctx.save();
               ctx.clearRect(0, 0, canvas.width, canvas.height);
 
               if (bgType === 'blur') {
-                // Draw video with blur filter applied to entire video
+                // For blur: Draw video with blur filter
+                // Note: Without segmentation, the entire video (including person) will be blurred
                 ctx.save();
                 ctx.filter = `blur(${bgBlur}px)`;
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 ctx.restore();
               } else if (bgType === 'color') {
-                // Draw solid color background first
+                // For color: Draw solid color background, then video on top
+                // Without segmentation, the entire video will be visible on the colored background
                 ctx.fillStyle = bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                // Draw video on top
+                // Draw video on top (full video, no segmentation)
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
               } else if (bgType === 'image' && backgroundImageRef.current) {
-                // Draw background image first (scaled to cover)
+                // For image: Draw background image, then video on top
+                // Without segmentation, the entire video will be visible on the background image
                 const bgImg = backgroundImageRef.current;
                 const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
                 const x = (canvas.width - bgImg.width * scale) / 2;
                 const y = (canvas.height - bgImg.height * scale) / 2;
                 
-                // Apply rotation if needed
+                // Draw background image
                 if (selectedBackgroundImage?.rotation) {
                   ctx.save();
                   ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -2309,7 +2405,7 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
                   ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
                 }
                 
-                // Draw video on top (no segmentation - full video overlay)
+                // Draw video on top (full video, no segmentation)
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
               } else {
                 // Default: just draw video
@@ -2319,27 +2415,69 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
               ctx.restore();
             } catch (err) {
               console.error('Error drawing frame:', err);
+              // Continue processing even on error
             }
+          } else {
+            // Video not ready yet, but continue the loop
+            // Don't log every frame to avoid spam
           }
 
+          // Always continue the animation loop
           animationFrameId = requestAnimationFrame(processFrames);
           backgroundAnimationFrameRef.current = animationFrameId;
         };
 
-        // Ensure video is playing before starting frame processing
-        if (video.paused) {
-          await video.play();
-        }
-        
-        // Wait a moment for video to start
-        await new Promise(r => setTimeout(r, 200));
-        
-        // Start processing frames
+        // Start processing frames immediately (video setup is already done above)
         processFrames();
 
         // Wait for frames to be drawn before capturing stream
         // Give the frame processing loop time to draw at least a few frames
-        await new Promise(r => setTimeout(r, 800));
+        console.log('⏳ Waiting for frames to be drawn...');
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // Verify canvas has content and video is playing
+        let frameCheckAttempts = 0;
+        let hasValidFrames = false;
+        while (frameCheckAttempts < 20 && !hasValidFrames) {
+          await new Promise(r => setTimeout(r, 100));
+          
+          // Check if video is playing
+          if (video.paused) {
+            try {
+              await video.play();
+            } catch (e) {
+              // Ignore
+            }
+          }
+          
+          // Check canvas content
+          try {
+            if (canvas.width > 0 && canvas.height > 0) {
+              const testImageData = ctx.getImageData(0, 0, Math.min(20, canvas.width), Math.min(20, canvas.height));
+              let nonBlackPixels = 0;
+              for (let i = 0; i < testImageData.data.length; i += 4) {
+                const r = testImageData.data[i];
+                const g = testImageData.data[i + 1];
+                const b = testImageData.data[i + 2];
+                if (r > 10 || g > 10 || b > 10) {
+                  nonBlackPixels++;
+                }
+              }
+              if (nonBlackPixels > 10) {
+                hasValidFrames = true;
+                console.log('✅ Canvas has valid frames');
+                break;
+              }
+            }
+          } catch (e) {
+            // Continue checking
+          }
+          frameCheckAttempts++;
+        }
+        
+        if (!hasValidFrames) {
+          console.warn('⚠️ Canvas frames check timeout, proceeding anyway');
+        }
         
         console.log('📹 Creating canvas stream...');
         console.log('📹 Canvas dimensions:', canvas.width, 'x', canvas.height);
@@ -2378,6 +2516,10 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
             if (video.srcObject) {
               video.srcObject.getTracks().forEach(track => track.stop());
               video.srcObject = null;
+            }
+            // Remove video from DOM
+            if (video.parentNode) {
+              document.body.removeChild(video);
             }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
           };
