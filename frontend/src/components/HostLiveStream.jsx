@@ -1020,6 +1020,28 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       setCoinBalance(prev => prev + data.amount);
       setError(`${data.viewer.username} joined! +${data.amount} coins`);
       setTimeout(() => setError(''), 3000);
+      
+      // Add join notification to iPhone chat panel (similar to comments)
+      const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIPhone && isFullscreenRef.current) {
+        const joinNotification = {
+          _id: `join-${Date.now()}-${Math.random()}`,
+          id: `join-${Date.now()}-${Math.random()}`,
+          username: data.viewer.username || 'Viewer',
+          text: `joined the stream`,
+          timestamp: new Date(),
+          isJoinNotification: true
+        };
+        
+        // Add to comments for iPhone chat panel
+        setComments(prev => [...prev, joinNotification]);
+        
+        // Add to overlay comments
+        setOverlayComments(prev => {
+          const updated = [...prev, { ...joinNotification, overlayId: Date.now() + Math.random() }];
+          return updated.slice(-10);
+        });
+      }
     });
 
     socket.on('tip-received', (data) => {
@@ -1460,8 +1482,31 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       await room.connect(data.roomUrl, data.publishToken);
       console.log('✅ Connected to LiveKit room as host');
 
-      room.on(RoomEvent.ParticipantConnected, () => {
-        setViewerCount(room.remoteParticipants.size);
+      room.on(RoomEvent.ParticipantConnected, (participant) => {
+        const newCount = room.remoteParticipants.size;
+        setViewerCount(newCount);
+        
+        // Add join notification to iPhone chat panel (similar to comments)
+        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIPhone && isFullscreenRef.current) {
+          const joinNotification = {
+            _id: `join-${Date.now()}-${Math.random()}`,
+            id: `join-${Date.now()}-${Math.random()}`,
+            username: 'System',
+            text: 'A viewer joined',
+            timestamp: new Date(),
+            isJoinNotification: true
+          };
+          
+          // Add to comments for iPhone chat panel
+          setComments(prev => [...prev, joinNotification]);
+          
+          // Add to overlay comments
+          setOverlayComments(prev => {
+            const updated = [...prev, { ...joinNotification, overlayId: Date.now() + Math.random() }];
+            return updated.slice(-10);
+          });
+        }
       });
 
       room.on(RoomEvent.ParticipantDisconnected, () => {
@@ -1700,8 +1745,31 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         await room.connect(session.roomUrl, session.publishToken);
         console.log('✅ Reconnected to LiveKit room as host (resume)');
 
-        room.on(RoomEvent.ParticipantConnected, () => {
-          setViewerCount(room.remoteParticipants.size);
+        room.on(RoomEvent.ParticipantConnected, (participant) => {
+          const newCount = room.remoteParticipants.size;
+          setViewerCount(newCount);
+          
+          // Add join notification to iPhone chat panel (similar to comments)
+          const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+          if (isIPhone && isFullscreenRef.current) {
+            const joinNotification = {
+              _id: `join-${Date.now()}-${Math.random()}`,
+              id: `join-${Date.now()}-${Math.random()}`,
+              username: 'System',
+              text: 'A viewer joined',
+              timestamp: new Date(),
+              isJoinNotification: true
+            };
+            
+            // Add to comments for iPhone chat panel
+            setComments(prev => [...prev, joinNotification]);
+            
+            // Add to overlay comments
+            setOverlayComments(prev => {
+              const updated = [...prev, { ...joinNotification, overlayId: Date.now() + Math.random() }];
+              return updated.slice(-10);
+            });
+          }
         });
 
         room.on(RoomEvent.ParticipantDisconnected, () => {
@@ -5317,7 +5385,11 @@ useEffect(() => {
                         comments.map((comment) => (
                           <div
                             key={comment.id || comment._id}
-                            className="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border border-white/10"
+                            className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border ${
+                              comment.isJoinNotification 
+                                ? 'bg-blue-500/40 border-blue-400/30' 
+                                : 'bg-black/30 border-white/10'
+                            }`}
                             style={{
                               fontSize: '0.85rem',
                               transform: 'translate3d(0,0,0)',
@@ -5325,12 +5397,24 @@ useEffect(() => {
                             }}
                           >
                             <div className="flex items-start gap-2">
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                {comment.username?.charAt(0)?.toUpperCase() || 'V'}
-                              </div>
+                              {comment.isJoinNotification ? (
+                                <Users className="w-5 h-5 text-blue-300 flex-shrink-0" />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                  {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+                                </div>
+                              )}
                               <div className="flex-1 min-w-0">
-                                <span className="font-semibold text-pink-300 text-xs">{comment.username}</span>
-                                <span className="text-white/90 text-xs ml-1 break-words">{comment.text}</span>
+                                {comment.isJoinNotification ? (
+                                  <span className="text-blue-200 text-xs italic">
+                                    {comment.username === 'System' ? comment.text : `${comment.username} ${comment.text}`}
+                                  </span>
+                                ) : (
+                                  <>
+                                    <span className="font-semibold text-pink-300 text-xs">{comment.username}</span>
+                                    <span className="text-white/90 text-xs ml-1 break-words">{comment.text}</span>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -6076,56 +6160,64 @@ useEffect(() => {
   </button>
 </div>
 
-                    {/* End Stream Button - More Prominent */}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('End Stream button clicked');
-                        // On iPhone, directly end stream without confirmation modal (modal might not show in fullscreen)
-                        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                        if (isIPhone && isFullscreen) {
-                          console.log('iPhone fullscreen detected - ending stream directly');
-                          endStream();
-                        } else {
-                          console.log('Setting showConfirmEnd to true');
-                          setShowConfirmEnd(true);
-                        }
-                      }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('End Stream button touched');
-                        // On iPhone, directly end stream without confirmation modal
-                        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                        if (isIPhone && isFullscreen) {
-                          console.log('iPhone fullscreen detected - ending stream directly');
-                          endStream();
-                        } else {
-                          console.log('Setting showConfirmEnd to true');
-                          setShowConfirmEnd(true);
-                        }
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
-                      style={{ 
-                        zIndex: 2147483647,
-                        pointerEvents: 'auto',
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        WebkitUserSelect: 'none'
-                      }}
-                      title={t('stream.endStream')}
-                      aria-label={t('stream.endStream')}
-                    >
-                      <X className="w-4 h-4" />
-                      <span className="text-sm">{t('stream.endStream')}</span>
-                    </button>
+                    {/* End Stream Button with Viewer Count - More Prominent */}
+                    <div className="absolute top-4 left-4 flex flex-col gap-2" style={{ zIndex: 2147483647 }}>
+                      {/* Viewer Count Display */}
+                      <div className="bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm font-semibold">{viewerCount} {t('common.viewers')}</span>
+                      </div>
+                      
+                      {/* End Stream Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('End Stream button clicked');
+                          // On iPhone, directly end stream without confirmation modal (modal might not show in fullscreen)
+                          const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                          if (isIPhone && isFullscreen) {
+                            console.log('iPhone fullscreen detected - ending stream directly');
+                            endStream();
+                          } else {
+                            console.log('Setting showConfirmEnd to true');
+                            setShowConfirmEnd(true);
+                          }
+                        }}
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('End Stream button touched');
+                          // On iPhone, directly end stream without confirmation modal
+                          const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                          if (isIPhone && isFullscreen) {
+                            console.log('iPhone fullscreen detected - ending stream directly');
+                            endStream();
+                          } else {
+                            console.log('Setting showConfirmEnd to true');
+                            setShowConfirmEnd(true);
+                          }
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
+                        style={{ 
+                          pointerEvents: 'auto',
+                          WebkitTapHighlightColor: 'transparent',
+                          touchAction: 'manipulation',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none'
+                        }}
+                        title={t('stream.endStream')}
+                        aria-label={t('stream.endStream')}
+                      >
+                        <X className="w-4 h-4" />
+                        <span className="text-sm">{t('stream.endStream')}</span>
+                      </button>
+                    </div>
 
                         {/* Background Filter Panel */}
                     {showBackgroundPanel && (
