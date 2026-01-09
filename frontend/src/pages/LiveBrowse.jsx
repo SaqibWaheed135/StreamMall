@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Users, Clock, Search, Filter } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, SOCKET_URL } from '../config/api';
+import io from 'socket.io-client';
 
 const LiveBrowse = () => {
   const { t } = useTranslation();
@@ -10,6 +11,8 @@ const LiveBrowse = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('viewers'); // viewers, recent, duration
   const [error, setError] = useState(null);
+  const socketRef = useRef(null);
+  const fetchLiveStreamsRef = useRef(null);
 
   // Skeleton components
   const Skeleton = ({ className = "", children, ...props }) => (
@@ -121,52 +124,131 @@ const LiveBrowse = () => {
     </div>
   );
 
-  // Fetch live streams
-  useEffect(() => {
-    const fetchLiveStreams = async () => {
-      try {
+  // Fetch live streams function
+  const fetchLiveStreams = async (showLoading = true) => {
+    try {
+      if (showLoading) {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/live`, {
-          credentials: 'include'
-        });
+      }
+      const response = await fetch(`${API_BASE_URL}/live`, {
+        credentials: 'include'
+      });
 
-        if (!response.ok) {
-          throw new Error(t('liveBrowse.errorLoading'));
+      if (!response.ok) {
+        throw new Error(t('liveBrowse.errorLoading'));
+      }
+
+      const streams = await response.json();
+      setLiveStreams(streams);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching live streams:', err);
+      setError(err.message);
+      // Set mock data for demonstration
+      setLiveStreams([
+        {
+          _id: '1',
+          title: 'Gaming Session - Call of Duty',
+          streamer: { username: 'gamer123', avatar: null },
+          currentViewers: 1234,
+          startedAt: new Date(Date.now() - 3600000).toISOString()
+        },
+        {
+          _id: '2',
+          title: 'Music Production Live',
+          streamer: { username: 'musicmaker', avatar: null },
+          currentViewers: 567,
+          startedAt: new Date(Date.now() - 7200000).toISOString()
         }
-
-        const streams = await response.json();
-        setLiveStreams(streams);
-      } catch (err) {
-        console.error('Error fetching live streams:', err);
-        setError(err.message);
-        // Set mock data for demonstration
-        setLiveStreams([
-          {
-            _id: '1',
-            title: 'Gaming Session - Call of Duty',
-            streamer: { username: 'gamer123', avatar: null },
-            currentViewers: 1234,
-            startedAt: new Date(Date.now() - 3600000).toISOString()
-          },
-          {
-            _id: '2',
-            title: 'Music Production Live',
-            streamer: { username: 'musicmaker', avatar: null },
-            currentViewers: 567,
-            startedAt: new Date(Date.now() - 7200000).toISOString()
-          }
-        ]);
-        setError(null); // Clear error for demo
-      } finally {
+      ]);
+      setError(null); // Clear error for demo
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    };
+    }
+  };
 
+  // Store fetch function in ref for use in other effects
+  useEffect(() => {
+    fetchLiveStreamsRef.current = fetchLiveStreams;
+  }, []);
+
+  // Initial fetch and periodic refresh
+  useEffect(() => {
     fetchLiveStreams();
     
     // Refresh every 30 seconds
-    const interval = setInterval(fetchLiveStreams, 30000);
+    const interval = setInterval(() => fetchLiveStreams(false), 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Set up socket connection to listen for stream-ended events
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const socket = io(SOCKET_URL, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity,
+      transports: ['websocket', 'polling'],
+      auth: token ? { token } : {}
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('✅ LiveBrowse: Socket connected');
+    });
+
+    socket.on('stream-ended', (data) => {
+      console.log('📺 LiveBrowse: Stream ended event received:', data);
+      // Immediately refresh the stream list when any stream ends
+      if (fetchLiveStreamsRef.current) {
+        console.log('🔄 LiveBrowse: Refreshing stream list due to stream end');
+        fetchLiveStreamsRef.current(false); // Don't show loading spinner
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('❌ LiveBrowse: Socket connection error:', error);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.warn('⚠️ LiveBrowse: Socket disconnected:', reason);
+    });
+
+    return () => {
+      console.log('🧹 LiveBrowse: Cleaning up socket connection');
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, []);
+
+  // Refresh when page becomes visible (user returns to tab/window)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && fetchLiveStreamsRef.current) {
+        console.log('👁️ LiveBrowse: Page became visible, refreshing streams');
+        fetchLiveStreamsRef.current(false);
+      }
+    };
+
+    const handleFocus = () => {
+      if (fetchLiveStreamsRef.current) {
+        console.log('🎯 LiveBrowse: Window focused, refreshing streams');
+        fetchLiveStreamsRef.current(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   // Filter and sort streams
