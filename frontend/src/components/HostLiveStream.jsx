@@ -168,6 +168,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const isApplyingFilterRef = useRef(false); // Prevent multiple simultaneous filter applications
   const filterActiveRef = useRef(false);
   const filterStartingRef = useRef(false);
+  const initializationCommentSentRef = useRef(false); // Track if initialization comment has been sent
   const lastAppliedFilterRef = useRef({
     background: 'none',
     color: '#00ff00',
@@ -1141,6 +1142,25 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             console.error('❌ HOST: Join stream error:', response.error);
           } else {
             console.log('✅ HOST: Successfully joined stream');
+            
+            // Send initialization comment to trigger all socket events
+            // Wait a bit to ensure socket listeners are set up
+            setTimeout(() => {
+              if (!initializationCommentSentRef.current && newSocket && newSocket.connected) {
+                console.log('🚀 HOST: Sending initialization comment to trigger socket events');
+                newSocket.emit('send-comment', {
+                  streamId: streamData.streamId,
+                  text: '🎥 Stream started!'
+                }, (commentResponse) => {
+                  if (commentResponse && commentResponse.error) {
+                    console.error('❌ HOST: Initialization comment error:', commentResponse.error);
+                  } else {
+                    console.log('✅ HOST: Initialization comment sent successfully');
+                    initializationCommentSentRef.current = true;
+                  }
+                });
+              }
+            }, 500); // Small delay to ensure listeners are ready
           }
         });
         
@@ -1178,6 +1198,23 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             console.error('❌ HOST: Rejoin stream error:', response.error);
           } else {
             console.log('✅ HOST: Successfully rejoined stream after reconnect');
+            
+            // Send initialization comment on reconnect to re-trigger socket events
+            setTimeout(() => {
+              if (newSocket && newSocket.connected) {
+                console.log('🚀 HOST: Sending initialization comment after reconnect');
+                newSocket.emit('send-comment', {
+                  streamId: streamData.streamId,
+                  text: '🔄 Reconnected!'
+                }, (commentResponse) => {
+                  if (commentResponse && commentResponse.error) {
+                    console.error('❌ HOST: Reconnect initialization comment error:', commentResponse.error);
+                  } else {
+                    console.log('✅ HOST: Reconnect initialization comment sent successfully');
+                  }
+                });
+              }
+            }, 500);
           }
         });
         newSocket.emit('subscribe-to-stream-earnings', {
@@ -1216,6 +1253,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           clearTimeout(fullscreenControlsTimeoutRef.current);
           fullscreenControlsTimeoutRef.current = null;
         }
+        // Reset initialization comment flag on cleanup
+        initializationCommentSentRef.current = false;
         console.log('🧹 HOST: Cleaning up socket connection');
         newSocket.disconnect();
       };
