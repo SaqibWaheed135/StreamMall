@@ -771,24 +771,43 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🎯 HOST: Setting up socket listeners');
     console.log('Socket ID:', socket.id);
+    console.log('Socket connected:', socket.connected);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    // Remove any existing listeners first to avoid duplicates
+    socket.off('new-comment');
+    
     // In the socket listener setup
     socket.on('new-comment', (data) => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('📨 HOST: New comment received');
       console.log('Comment data:', JSON.stringify(data, null, 2));
+      console.log('Socket ID:', socket.id);
+      console.log('Socket connected:', socket.connected);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      if (!data || !data.text) {
+        console.error('❌ Invalid comment data received:', data);
+        return;
+      }
+      
       const newComment = {
         _id: data._id || data.id, // ✅ Use _id or fall back to id
         id: data.id || data._id,   // ✅ Include both for compatibility
         username: data.username || 'Viewer',
         text: data.text,
-        timestamp: new Date(),
+        timestamp: new Date(data.timestamp || Date.now()),
         replies: [] // ✅ Initialize replies array
       };
 
+      console.log('✅ Adding comment to UI:', newComment);
+
       // Add to sidebar comments
-      setComments(prev => [...prev, newComment]);
+      setComments(prev => {
+        const updated = [...prev, newComment];
+        console.log('📝 Comments updated. Total:', updated.length);
+        return updated;
+      });
 
       // Add to overlay comments (for video screen display)
       setOverlayComments(prev => {
@@ -918,8 +937,16 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     });
 
     socket.on('error', (error) => {
-      console.error('Socket error:', error);
+      console.error('❌ HOST Socket error:', error);
     });
+
+    // Test listener to verify socket is working
+    socket.on('joined-stream', (data) => {
+      console.log('✅ HOST: Successfully joined stream via socket:', data);
+    });
+
+    // Log all registered event listeners for debugging
+    console.log('📋 HOST Socket event listeners registered:', socket._callbacks ? Object.keys(socket._callbacks) : 'No callbacks object');
   };
 
   useEffect(() => {
@@ -927,11 +954,24 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       const newSocket = io(SOCKET_URL, {
         auth: {
           token: localStorage.getItem('token')
-        }
+        },
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        transports: ['websocket', 'polling']
       });
 
+      // Set up listeners BEFORE connect to ensure they're ready
+      setupSocketListeners(newSocket);
+
       newSocket.on('connect', () => {
-        console.log('Socket connected');
+        console.log('✅ HOST Socket connected, ID:', newSocket.id);
+        
+        // Re-setup listeners after connection to ensure they're active
+        console.log('🔍 Re-setting up socket listeners after connection...');
+        setupSocketListeners(newSocket);
+        
         newSocket.emit('join-stream', {
           streamId: streamData.streamId,
           isStreamer: true
@@ -939,9 +979,18 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         newSocket.emit('subscribe-to-stream-earnings', {
           streamId: streamData.streamId
         });
+        
+        console.log('✅ HOST: Joined stream and subscribed to earnings');
       });
 
-      setupSocketListeners(newSocket);
+      newSocket.on('disconnect', (reason) => {
+        console.log('⚠️ HOST Socket disconnected:', reason);
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.error('❌ HOST Socket connection error:', error);
+      });
+
       setSocket(newSocket);
       fetchInitialOrders();
       setProducts(streamData.stream.products?.map((p, i) => ({ ...p, index: i })) || []);
@@ -954,6 +1003,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           clearTimeout(fullscreenControlsTimeoutRef.current);
           fullscreenControlsTimeoutRef.current = null;
         }
+        console.log('🧹 Cleaning up HOST socket...');
+        newSocket.removeAllListeners(); // Remove all listeners before disconnect
         newSocket.disconnect();
       };
     }
