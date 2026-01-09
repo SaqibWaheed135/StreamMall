@@ -2354,10 +2354,8 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       videoTrack.enabled = true;
     }
     
-    // Ensure track is not muted
-    if (videoTrack.muted) {
-      videoTrack.muted = false;
-    }
+    // Note: muted is a read-only property on MediaStreamTrack, cannot be set
+    // The track's muted state is controlled by the MediaStream, not the track itself
     
     let animationFrameId = null;
     let isProcessing = false;
@@ -2597,9 +2595,8 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
           const videoTrack = stream.getVideoTracks()[0];
           if (videoTrack) {
             videoTrack.enabled = true;
-            // Ensure the track is not muted
-            videoTrack.muted = false;
-            console.log('✅ Video track enabled, readyState:', videoTrack.readyState);
+            // Note: muted is a read-only property, cannot be set
+            console.log('✅ Video track enabled, readyState:', videoTrack.readyState, 'muted:', videoTrack.muted);
           }
           
           // Keep the processing loop running to ensure continuous updates
