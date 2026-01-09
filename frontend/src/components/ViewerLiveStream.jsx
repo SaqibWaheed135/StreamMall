@@ -1589,33 +1589,10 @@ newSocket.on('product-added', (data) => {
     };
   }, [overlayComments.length]);
 
-  // Handle back navigation with auto-refresh (for manual back button clicks)
+  // Handle back navigation with auto-refresh (for all navigation cases)
   const handleBack = () => {
-    // Don't reload if stream has ended - just navigate back normally
-    if (showStreamEnded) {
-      console.log('📺 Stream already ended, navigating back without reload');
-      onBack();
-      return;
-    }
+    console.log('🔙 Navigating back from viewer stream - cleaning up and reloading');
     
-    // Clean up resources
-    if (liveKitRoom) {
-      liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
-    }
-    if (socket) {
-      socket.disconnect();
-    }
-    
-    // Auto-refresh the page to ensure all state is completely reset
-    // This resolves the issue where the page gets stuck after leaving viewer stream
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
-  };
-
-  // Handle navigation from stream ended modal (no reload needed)
-  const handleStreamEndedNavigate = () => {
-    console.log('📺 Navigating back from stream ended modal');
     // Clean up resources
     if (liveKitRoom) {
       liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
@@ -1625,8 +1602,97 @@ newSocket.on('product-added', (data) => {
       socket.disconnect();
       setSocket(null);
     }
-    // Just navigate back without reload since stream has already ended
-    onBack();
+    
+    // Exit fullscreen on iPhone if active
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIPhone && isFullscreen && videoContainerRef.current) {
+      console.log('📱 Exiting iPhone fullscreen before navigation');
+      videoContainerRef.current.classList.remove('ios-fullscreen');
+      document.body.classList.remove('ios-fullscreen-active');
+      document.documentElement.classList.remove('ios-fullscreen-active');
+      
+      // Reset inline styles
+      if (videoContainerRef.current) {
+        videoContainerRef.current.style.cssText = '';
+      }
+      
+      // Restore body scroll
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.bottom = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.body.style.overflow = '';
+      
+      // Restore html styles
+      document.documentElement.style.position = '';
+      document.documentElement.style.width = '';
+      document.documentElement.style.height = '';
+      document.documentElement.style.overflow = '';
+      
+      setIsFullscreen(false);
+    }
+    
+    // Auto-refresh the page to ensure all state is completely reset
+    // This resolves the issue where the page gets stuck after leaving viewer stream
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
+  };
+
+  // Handle navigation from stream ended modal (also auto-refresh)
+  const handleStreamEndedNavigate = () => {
+    console.log('📺 Navigating back from stream ended modal - cleaning up and reloading');
+    
+    // Clean up resources
+    if (liveKitRoom) {
+      liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
+      setLiveKitRoom(null);
+    }
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+    
+    // Exit fullscreen on iPhone if active
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIPhone && isFullscreen && videoContainerRef.current) {
+      console.log('📱 Exiting iPhone fullscreen before navigation');
+      videoContainerRef.current.classList.remove('ios-fullscreen');
+      document.body.classList.remove('ios-fullscreen-active');
+      document.documentElement.classList.remove('ios-fullscreen-active');
+      
+      // Reset inline styles
+      if (videoContainerRef.current) {
+        videoContainerRef.current.style.cssText = '';
+      }
+      
+      // Restore body scroll
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.bottom = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.body.style.overflow = '';
+      
+      // Restore html styles
+      document.documentElement.style.position = '';
+      document.documentElement.style.width = '';
+      document.documentElement.style.height = '';
+      document.documentElement.style.overflow = '';
+      
+      setIsFullscreen(false);
+    }
+    
+    // Auto-refresh the page to ensure all state is completely reset
+    // This resolves the issue where the page gets stuck after leaving viewer stream
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   };
 
   // Auto-fullscreen for iPhone users when stream is ready
