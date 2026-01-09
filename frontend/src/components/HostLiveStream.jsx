@@ -164,7 +164,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const isNavigatingAwayRef = useRef(false); // Track if we're navigating away to prevent unnecessary operations
   const iPhoneChatPanelRef = useRef(null); // Ref for iPhone chat panel auto-scroll
 
-
   // Handle iOS viewport height changes
   useEffect(() => {
     const handleResize = () => {
@@ -1812,52 +1811,10 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
   };
 
-  const startBackgroundProcessing = () => {
-    if (backgroundProcessingRef.current) return;
-  
-    backgroundProcessingRef.current = true;
-  
-    const video = backgroundVideoRef.current;
-    const canvas = backgroundCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-  
-    const render = () => {
-      if (!backgroundProcessingRef.current) return;
-  
-      if (video.readyState >= 2) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-  
-        // Background
-        if (selectedBackground === 'color') {
-          ctx.fillStyle = backgroundColor;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-  
-        if (selectedBackground === 'image' && backgroundImageRef.current) {
-          ctx.drawImage(
-            backgroundImageRef.current,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
-        }
-  
-        // Camera on top
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      }
-  
-      backgroundAnimationFrameRef.current = requestAnimationFrame(render);
-    };
-  
-    render();
-  };
-
-  const createProcessedStream = () => {
-    const canvas = backgroundCanvasRef.current;
-    return canvas.captureStream(30);
-  };
+  // Store MediaPipe instance and processing state
+  const selfieSegmentationRef = useRef(null);
+  const backgroundVideoElementRef = useRef(null);
+  const isProcessingBackgroundRef = useRef(false);
   
   const replaceLiveKitTrack = async (processedStream) => {
     if (!liveKitRoom) return;
@@ -1869,38 +1826,106 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   
     if (publication?.track) {
       await publication.track.replaceTrack(videoTrack);
+      console.log('✅ Replaced LiveKit track with processed stream');
     }
   };
-  const applyBackground = async () => {
-    if (!localStream || !liveKitRoom) return;
-  
-    // Attach original camera stream to hidden video
-    backgroundVideoRef.current.srcObject = localStream;
-    await backgroundVideoRef.current.play();
-  
-    // Start rendering to canvas
-    startBackgroundProcessing();
-  
-    // Capture canvas stream
-    const processedStream = createProcessedStream();
-  
-    // Replace LiveKit camera track
-    await replaceLiveKitTrack(processedStream);
-  };
+
   const restoreOriginalCamera = async () => {
     if (!liveKitRoom || !localStream) return;
+  
+    // Cleanup MediaPipe processing
+    if (selfieSegmentationRef.current) {
+      try {
+        selfieSegmentationRef.current.close();
+        selfieSegmentationRef.current = null;
+      } catch (err) {
+        console.warn('Error closing MediaPipe:', err);
+      }
+    }
+
+    if (backgroundAnimationFrameRef.current) {
+      cancelAnimationFrame(backgroundAnimationFrameRef.current);
+      backgroundAnimationFrameRef.current = null;
+    }
+
+    if (backgroundVideoElementRef.current) {
+      backgroundVideoElementRef.current.pause();
+      if (backgroundVideoElementRef.current.srcObject) {
+        backgroundVideoElementRef.current.srcObject.getTracks().forEach(track => track.stop());
+        backgroundVideoElementRef.current.srcObject = null;
+      }
+    }
+
+    isProcessingBackgroundRef.current = false;
+    backgroundProcessingRef.current = false;
   
     const originalTrack = localStream.getVideoTracks()[0];
   
     const publication =
       liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
   
-    if (publication?.track) {
+    if (publication?.track && originalTrack) {
       await publication.track.replaceTrack(originalTrack);
+      console.log('✅ Restored original camera track');
     }
-  
-    cancelAnimationFrame(backgroundAnimationFrameRef.current);
-    backgroundProcessingRef.current = false;
+  };
+
+  const applyBackground = async () => {
+    if (!localStream || !liveKitRoom || !backgroundCanvasRef.current) {
+      console.error('Missing required components for background processing');
+      return;
+    }
+
+    // If background is 'none', restore original camera
+    if (selectedBackground === 'none') {
+      await restoreOriginalCamera();
+      return;
+    }
+
+    // Cleanup any existing processing
+    if (isProcessingBackgroundRef.current) {
+      await restoreOriginalCamera();
+      // Wait a bit before starting new processing
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    try {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (!videoTrack || videoTrack.readyState === 'ended') {
+        console.error('Video track not available or ended');
+        return;
+      }
+
+      const canvas = backgroundCanvasRef.current;
+      const bgType = selectedBackground;
+      const bgColor = backgroundColor;
+      const bgBlur = backgroundBlur;
+
+      console.log('🎬 Applying background filter:', bgType);
+
+      // Process video with MediaPipe
+      const processedStream = await processVideoWithBackground(
+        videoTrack,
+        canvas,
+        bgType,
+        bgColor,
+        bgBlur
+      );
+
+      if (processedStream) {
+        // Replace LiveKit track with processed stream
+        await replaceLiveKitTrack(processedStream);
+        isProcessingBackgroundRef.current = true;
+        backgroundProcessingRef.current = true;
+        setProcessedStream(processedStream);
+        console.log('✅ Background filter applied successfully');
+      } else {
+        console.error('❌ Failed to create processed stream');
+      }
+    } catch (error) {
+      console.error('❌ Error applying background:', error);
+      setError('Failed to apply background filter. Please try again.');
+    }
   };
       
 
@@ -2029,17 +2054,16 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
     console.log('🎬 Starting MediaPipe background processing with type:', bgType);
 
-    // Create video element
+    // Create video element for MediaPipe processing
     const video = document.createElement('video');
     video.playsInline = true;
     video.muted = true;
     video.autoplay = true;
-    await video.play(); // 🔥 REQUIRED
-
-    
-
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
+    
+    // Store reference for cleanup
+    backgroundVideoElementRef.current = video;
     
     // Check if track is active before using it
     if (videoTrack.readyState === 'ended') {
@@ -2061,29 +2085,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     
     let animationFrameId = null;
     let isProcessing = false;
-    let videoReady = false;
-    let framesDrawn = 0;
-
-const drawLoop = async () => {
-  if (!video.videoWidth || !video.videoHeight) {
-    requestAnimationFrame(drawLoop);
-    return;
-  }
-
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  framesDrawn++;
-
-  if (framesDrawn > 10) {
-    // Only capture stream AFTER frames exist
-    stream = canvas.captureStream(30);
-  }
-
-  requestAnimationFrame(drawLoop);
-};
-
-drawLoop();
-
     let stream = null;
+    let framesProcessed = 0;
 
     // Initialize MediaPipe Selfie Segmentation
     let selfieSegmentation;
@@ -2096,7 +2099,11 @@ drawLoop();
       
       selfieSegmentation.setOptions({
         modelSelection: 1, // 0: General, 1: Landscape (better for video)
+        selfieMode: false, // false = better segmentation quality
       });
+      
+      // Store reference for cleanup
+      selfieSegmentationRef.current = selfieSegmentation;
       console.log('✅ MediaPipe Selfie Segmentation initialized');
     } catch (err) {
       console.error('❌ Failed to initialize MediaPipe:', err);
@@ -2159,30 +2166,24 @@ drawLoop();
       faceDetection.onResults(processFaceDetection);
     }
 
-    // MediaPipe processing function
+    // MediaPipe processing function - Proper compositing
     const processFrameWithMediaPipe = (results) => {
-      if (!results) {
-        console.warn('⚠️ MediaPipe results is null/undefined');
+      if (!results || !isProcessing) {
         return;
       }
 
-      if (!results.segmentationMask) {
-        console.warn('⚠️ MediaPipe results missing segmentation mask');
+      if (!results.segmentationMask || !results.image) {
         return;
       }
 
-      if (!results.image) {
-        console.warn('⚠️ MediaPipe results missing image');
-        return;
-      }
-
+      // Set canvas dimensions from video if not set
       if (canvas.width === 0 || canvas.height === 0) {
-        console.warn('⚠️ Canvas dimensions not set yet:', canvas.width, 'x', canvas.height);
-        // Try to set dimensions from results
-        if (results.image && results.image.width && results.image.height) {
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        } else if (results.image && results.image.width && results.image.height) {
           canvas.width = results.image.width;
           canvas.height = results.image.height;
-          console.log('✅ Set canvas dimensions from MediaPipe results:', canvas.width, 'x', canvas.height);
         } else {
           return;
         }
@@ -2192,31 +2193,29 @@ drawLoop();
         ctx.save();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // CORRECT MediaPipe compositing approach:
-        // 1. Draw the person (image) first
-        // 2. Apply segmentation mask to keep only the person (destination-in)
-        // 3. Draw background behind in transparent areas (destination-over)
-        
-        // Step 1: Draw the person image
+        // Correct MediaPipe compositing approach:
+        // 1. Draw the person image first
         ctx.globalCompositeOperation = 'source-over';
         ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
         
-        // Step 2: Apply segmentation mask - keep only where mask is opaque (white = person)
+        // 2. Apply segmentation mask to keep only the person (white = person, black = transparent)
+        // destination-in keeps only where both exist (person + mask)
         ctx.globalCompositeOperation = 'destination-in';
         ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
         
-        // Step 3: Draw background behind (in transparent areas where person isn't)
+        // 3. Draw background behind (destination-over fills transparent areas)
         ctx.globalCompositeOperation = 'destination-over';
         if (bgType === 'blur') {
-          const blurTemp = document.createElement('canvas');
-          blurTemp.width = canvas.width;
-          blurTemp.height = canvas.height;
-          const blurTempCtx = blurTemp.getContext('2d');
-          blurTempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          // Create temporary canvas for blur effect
+          const blurCanvas = document.createElement('canvas');
+          blurCanvas.width = canvas.width;
+          blurCanvas.height = canvas.height;
+          const blurCtx = blurCanvas.getContext('2d');
+          blurCtx.drawImage(video, 0, 0, blurCanvas.width, blurCanvas.height);
+          
           ctx.save();
           ctx.filter = `blur(${bgBlur}px)`;
-          ctx.drawImage(blurTemp, 0, 0);
-          ctx.filter = 'none';
+          ctx.drawImage(blurCanvas, 0, 0);
           ctx.restore();
         } else if (bgType === 'color') {
           ctx.fillStyle = bgColor;
@@ -2224,24 +2223,28 @@ drawLoop();
         } else if (bgType === 'image' && backgroundImageRef.current) {
           const bgImg = backgroundImageRef.current;
           ctx.save();
-          ctx.translate(canvas.width / 2, canvas.height / 2);
-          const rotation = selectedBackgroundImage?.rotation || 0;
-          ctx.rotate((rotation * Math.PI) / 180);
+          // Center and scale background image to cover canvas
           const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-          ctx.drawImage(bgImg, -bgImg.width * scale / 2, -bgImg.height * scale / 2, bgImg.width * scale, bgImg.height * scale);
+          const x = (canvas.width - bgImg.width * scale) / 2;
+          const y = (canvas.height - bgImg.height * scale) / 2;
+          
+          // Apply rotation if needed
+          if (selectedBackgroundImage?.rotation) {
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((selectedBackgroundImage.rotation * Math.PI) / 180);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+          }
+          
+          ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
           ctx.restore();
         } else {
+          // Default: black background
           ctx.fillStyle = '#000000';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         ctx.restore();
-        framesDrawn++;
-        
-        // Log first few frames to verify drawing
-        if (framesDrawn <= 3) {
-          console.log(`✅ Frame ${framesDrawn} drawn to canvas, dimensions:`, canvas.width, 'x', canvas.height);
-        }
+        framesProcessed++;
       } catch (err) {
         console.error('❌ Error drawing MediaPipe frame:', err);
       }
@@ -2253,12 +2256,7 @@ drawLoop();
     // Initialize and start processing
     return new Promise(async (resolve, reject) => {
       try {
-        console.log('📹 Step 1: Setting up video element...');
-        
-        // Ensure video has srcObject set
-        if (!video.srcObject) {
-          video.srcObject = sourceStream;
-        }
+        console.log('📹 Setting up video element for MediaPipe...');
         
         // Set up error handler
         video.onerror = (err) => {
@@ -2266,57 +2264,23 @@ drawLoop();
           reject(new Error('Video element error'));
         };
         
-        console.log('📹 Step 1b: Starting video playback...');
-        console.log('📹 Video track state:', {
-          enabled: videoTrack.enabled,
-          readyState: videoTrack.readyState,
-          muted: videoTrack.muted,
-          id: videoTrack.id
-        });
-        console.log('📹 Video element state:', {
-          srcObject: !!video.srcObject,
-          paused: video.paused,
-          readyState: video.readyState
-        });
-        
-        // Start video playback with timeout and better error handling
+        // Start video playback
         try {
-          const playPromise = video.play();
-          if (playPromise !== undefined) {
-            await Promise.race([
-              playPromise,
-              new Promise((_, timeoutReject) => 
-                setTimeout(() => timeoutReject(new Error('Video play timeout after 3 seconds')), 3000)
-              )
-            ]);
-            console.log('✅ Video playback started successfully');
-          } else {
-            console.log('⚠️ play() returned undefined, checking if video is playing...');
-            // Wait a bit and check if video started
-            await new Promise(r => setTimeout(r, 500));
-            if (video.paused) {
-              throw new Error('Video is still paused after play() call');
-            }
-            console.log('✅ Video appears to be playing');
-          }
+          await video.play();
+          console.log('✅ Video playback started');
         } catch (playErr) {
           console.error('❌ Video play error:', playErr);
-          // Check if video has frames anyway
-          if (video.readyState >= video.HAVE_METADATA) {
-            console.log('⚠️ Play failed but video has metadata, continuing...');
-          } else {
-            throw new Error(`Video play failed: ${playErr.message}`);
-          }
+          throw new Error(`Video play failed: ${playErr.message}`);
         }
         
-        // Wait for video to have valid dimensions with polling
-        console.log('📹 Step 2: Waiting for video dimensions...');
+        // Wait for video to have valid dimensions
+        console.log('📹 Waiting for video dimensions...');
         let attempts = 0;
         const maxAttempts = 100;
         
         while (attempts < maxAttempts) {
           if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
-            console.log('✅ Video is ready with dimensions:', video.videoWidth, 'x', video.videoHeight);
+            console.log('✅ Video ready:', video.videoWidth, 'x', video.videoHeight);
             break;
           }
           await new Promise(r => setTimeout(r, 50));
@@ -2324,21 +2288,17 @@ drawLoop();
         }
         
         if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
-          throw new Error(`Video not ready after ${maxAttempts * 50}ms. readyState: ${video.readyState}, dimensions: ${video.videoWidth}x${video.videoHeight}`);
+          throw new Error(`Video not ready after ${maxAttempts * 50}ms`);
         }
-        
-        // Additional wait to ensure video is actually playing and has frames
-        await new Promise(r => setTimeout(r, 500));
         
         // Set canvas dimensions
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        videoReady = true;
-        console.log('✅ Step 3: Canvas dimensions set:', canvas.width, 'x', canvas.height);
+        console.log('✅ Canvas dimensions set:', canvas.width, 'x', canvas.height);
 
-        // Wait for background image to load if needed
+        // Load background image if needed
         if (bgType === 'image' && selectedBackgroundImage && !backgroundImageRef.current) {
-          console.log('📹 Step 4: Loading background image...');
+          console.log('📹 Loading background image...');
           await new Promise((imgResolve, imgReject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -2356,182 +2316,100 @@ drawLoop();
         }
 
         // Start MediaPipe processing
-        console.log('📹 Step 5: Starting MediaPipe processing...');
+        console.log('📹 Starting MediaPipe frame processing...');
         isProcessing = true;
         backgroundProcessingRef.current = true;
 
-        // Process initial frames through MediaPipe
-        let framesProcessed = 0;
-        let lastFrameTime = Date.now();
-        
-        const processInitialFrames = async () => {
-          // Check if video is still ready
-          if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
-            console.warn('⚠️ Video not ready, retrying...');
-            if (framesProcessed < 200) {
-              requestAnimationFrame(processInitialFrames);
-            }
+        // Process frames continuously
+        const processFrames = async () => {
+          if (!isProcessing || !backgroundProcessingRef.current) {
             return;
           }
-          
-          try {
-            // Ensure video is playing
-            if (video.paused) {
-              await video.play();
-            }
-            
-            // Send frame to MediaPipe for selfie segmentation
-            await selfieSegmentation.send({ image: video });
-            
-            // Also send frame to face detection (if initialized)
-            if (faceDetection) {
-              try {
-                await faceDetection.send({ image: video });
-              } catch (faceErr) {
-                // Face detection errors are non-critical, just log
-                if (framesProcessed === 1) {
-                  console.warn('⚠️ Face detection error (non-critical):', faceErr);
-                }
-              }
-            }
-            
-            framesProcessed++;
-            lastFrameTime = Date.now();
-            
-            console.log(`📊 Processed frame ${framesProcessed}/30 through MediaPipe`);
 
-              // After processing 30 frames, create the stream
-              if (framesProcessed >= 30 && !stream) {
-                console.log('✅ Step 6: Created canvas stream after', framesProcessed, 'MediaPipe frames');
-                
-                // Wait a moment for MediaPipe callback to draw
-                await new Promise(r => setTimeout(r, 500));
-                
-                // Create stream - MediaPipe should have drawn frames by now
-                stream = canvas.captureStream(30);
-
-                // Verify stream has tracks
-                if (stream && stream.getVideoTracks().length > 0) {
-                  console.log('✅ Step 7: Stream created successfully with', stream.getVideoTracks().length, 'track(s)');
-
-                  // Continue processing frames
-                  const continueProcessing = async () => {
-                    if (isProcessing && backgroundProcessingRef.current && video.readyState >= video.HAVE_CURRENT_DATA) {
-                      try {
-                        // Process selfie segmentation
-                        await selfieSegmentation.send({ image: video });
-                        
-                        // Also process face detection (if initialized)
-                        if (faceDetection) {
-                          try {
-                            await faceDetection.send({ image: video });
-                          } catch (faceErr) {
-                            // Face detection errors are non-critical
-                          }
-                        }
-                        
-                        animationFrameId = requestAnimationFrame(continueProcessing);
-                        backgroundAnimationFrameRef.current = animationFrameId;
-                      } catch (err) {
-                        console.error('MediaPipe processing error:', err);
-                      }
-                    }
-                  };
-                  continueProcessing();
-
-                  // Store cleanup
-                  stream._cleanup = () => {
-                    console.log('🧹 Cleaning up MediaPipe background processing');
-                    isProcessing = false;
-                    backgroundProcessingRef.current = false;
-                    videoReady = false;
-                    framesDrawn = 0;
-                    if (animationFrameId) {
-                      cancelAnimationFrame(animationFrameId);
-                      animationFrameId = null;
-                    }
-                    video.pause();
-                    if (video.srcObject) {
-                      video.srcObject = null;
-                    }
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    selfieSegmentation.close();
-                    if (faceDetection) {
-                      try {
-                        faceDetection.close();
-                      } catch (err) {
-                        console.warn('Error closing face detection:', err);
-                      }
-                    }
-                  };
-                  stream._videoElement = video;
-                  stream._selfieSegmentation = selfieSegmentation;
-
-                  // Wait a bit for stream to stabilize
-                  await new Promise(r => setTimeout(r, 300));
-                  resolve(stream);
-                  return;
-                } else {
-                  console.error('❌ Stream created but has no video tracks');
-                }
-              } else if (framesProcessed < 30) {
-                // Continue processing initial frames
-                requestAnimationFrame(processInitialFrames);
-              }
+          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+            try {
+              // Send frame to MediaPipe
+              await selfieSegmentation.send({ image: video });
+              
+              // Continue processing
+              animationFrameId = requestAnimationFrame(processFrames);
+              backgroundAnimationFrameRef.current = animationFrameId;
             } catch (err) {
               console.error('MediaPipe send error:', err);
-              if (framesProcessed < 100) {
-                requestAnimationFrame(processInitialFrames);
-              }
+              // Retry after a short delay
+              setTimeout(() => {
+                if (isProcessing) {
+                  requestAnimationFrame(processFrames);
+                }
+              }, 100);
             }
+          } else {
+            // Video not ready, retry
+            requestAnimationFrame(processFrames);
+          }
         };
 
-        // Start processing initial frames
-        processInitialFrames();
+        // Start processing frames
+        processFrames();
 
-        // Timeout after 10 seconds
-        setTimeout(() => {
-          if (!stream) {
-            console.error('❌ Timeout: Failed to create stream after 10 seconds');
-            // Create stream anyway as fallback
-            stream = canvas.captureStream(30);
-            isProcessing = true;
-            backgroundProcessingRef.current = true;
-            resolve(stream);
-          }
-        }, 10000);
+        // Wait a bit for MediaPipe to process initial frames
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // Create canvas stream
+        stream = canvas.captureStream(30);
+
+        if (stream && stream.getVideoTracks().length > 0) {
+          console.log('✅ Stream created successfully with', stream.getVideoTracks().length, 'track(s)');
+
+          // Store cleanup function
+          stream._cleanup = () => {
+            console.log('🧹 Cleaning up MediaPipe background processing');
+            isProcessing = false;
+            backgroundProcessingRef.current = false;
+            
+            if (animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+              animationFrameId = null;
+            }
+            
+            if (backgroundAnimationFrameRef.current) {
+              cancelAnimationFrame(backgroundAnimationFrameRef.current);
+              backgroundAnimationFrameRef.current = null;
+            }
+            
+            video.pause();
+            if (video.srcObject) {
+              video.srcObject.getTracks().forEach(track => track.stop());
+              video.srcObject = null;
+            }
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (selfieSegmentation) {
+              try {
+                selfieSegmentation.close();
+              } catch (err) {
+                console.warn('Error closing MediaPipe:', err);
+              }
+            }
+          };
+          
+          stream._videoElement = video;
+          stream._selfieSegmentation = selfieSegmentation;
+
+          resolve(stream);
+        } else {
+          console.error('❌ Stream created but has no video tracks');
+          reject(new Error('Failed to create stream with video tracks'));
+        }
 
       } catch (err) {
         console.error('❌ MediaPipe initialization error:', err);
+        isProcessing = false;
+        backgroundProcessingRef.current = false;
         reject(err);
       }
     });
-    
-    // Store cleanup function
-    const cleanup = () => {
-      console.log('🧹 Cleaning up background processing');
-      isProcessing = false;
-      backgroundProcessingRef.current = false;
-      videoReady = false;
-      framesDrawn = 0;
-      
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-      
-      video.pause();
-      if (video.srcObject) {
-        video.srcObject = null;
-      }
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    };
-
-    stream._cleanup = cleanup;
-    stream._videoElement = video;
-    
-    return stream;
   };
 
   // const applyBackgroundFilter = React.useCallback(async () => {
@@ -3278,10 +3156,6 @@ drawLoop();
   //   }
   // }, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, processedStream, attachVideoStream]);
 
-
-  // Add this ref at the top with your other refs
-const isApplyingFilterRef = useRef(false);
-
 // Then update the applyBackgroundFilter function:
 const applyBackgroundFilter = React.useCallback(async () => {
   // CRITICAL: Prevent concurrent filter applications
@@ -3359,19 +3233,23 @@ const applyBackgroundFilter = React.useCallback(async () => {
 
       // Use replaceTrack to restore original
       const currentCameraPub = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (currentCameraPub && currentCameraPub.track) {
+      if (currentCameraPub && currentCameraPub.track && originalTrack) {
         try {
-          await liveKitRoom.localParticipant.publishTrack(processedTrack, {
-            source: Track.Source.Camera,
-            name: 'camera-with-background'
-          });
+          await currentCameraPub.track.replaceTrack(originalTrack);
           console.log('✅ Restored original track using replaceTrack');
         } catch (replaceError) {
           console.warn('replaceTrack failed:', replaceError);
-          await liveKitRoom.localParticipant.publishTrack(originalTrack, {
-            source: Track.Source.Camera,
-            name: 'camera'
-          });
+          // Fallback: unpublish and republish
+          try {
+            await liveKitRoom.localParticipant.unpublishTrack(currentCameraPub.track);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await liveKitRoom.localParticipant.publishTrack(originalTrack, {
+              source: Track.Source.Camera,
+              name: 'camera'
+            });
+          } catch (err) {
+            console.error('Failed to restore original track:', err);
+          }
         }
       }
 
@@ -3632,15 +3510,7 @@ useEffect(() => {
     clearTimeout(timer);
   };
 }, [selectedBackground, backgroundColor, backgroundBlur, selectedBackgroundImage, isLive, liveKitRoom, applyBackgroundFilter, processedStream]);
-  useEffect(() => {
-    if (!isLive) return;
-  
-    if (selectedBackground === 'none') {
-      restoreOriginalCamera();
-    } else {
-      applyBackground();
-    }
-  }, [selectedBackground]);
+  // Removed duplicate useEffect - using applyBackgroundFilter instead
 
   // Detect iOS device
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
