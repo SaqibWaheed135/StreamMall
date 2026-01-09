@@ -649,8 +649,6 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const videoContainerRef = useRef(null);
   const videoRef = useRef(null);
-  const fullscreenInputRef = useRef(null);
-  const streamEndedRef = useRef(false); // Track if stream has ended to prevent reconnection
 
   const commentsEndRef = useRef(null);
 
@@ -719,22 +717,12 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('✅ VIEWER Socket connected, ID:', newSocket.id);
-      console.log('✅ VIEWER Socket readyState:', newSocket.readyState);
       setSocketConnected(true);
 
       // Always try to join the stream - backend will handle access checks
-      console.log('📤 VIEWER: Emitting join-stream with streamId:', streamId);
       newSocket.emit('join-stream', {
         streamId,
         isStreamer: false
-      });
-      
-      // Listen for any socket events to debug
-      newSocket.onAny((eventName, ...args) => {
-        if (eventName === 'new-comment') {
-          console.log('🔍 VIEWER: Received new-comment event via onAny:', args);
-        }
       });
     });
 
@@ -960,9 +948,6 @@ newSocket.on('product-added', (data) => {
       // Check if this is the current stream
       if (data.stream?._id === streamId || data.stream?._id?.toString() === streamId?.toString()) {
         console.log('✅ Stream ended - showing modal');
-        // Mark stream as ended to prevent any reconnection attempts
-        streamEndedRef.current = true;
-        
         setEndedStreamData({
           duration: data.duration,
           totalViews: data.stream.totalViews,
@@ -972,52 +957,16 @@ newSocket.on('product-added', (data) => {
         });
         setShowStreamEnded(true);
         
-        // Exit fullscreen on iPhone if active
-        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        if (isIPhone && isFullscreen && videoContainerRef.current) {
-          console.log('📱 Exiting iPhone fullscreen due to stream end');
-          videoContainerRef.current.classList.remove('ios-fullscreen');
-          document.body.classList.remove('ios-fullscreen-active');
-          document.documentElement.classList.remove('ios-fullscreen-active');
-          
-          // Reset inline styles
-          if (videoContainerRef.current) {
-            videoContainerRef.current.style.cssText = '';
-          }
-          
-          // Restore body scroll
-          document.body.style.position = '';
-          document.body.style.top = '';
-          document.body.style.left = '';
-          document.body.style.right = '';
-          document.body.style.bottom = '';
-          document.body.style.width = '';
-          document.body.style.height = '';
-          document.body.style.overflow = '';
-          
-          // Restore html styles
-          document.documentElement.style.position = '';
-          document.documentElement.style.width = '';
-          document.documentElement.style.height = '';
-          document.documentElement.style.overflow = '';
-          
-          setIsFullscreen(false);
-        }
-        
         // Disconnect from LiveKit room
         if (liveKitRoom) {
           liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
           setLiveKitRoom(null);
         }
         
-        // Disconnect socket and prevent reconnection
+        // Disconnect socket
         if (newSocket) {
-          newSocket.removeAllListeners('reconnect'); // Prevent reconnection
           newSocket.disconnect();
         }
-        
-        // Clear the stream state to prevent any reconnection attempts
-        setStream(null);
       }
     });
 
@@ -1035,13 +984,6 @@ newSocket.on('product-added', (data) => {
     });
 
     newSocket.on('reconnect', () => {
-      // Don't reconnect if stream has ended
-      if (showStreamEnded || streamEndedRef.current) {
-        console.log('📺 Stream has ended, preventing reconnection');
-        newSocket.disconnect();
-        return;
-      }
-      
       setSocketConnected(true);
       // Rejoin stream on reconnect
       newSocket.emit('join-stream', {
@@ -1231,21 +1173,8 @@ newSocket.on('product-added', (data) => {
       room.on(RoomEvent.ParticipantDisconnected, () => {
         setViewerCount(room.remoteParticipants.size);
       });
-
-      // Handle room disconnection - don't try to reconnect if stream has ended
-      room.on(RoomEvent.Disconnected, (reason) => {
-        console.log('📺 LiveKit room disconnected:', reason);
-        // Don't try to reconnect if stream has ended
-        if (streamEndedRef.current) {
-          console.log('📺 Stream has ended, not attempting LiveKit reconnection');
-          return;
-        }
-      });
     } catch (err) {
-      // Don't show error if stream has already ended
-      if (!streamEndedRef.current) {
-        setError(t('viewerStream.errors.failedToConnect', { message: err.message }));
-      }
+      setError(t('viewerStream.errors.failedToConnect', { message: err.message }));
     }
   };
 
@@ -1333,16 +1262,7 @@ newSocket.on('product-added', (data) => {
       return;
     }
 
-    const commentText = comment.trim();
-    console.log('📤 Sending comment from viewer:', commentText);
-    console.log('📤 Socket state:', { 
-      socket: !!socket, 
-      connected: socket?.connected, 
-      id: socket?.id,
-      readyState: socket?.readyState 
-    });
-    console.log('📤 Stream ID:', streamId);
-    console.log('📤 Has access:', hasAccess);
+    console.log('📤 Sending comment from viewer:', comment.trim());
 
     // Optimistically add comment to UI
     const newComment = {
@@ -1362,39 +1282,11 @@ newSocket.on('product-added', (data) => {
     
     setComment('');
 
-    // Emit comment to server with error handling
-    try {
-      console.log('📤 Emitting send-comment event...');
-      console.log('📤 Socket state:', {
-        connected: socket.connected,
-        id: socket.id,
-        readyState: socket.readyState
-      });
-      console.log('📤 Payload:', { streamId, text: commentText });
-      
-      socket.emit('send-comment', {
-        streamId,
-        text: commentText
-      });
-      
-      console.log('✅ send-comment event emitted successfully');
-      
-      // Add listener to check if server acknowledges
-      socket.once('comment-sent', (data) => {
-        console.log('✅ Server acknowledged comment:', data);
-      });
-      
-      // Check for errors
-      socket.once('comment-error', (error) => {
-        console.error('❌ Server returned comment error:', error);
-        setError(error.message || 'Failed to send comment');
-        setTimeout(() => setError(''), 3000);
-      });
-    } catch (error) {
-      console.error('❌ Error emitting send-comment:', error);
-      setError('Failed to send comment. Please try again.');
-      setTimeout(() => setError(''), 3000);
-    }
+    // Emit comment to server
+    socket.emit('send-comment', {
+      streamId,
+      text: comment.trim()
+    });
   };
 
   // Detect iOS device
@@ -1402,133 +1294,46 @@ newSocket.on('product-added', (data) => {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   const toggleFullscreen = async () => {
-    const container = videoContainerRef.current;
-    const videoEl = videoRef.current;
-
-    if (!container && !videoEl) return;
-
-    // More specific iOS detection (excludes iPad and Mac with touchscreen)
-    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isIPad = /iPad/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!videoContainerRef.current) return;
 
     try {
       if (!isFullscreen) {
-        // iPhone-specific: Use enhanced CSS fullscreen
-        if (isIPhone) {
-          // Scroll to top first to hide address bar
-          window.scrollTo(0, 1);
-
-          // Add fullscreen classes
-          container.classList.add('ios-fullscreen');
+        // For iOS, use CSS-based fullscreen since container fullscreen API doesn't work
+        if (isIOS) {
+          // iOS doesn't support container fullscreen API, use CSS approach
           document.body.classList.add('ios-fullscreen-active');
-          document.documentElement.classList.add('ios-fullscreen-active');
-
-          // Apply aggressive inline styles to container to break out of parent
-          container.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            height: calc(var(--vh, 1vh) * 100) !important;
-            max-width: 100vw !important;
-            max-height: 100vh !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            z-index: 2147483647 !important;
-            border-radius: 0 !important;
-            background: #000 !important;
-            transform: none !important;
-            -webkit-transform: translate3d(0,0,0) !important;
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-          `;
-
-          // Force viewport height calculation
-          const vh = window.innerHeight * 0.01;
-          document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-          // Prevent body scroll
-          document.body.style.position = 'fixed';
-          document.body.style.top = '0';
-          document.body.style.left = '0';
-          document.body.style.right = '0';
-          document.body.style.bottom = '0';
-          document.body.style.width = '100%';
-          document.body.style.height = '100%';
+          videoContainerRef.current.classList.add('ios-fullscreen');
           document.body.style.overflow = 'hidden';
-
-          // Also set on html
-          document.documentElement.style.position = 'fixed';
-          document.documentElement.style.width = '100%';
-          document.documentElement.style.height = '100%';
           document.documentElement.style.overflow = 'hidden';
-
+          // Force repaint to ensure styles apply
+          videoContainerRef.current.offsetHeight;
           setIsFullscreen(true);
-
-          // Request orientation lock if available
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {
-              console.log('Orientation lock not available');
-            });
-          }
-
           return;
         }
 
-        // iPad and desktop: Use native fullscreen API
-        if (container.requestFullscreen) {
-          await container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-          await container.webkitRequestFullscreen();
-        } else if (container.mozRequestFullScreen) {
-          await container.mozRequestFullScreen();
-        } else if (container.msRequestFullscreen) {
-          await container.msRequestFullscreen();
+        // For other browsers, use native fullscreen API
+        if (videoContainerRef.current.requestFullscreen) {
+          await videoContainerRef.current.requestFullscreen();
+        } else if (videoContainerRef.current.webkitRequestFullscreen) {
+          await videoContainerRef.current.webkitRequestFullscreen();
+        } else if (videoContainerRef.current.mozRequestFullScreen) {
+          await videoContainerRef.current.mozRequestFullScreen();
+        } else if (videoContainerRef.current.msRequestFullscreen) {
+          await videoContainerRef.current.msRequestFullscreen();
         } else {
           // Fallback to CSS-based fullscreen if API not available
-          container.classList.add('ios-fullscreen');
-          document.body.classList.add('ios-fullscreen-active');
+          videoContainerRef.current.classList.add('ios-fullscreen');
           document.body.style.overflow = 'hidden';
         }
-
         setIsFullscreen(true);
-
       } else {
         // Exit fullscreen
-        if (isIPhone) {
-          container.classList.remove('ios-fullscreen');
+        if (isIOS) {
+          // Remove CSS-based fullscreen for iOS
           document.body.classList.remove('ios-fullscreen-active');
-          document.documentElement.classList.remove('ios-fullscreen-active');
-
-          // Reset inline styles
-          container.style.cssText = '';
-
-          // Restore body scroll
-          document.body.style.position = '';
-          document.body.style.top = '';
-          document.body.style.left = '';
-          document.body.style.right = '';
-          document.body.style.bottom = '';
-          document.body.style.width = '';
-          document.body.style.height = '';
+          videoContainerRef.current.classList.remove('ios-fullscreen');
           document.body.style.overflow = '';
-
-          // Restore html styles
-          document.documentElement.style.position = '';
-          document.documentElement.style.width = '';
-          document.documentElement.style.height = '';
           document.documentElement.style.overflow = '';
-
-          // Unlock orientation
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
-
           setIsFullscreen(false);
           return;
         }
@@ -1544,15 +1349,31 @@ newSocket.on('product-added', (data) => {
           await document.msExitFullscreen();
         } else {
           // Fallback: remove CSS-based fullscreen
-          container.classList.remove('ios-fullscreen');
-          document.body.classList.remove('ios-fullscreen-active');
+          videoContainerRef.current.classList.remove('ios-fullscreen');
           document.body.style.overflow = '';
         }
-
         setIsFullscreen(false);
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
+      // Fallback to CSS-based fullscreen on error
+      if (!isFullscreen) {
+        if (isIOS) {
+          document.body.classList.add('ios-fullscreen-active');
+        }
+        videoContainerRef.current.classList.add('ios-fullscreen');
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        setIsFullscreen(true);
+      } else {
+        if (isIOS) {
+          document.body.classList.remove('ios-fullscreen-active');
+        }
+        videoContainerRef.current.classList.remove('ios-fullscreen');
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        setIsFullscreen(false);
+      }
     }
   };
 
@@ -1636,314 +1457,7 @@ newSocket.on('product-added', (data) => {
     };
   }, [overlayComments.length]);
 
-  // Handle back navigation with auto-refresh (for manual back button clicks)
-  const handleBack = () => {
-    // Don't reload if stream has ended - just navigate back normally
-    if (showStreamEnded) {
-      console.log('📺 Stream already ended, navigating back without reload');
-      onBack();
-      return;
-    }
-    
-    // Clean up resources
-    if (liveKitRoom) {
-      liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
-    }
-    if (socket) {
-      socket.disconnect();
-    }
-    
-    // Auto-refresh the page to ensure all state is completely reset
-    // This resolves the issue where the page gets stuck after leaving viewer stream
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
-  };
-
-  // Handle navigation from stream ended modal (no reload needed)
-  const handleStreamEndedNavigate = () => {
-    console.log('📺 Navigating back from stream ended modal');
-    // Clean up resources
-    if (liveKitRoom) {
-      liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
-      setLiveKitRoom(null);
-    }
-    if (socket) {
-      socket.disconnect();
-      setSocket(null);
-    }
-    // Just navigate back without reload since stream has already ended
-    onBack();
-  };
-
-  // Auto-fullscreen for iPhone users when stream is ready
-  useEffect(() => {
-    // Only detect iPhone specifically (not iPad or other iOS devices)
-    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const streamReady = stream && liveKitRoom && !loading;
-    console.log('🔍 Auto-fullscreen check:', { streamReady, isIPhone, isFullscreen });
-
-    // Only auto-fullscreen on iPhone when stream is ready
-    if (streamReady && isIPhone && !isFullscreen) {
-      console.log('📱 iPhone detected - attempting auto-fullscreen');
-      // Show toast notification
-      setShowFullscreenToast(true);
-
-      // Function to attempt fullscreen with retries
-      const attemptFullscreen = (attempts = 0) => {
-        const container = videoContainerRef.current;
-        console.log(`🔄 Fullscreen attempt ${attempts}:`, { container: !!container });
-        
-        // Check if already in fullscreen to avoid duplicate calls
-        if (container && container.classList.contains('ios-fullscreen')) {
-          console.log('✅ Already in fullscreen');
-          setIsFullscreen(true);
-          return;
-        }
-        
-        if (!container && attempts < 20) {
-          // Retry if container not ready yet (up to 4 seconds)
-          setTimeout(() => attemptFullscreen(attempts + 1), 200);
-          return;
-        }
-
-        if (container && !container.classList.contains('ios-fullscreen')) {
-          console.log('🎬 Applying iPhone fullscreen');
-          
-          // Use requestAnimationFrame to ensure DOM is ready
-          requestAnimationFrame(() => {
-            // Apply iPhone fullscreen directly
-            window.scrollTo(0, 1);
-
-            // Add fullscreen classes
-            container.classList.add('ios-fullscreen');
-            document.body.classList.add('ios-fullscreen-active');
-            document.documentElement.classList.add('ios-fullscreen-active');
-
-            // Apply aggressive inline styles to container to break out of parent
-            container.style.cssText = `
-              position: fixed !important;
-              top: 0 !important;
-              left: 0 !important;
-              right: 0 !important;
-              bottom: 0 !important;
-              width: 100vw !important;
-              height: 100vh !important;
-              height: calc(var(--vh, 1vh) * 100) !important;
-              max-width: 100vw !important;
-              max-height: 100vh !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              z-index: 2147483647 !important;
-              border-radius: 0 !important;
-              background: #000 !important;
-              transform: none !important;
-              -webkit-transform: translate3d(0,0,0) !important;
-              display: block !important;
-              visibility: visible !important;
-              opacity: 1 !important;
-            `;
-
-            // Force viewport height calculation
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-            // Prevent body scroll
-            document.body.style.position = 'fixed';
-            document.body.style.top = '0';
-            document.body.style.left = '0';
-            document.body.style.right = '0';
-            document.body.style.bottom = '0';
-            document.body.style.width = '100%';
-            document.body.style.height = '100%';
-            document.body.style.overflow = 'hidden';
-
-            // Also set on html
-            document.documentElement.style.position = 'fixed';
-            document.documentElement.style.width = '100%';
-            document.documentElement.style.height = '100%';
-            document.documentElement.style.overflow = 'hidden';
-
-            setIsFullscreen(true);
-            console.log('✅ Fullscreen applied with inline styles');
-
-            // Focus input to open keyboard immediately on iPhone - using multiple techniques
-            const triggerKeyboard = () => {
-              const input = fullscreenInputRef.current;
-              if (!input) return;
-
-              // Technique 1: Temporarily change input type to 'tel' (always shows keyboard on iOS), then change back
-              const originalType = input.type;
-              if (originalType === 'text') {
-                input.type = 'tel';
-                // Force reflow
-                void input.offsetHeight;
-                input.type = 'text';
-              }
-
-              // Technique 2: Programmatic click event (iOS responds better to this)
-              try {
-                const clickEvent = new MouseEvent('click', {
-                  bubbles: true,
-                  cancelable: true,
-                  view: window
-                });
-                input.dispatchEvent(clickEvent);
-              } catch (e) {
-                console.log('Click event dispatch failed:', e);
-              }
-
-              // Technique 3: Direct focus
-              input.focus();
-              
-              // Technique 4: Click method (iOS sometimes needs this)
-              if (input.click) {
-                input.click();
-              }
-              
-              // Technique 5: Set selection range (makes input more "active" on iOS)
-              if (input.setSelectionRange) {
-                try {
-                  const len = input.value.length || 0;
-                  input.setSelectionRange(len, len);
-                } catch (e) {
-                  // Ignore errors for inputs that don't support selection
-                }
-              }
-
-              // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
-              setTimeout(() => {
-                input.blur();
-                setTimeout(() => {
-                  try {
-                    const clickEvent = new MouseEvent('click', {
-                      bubbles: true,
-                      cancelable: true,
-                      view: window
-                    });
-                    input.dispatchEvent(clickEvent);
-                  } catch (e) { }
-                  input.focus();
-                  if (input.click) {
-                    input.click();
-                  }
-                }, 10);
-              }, 50);
-              
-              console.log('⌨️ Attempted to show keyboard with multiple techniques');
-            };
-
-            // Try multiple times with increasing delays
-            setTimeout(triggerKeyboard, 100);
-            setTimeout(triggerKeyboard, 300);
-            setTimeout(triggerKeyboard, 500);
-            setTimeout(triggerKeyboard, 800);
-            setTimeout(triggerKeyboard, 1000);
-
-            // Request orientation lock if available
-            if (screen.orientation && screen.orientation.lock) {
-              screen.orientation.lock('landscape').catch(() => {
-                console.log('Orientation lock not available');
-              });
-            }
-
-            // Hide toast after fullscreen is activated
-            setTimeout(() => {
-              setShowFullscreenToast(false);
-            }, 2000);
-          });
-        } else if (!container) {
-          console.warn('⚠️ Container not found after all retries');
-        }
-      };
-
-      // Start attempting fullscreen after a delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        attemptFullscreen();
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [stream, liveKitRoom, loading]); // Trigger when stream becomes ready
-
-  // Auto-focus input to show keyboard when iPhone enters fullscreen mode
-  useEffect(() => {
-    const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const streamReady = stream && liveKitRoom && !loading;
-    
-    if (isFullscreen && isIPhone && streamReady) {
-      // Aggressive focus with multiple techniques for iOS
-      const triggerKeyboard = () => {
-        const input = fullscreenInputRef.current;
-        if (!input) return;
-
-        // Technique 1: Temporarily change input type to 'tel' (always shows keyboard on iOS), then change back
-        const originalType = input.type;
-        if (originalType === 'text') {
-          input.type = 'tel';
-          // Force reflow
-          void input.offsetHeight;
-          input.type = 'text';
-        }
-
-        // Technique 2: Programmatic click event (iOS responds better to this)
-        try {
-          const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-          });
-          input.dispatchEvent(clickEvent);
-        } catch (e) {
-          console.log('Click event dispatch failed:', e);
-        }
-
-        // Technique 3: Direct focus
-        input.focus();
-        
-        // Technique 4: Click method (iOS sometimes needs this)
-        if (typeof input.click === 'function') {
-          input.click();
-        }
-        
-        // Technique 5: Set selection range
-        if (typeof input.setSelectionRange === 'function') {
-          try {
-            const len = input.value.length || 0;
-            input.setSelectionRange(len, len);
-          } catch (e) {
-            // Ignore errors
-          }
-        }
-        
-        // Technique 6: Force blur then focus with click (sometimes triggers keyboard)
-        setTimeout(() => {
-          input.blur();
-          setTimeout(() => {
-            try {
-              const clickEvent = new MouseEvent('click', {
-                bubbles: true,
-                cancelable: true,
-                view: window
-              });
-              input.dispatchEvent(clickEvent);
-            } catch (e) {
-              // Ignore errors
-            }
-            input.focus();
-            if (typeof input.click === 'function') {
-              input.click();
-            }
-          }, 10);
-        }, 50);
-      };
-
-      // Try multiple times with increasing delays
-      setTimeout(triggerKeyboard, 100);
-      setTimeout(triggerKeyboard, 300);
-      setTimeout(triggerKeyboard, 500);
-    }
-  }, [isFullscreen, stream, liveKitRoom, loading]);
+  // Removed iPhone-specific auto-fullscreen - now works same as Android/other browsers
 
   if (loading) {
     return (
@@ -1966,7 +1480,7 @@ newSocket.on('product-added', (data) => {
           <h2 className="text-2xl font-bold text-pink-700 mb-3">{t('viewerStream.streamNotAvailable')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={handleBack}
+            onClick={onBack}
             className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 px-6 py-3 rounded-xl text-white font-semibold transition-all"
           >
             {t('viewerStream.goBack')}
@@ -2008,7 +1522,7 @@ newSocket.on('product-added', (data) => {
                 {paymentProcessing ? t('viewerStream.processing') : t('viewerStream.payEnterStream')}
               </button>
               <button
-                onClick={handleBack}
+                onClick={onBack}
                 disabled={paymentProcessing}
                 className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
@@ -2027,7 +1541,7 @@ newSocket.on('product-added', (data) => {
                 {t('viewerStream.purchaseCoins')}
               </button>
               <button
-                onClick={handleBack}
+                onClick={onBack}
                 className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
                 {t('viewerStream.goBack')}
@@ -2337,7 +1851,7 @@ newSocket.on('product-added', (data) => {
       )}
 
       {showStreamEnded && endedStreamData && (
-        <StreamEndedModal streamData={endedStreamData} onNavigate={handleStreamEndedNavigate} />
+        <StreamEndedModal streamData={endedStreamData} onNavigate={onBack} />
       )}
 
       {/* iPhone Fullscreen Toast */}
@@ -2365,7 +1879,7 @@ newSocket.on('product-added', (data) => {
               </div>
             </div>
             <button
-              onClick={handleBack}
+              onClick={onBack}
               className="bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
             >
               {t('viewerStream.exit')}
@@ -2473,7 +1987,6 @@ newSocket.on('product-added', (data) => {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
-                      ref={fullscreenInputRef}
                       type="text"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
@@ -2528,7 +2041,7 @@ newSocket.on('product-added', (data) => {
 
                   {/* Exit Button - Top Left */}
                   <button
-                    onClick={handleBack}
+                    onClick={onBack}
                     className="absolute top-4 left-4 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
                     style={{ 
                       zIndex: 2147483647,
