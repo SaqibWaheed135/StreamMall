@@ -2121,8 +2121,8 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     // Cleanup any existing processing
     if (isProcessingBackgroundRef.current) {
       await restoreOriginalCamera();
-      // Wait a bit before starting new processing
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait longer for MediaPipe to fully clean up before re-initializing
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     try {
@@ -2694,6 +2694,13 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     video.autoplay = true;
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
+    // Add to DOM (hidden) to ensure it plays properly
+    video.style.position = 'absolute';
+    video.style.top = '-9999px';
+    video.style.width = '1px';
+    video.style.height = '1px';
+    video.style.opacity = '0';
+    document.body.appendChild(video);
     
     // Store reference for cleanup
     backgroundVideoElementRef.current = video;
@@ -2722,23 +2729,34 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     let framesProcessed = 0;
 
     // Initialize MediaPipe Selfie Segmentation
-    // Clean up any existing instance first
+    // Clean up any existing instance first and wait for cleanup to complete
     if (selfieSegmentationRef.current) {
       try {
         selfieSegmentationRef.current.close();
+        selfieSegmentationRef.current = null;
+        // Wait for MediaPipe to fully clean up
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (cleanupErr) {
         console.warn('Error cleaning up previous MediaPipe instance:', cleanupErr);
+        selfieSegmentationRef.current = null;
+        // Still wait a bit
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
-      selfieSegmentationRef.current = null;
     }
     
     let selfieSegmentation;
     try {
       // Check if SelfieSegmentation is available
       if (!SelfieSegmentation || typeof SelfieSegmentation !== 'function') {
+        console.error('SelfieSegmentation check:', {
+          exists: !!SelfieSegmentation,
+          type: typeof SelfieSegmentation,
+          isFunction: typeof SelfieSegmentation === 'function'
+        });
         throw new Error('SelfieSegmentation is not available or not a constructor');
       }
       
+      console.log('📹 Creating new SelfieSegmentation instance...');
       selfieSegmentation = new SelfieSegmentation({
         locateFile: (file) => {
           return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
@@ -2760,7 +2778,7 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         selfieSegmentationRef.current = null;
       }
       // Remove video element from DOM if it exists
-      if (video.parentNode) {
+      if (video && video.parentNode) {
         try {
           document.body.removeChild(video);
         } catch (e) {
@@ -2827,13 +2845,24 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     }
 
     // MediaPipe processing function - Proper compositing
+    let frameCount = 0;
     const processFrameWithMediaPipe = (results) => {
-      if (!results || !isProcessing) {
+      if (!results || !isProcessing || !backgroundProcessingRef.current) {
         return;
       }
 
       if (!results.segmentationMask || !results.image) {
+        // Log occasionally if results are missing
+        if (frameCount % 100 === 0) {
+          console.warn('⚠️ MediaPipe results missing segmentation mask or image');
+        }
         return;
+      }
+      
+      frameCount++;
+      // Log first few frames to confirm processing
+      if (frameCount <= 3) {
+        console.log(`✅ MediaPipe processing frame ${frameCount}`);
       }
 
       // Set canvas dimensions from video if not set
@@ -2937,9 +2966,9 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         // Wait for video to have valid dimensions
         console.log('📹 Waiting for video dimensions...');
         let attempts = 0;
-        const maxAttempts = 100;
+        const maxVideoAttempts = 100;
         
-        while (attempts < maxAttempts) {
+        while (attempts < maxVideoAttempts) {
           if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
             console.log('✅ Video ready:', video.videoWidth, 'x', video.videoHeight);
             break;
@@ -3029,7 +3058,9 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         console.log('⏳ Waiting for MediaPipe to process frames...');
         let frameCheckAttempts = 0;
         let hasValidFrames = false;
-        while (frameCheckAttempts < 30 && !hasValidFrames) {
+        const maxFrameCheckAttempts = 50; // Increased from 30 to give more time
+        
+        while (frameCheckAttempts < maxFrameCheckAttempts && !hasValidFrames) {
           await new Promise(r => setTimeout(r, 100));
           
           // Check if canvas has content
@@ -3047,7 +3078,7 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
               }
               if (nonBlackPixels > 10) {
                 hasValidFrames = true;
-                console.log('✅ Canvas has valid frames from MediaPipe');
+                console.log(`✅ Canvas has valid frames from MediaPipe (after ${frameCheckAttempts} attempts, ${frameCount} frames processed)`);
                 break;
               }
             }
@@ -3055,10 +3086,15 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
             // Continue checking
           }
           frameCheckAttempts++;
+          
+          // Log progress every 10 attempts
+          if (frameCheckAttempts % 10 === 0) {
+            console.log(`⏳ Still waiting for frames... (attempt ${frameCheckAttempts}/${maxFrameCheckAttempts}, frames processed: ${frameCount})`);
+          }
         }
         
         if (!hasValidFrames) {
-          console.warn('⚠️ Canvas frames check timeout, proceeding anyway');
+          console.warn(`⚠️ Canvas frames check timeout after ${maxFrameCheckAttempts} attempts (${frameCount} frames processed), proceeding anyway`);
         }
         
         // Create canvas stream
@@ -3086,8 +3122,24 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
             
             video.pause();
             if (video.srcObject) {
-              video.srcObject.getTracks().forEach(track => track.stop());
+              // Only stop tracks that are not the original camera track
+              video.srcObject.getTracks().forEach(track => {
+                if (originalMediaStreamTrackRef.current && track.id === originalMediaStreamTrackRef.current.id) {
+                  // Don't stop the original camera track
+                  return;
+                }
+                track.stop();
+              });
               video.srcObject = null;
+            }
+            
+            // Remove video element from DOM
+            if (video.parentNode) {
+              try {
+                document.body.removeChild(video);
+              } catch (e) {
+                // Element might already be removed
+              }
             }
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
