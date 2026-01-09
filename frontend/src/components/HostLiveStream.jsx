@@ -5471,6 +5471,82 @@ useEffect(() => {
                   </div>
                 )}
 
+                {/* Persistent Chat Panel - Android/Desktop - Always visible in fullscreen mode */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <div
+                    className="fixed left-0 bottom-0 z-50 flex flex-col"
+                    style={{
+                      width: '280px',
+                      maxWidth: '75%',
+                      maxHeight: '60%',
+                      height: 'auto',
+                      bottom: '80px', // Above the input bar
+                      zIndex: 2147483646,
+                      pointerEvents: 'auto',
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)'
+                    }}
+                  >
+                    {/* Chat Messages Container - Scrollable */}
+                    <div
+                      ref={iPhoneChatPanelRef}
+                      className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
+                      style={{
+                        maxHeight: 'calc(60vh - 60px)',
+                        WebkitOverflowScrolling: 'touch',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                      }}
+                    >
+                      {comments.length === 0 ? (
+                        <div className="text-white/60 text-xs text-center py-4">
+                          {t('chat.noCommentsYet')}
+                        </div>
+                      ) : (
+                        comments.map((comment) => (
+                          <div
+                            key={comment.id || comment._id}
+                            className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border ${
+                              comment.isJoinNotification 
+                                ? 'bg-blue-500/40 border-blue-400/30' 
+                                : 'bg-black/30 border-white/10'
+                            }`}
+                            style={{
+                              fontSize: '0.85rem',
+                              transform: 'translate3d(0,0,0)',
+                              WebkitTransform: 'translate3d(0,0,0)'
+                            }}
+                          >
+                            <div className="flex items-start gap-2">
+                              {comment.isJoinNotification ? (
+                                <Users className="w-5 h-5 text-blue-300 flex-shrink-0" />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                  {comment.username?.charAt(0)?.toUpperCase() || 'V'}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                {comment.isJoinNotification ? (
+                                  <span className="text-blue-200 text-xs italic">
+                                    {comment.username === 'System' ? comment.text : `${comment.username} ${comment.text}`}
+                                  </span>
+                                ) : (
+                                  <>
+                                    <span className="font-semibold text-pink-300 text-xs">{comment.username}</span>
+                                    <span className="text-white/90 text-xs ml-1 break-words">{comment.text}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      {/* Invisible element at the end for scrolling */}
+                      <div ref={commentsEndRef} />
+                    </div>
+                  </div>
+                )}
+
                 {/* Floating Menu Button for Android/Desktop Fullscreen */}
                 {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <button
@@ -5489,6 +5565,212 @@ useEffect(() => {
                   >
                     {showFullscreenControls ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
                   </button>
+                )}
+
+                {/* Camera/Mic/Filter Controls - Always Visible on Android/Desktop Fullscreen */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <div 
+                    className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4"
+                    style={{ 
+                      zIndex: 2147483648  // Higher than input bar
+                    }}
+                  >
+                    <button
+                      onClick={toggleCamera}
+                      className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isCameraOn
+                        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
+                        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+                      }`}
+                      title={isCameraOn ? t('camera.turnOffCamera') : t('camera.turnOnCamera')}
+                    >
+                      {isCameraOn ? <Video className="w-8 h-8" /> : <VideoOff className="w-8 h-8" />}
+                    </button>
+
+                    <button
+                      onClick={toggleMic}
+                      className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${isMicOn
+                        ? 'bg-white/90 border-white text-gray-900 hover:bg-white' 
+                        : 'bg-red-600/90 border-red-400 text-white hover:bg-red-700'
+                      }`}
+                      title={isMicOn ? t('camera.muteMicrophone') : t('camera.unmuteMicrophone')}
+                    >
+                      {isMicOn ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
+                    </button>
+
+                    <button
+                      onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
+                      className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl border-4 transition-all ${selectedBackground !== 'none'
+                        ? 'bg-pink-600/90 border-pink-400 text-white hover:bg-pink-700' 
+                        : 'bg-white/90 border-white text-gray-900 hover:bg-white'
+                      }`}
+                      title={t('background.backgroundFilters')}
+                    >
+                      <Sparkles className="w-8 h-8" />
+                    </button>
+                  </div>
+                )}
+
+                {/* End Stream Button with Viewer Count - Android/Desktop */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <div className="absolute top-4 left-4 flex flex-col gap-2" style={{ zIndex: 2147483647 }}>
+                    {/* Viewer Count Display */}
+                    <div className="bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      <span className="text-sm font-semibold">{viewerCount} {t('common.viewers')}</span>
+                    </div>
+                    
+                    {/* End Stream Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowConfirmEnd(true);
+                      }}
+                      className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
+                      style={{ 
+                        pointerEvents: 'auto',
+                        cursor: 'pointer',
+                        userSelect: 'none'
+                      }}
+                      title={t('stream.endStream')}
+                      aria-label={t('stream.endStream')}
+                    >
+                      <X className="w-4 h-4" />
+                      <span className="text-sm">{t('stream.endStream')}</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Floating Comment Input - Always Visible on Android/Desktop Fullscreen */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
+                  <div 
+                    className="absolute left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/10 p-3 z-50"
+                    style={{ 
+                      zIndex: 2147483647,
+                      bottom: '0px',
+                      position: 'fixed',
+                      width: '100%',
+                      maxWidth: '100dvw',
+                      left: '0',
+                      right: '0',
+                      transform: 'translateZ(0)',
+                      WebkitTransform: 'translateZ(0)'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        inputMode="text"
+                        enterKeyHint="send"
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        value={fullscreenComment}
+                        onChange={(e) => setFullscreenComment(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && fullscreenComment.trim() && socket) {
+                            e.preventDefault();
+                            socket.emit('send-comment', {
+                              streamId: streamData.streamId,
+                              text: fullscreenComment.trim()
+                            });
+                            setFullscreenComment('');
+                          }
+                        }}
+                        placeholder={t('chat.typeMessage')}
+                        className="flex-1 bg-white/10 border border-white/20 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (fullscreenComment.trim() && socket) {
+                            socket.emit('send-comment', {
+                              streamId: streamData.streamId,
+                              text: fullscreenComment.trim()
+                            });
+                            setFullscreenComment('');
+                          }
+                        }}
+                        disabled={!fullscreenComment.trim()}
+                        className="bg-pink-600 text-white p-2.5 rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                      >
+                        <Send className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Background Filter Panel - Android/Desktop */}
+                {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && showBackgroundPanel && (
+                  <div
+                    className="absolute top-0 right-0 h-full w-full max-w-sm bg-black/95 backdrop-blur-xl text-white z-50 flex flex-col"
+                    style={{
+                      zIndex: 2147483648,
+                      animation: 'slideInRight 0.3s ease-out',
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div className="p-4 border-b border-white/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                          <Sparkles className="w-5 h-5" />
+                          {t('background.backgroundFilters')}
+                        </h3>
+                        <button
+                          onClick={() => setShowBackgroundPanel(false)}
+                          className="p-2 hover:bg-white/10 rounded-full transition"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {/* Background Options */}
+                      <div>
+                        <label className="block text-sm font-medium mb-3 text-white/80">{t('background.backgroundColor')}</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => setSelectedBackground('none')}
+                            className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'none'
+                              ? 'border-pink-500 bg-pink-500/20'
+                              : 'border-white/20 bg-white/5 hover:bg-white/10'
+                            }`}
+                          >
+                            <X className="w-5 h-5 mx-auto mb-1" />
+                            <span className="text-xs">{t('background.none')}</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (backgroundImages.length === 0 && !selectedBackgroundImage) {
+                                setError('Please upload a background image first');
+                                return;
+                              }
+                              setSelectedBackground('image');
+                            }}
+                            className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
+                              ? 'border-pink-500 bg-pink-500/20'
+                              : 'border-white/20 bg-white/5 hover:bg-white/10'
+                            } ${(backgroundImages.length === 0 && !selectedBackgroundImage) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={backgroundImages.length === 0 && !selectedBackgroundImage}
+                            title={backgroundImages.length === 0 && !selectedBackgroundImage ? 'Upload an image first' : 'Background Image'}
+                          >
+                            <Image className="w-5 h-5 mx-auto mb-1" />
+                            <span className="text-xs">Image</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-white/20">
+                        <p className="text-xs text-white/60 mb-2">
+                          {t('background.backgroundTip')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {/* Fullscreen Controls Panel for Android/Desktop - Same as iPhone */}
