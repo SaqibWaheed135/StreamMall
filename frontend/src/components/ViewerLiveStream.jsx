@@ -976,23 +976,17 @@ newSocket.on('product-added', (data) => {
       console.log('📺 Stream ended event received:', data);
       // Check if this is the current stream
       if (data.stream?._id === streamId || data.stream?._id?.toString() === streamId?.toString()) {
-        console.log('✅ Stream ended - showing modal');
-        setEndedStreamData({
-          duration: data.duration,
-          totalViews: data.stream.totalViews,
-          heartsReceived: data.stream.heartsReceived || data.stream.heartsReceived || 0,
-          formattedDuration: data.stream.formattedDuration,
-          title: data.stream.title
-        });
-        setShowStreamEnded(true);
+        console.log('✅ Stream ended - navigating to live streams immediately');
         
-        // Disconnect from LiveKit room
+        // Navigate immediately to live streams page (before cleanup to avoid black screen)
+        // Using window.location.href for immediate navigation
+        window.location.href = '/live-streams';
+        
+        // Cleanup in background (won't block navigation)
         if (liveKitRoom) {
           liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
-          setLiveKitRoom(null);
         }
         
-        // Disconnect socket
         if (newSocket) {
           newSocket.disconnect();
         }
@@ -2290,9 +2284,7 @@ newSocket.on('product-added', (data) => {
         />
       )}
 
-      {showStreamEnded && endedStreamData && (
-        <StreamEndedModal streamData={endedStreamData} onNavigate={onBack} />
-      )}
+      {/* StreamEndedModal removed - navigating immediately instead */}
 
       {/* iPhone Fullscreen Toast */}
       {showFullscreenToast && (
