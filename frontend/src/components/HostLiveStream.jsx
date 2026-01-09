@@ -5471,8 +5471,78 @@ useEffect(() => {
                             </div>
                           )}
 
-                          {/* Orders Tab - Keep as is */}
-                          {/* Gifts Tab - Keep as is */}
+                          {/* Orders Tab */}
+                          {activeFullscreenTab === 'orders' && (
+                            <div className="space-y-4 pb-8">
+                              <h4 className="font-semibold text-lg mb-4">{t('orders.orders')} ({orders.length})</h4>
+                              {orders.length === 0 ? (
+                                <div className="text-center text-white/50 py-8">
+                                  <p className="text-sm">{t('orders.noOrdersYet')}</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  {orders.map((order, i) => (
+                                    <div key={i} className="bg-white/10 border border-white/20 rounded-xl p-3 shadow-sm">
+                                      <button
+                                        onClick={() => {
+                                          const product = products[order.productIndex];
+                                          setSelectedOrderDetails({
+                                            order,
+                                            product
+                                          });
+                                        }}
+                                        className="w-full text-left hover:bg-white/20 p-3 rounded-xl transition"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1">
+                                            <p className="font-semibold text-white">
+                                              {products[order.productIndex]?.name || 'Unknown Product'}
+                                            </p>
+                                            <p className="text-xs text-white/70 mt-1">
+                                              By: {order.buyer?.username || order.buyerUsername || 'Unknown Buyer'}
+                                            </p>
+                                            <p className="text-xs text-yellow-400 mt-1">
+                                              +{Math.ceil((products[order.productIndex]?.price || 0) * 100)} coins
+                                            </p>
+                                          </div>
+                                          <ChevronDown className="w-4 h-4 text-white/50" />
+                                        </div>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Gifts Tab */}
+                          {activeFullscreenTab === 'gifts' && (
+                            <div className="space-y-4 pb-8">
+                              <h4 className="font-semibold text-lg mb-4">{t('gifts.gifts')} ({tips.length})</h4>
+                              {tips.length === 0 ? (
+                                <div className="text-center text-white/50 py-8">
+                                  <p className="text-sm">{t('stream.noTipsYet')}</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  {tips.slice(-10).reverse().map((tip) => (
+                                    <div key={tip.id} className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 flex items-center justify-between shadow-sm">
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-3xl">{getGiftIcon(tip.giftType)}</span>
+                                        <div>
+                                          <p className="text-sm font-semibold text-white">{tip.username}</p>
+                                          <p className="text-xs text-white/70">
+                                            {tip.timestamp ? new Date(tip.timestamp).toLocaleTimeString() : ''}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <span className="text-pink-400 font-semibold text-lg">+{tip.amount}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                         </div>
                       </div>
