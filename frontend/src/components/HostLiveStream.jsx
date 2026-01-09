@@ -772,30 +772,47 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     console.log('🎯 HOST: Setting up socket listeners');
     console.log('Socket ID:', socket.id);
     console.log('Socket connected:', socket.connected);
+    console.log('Socket readyState:', socket.readyState);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     // Remove any existing listeners first to avoid duplicates
     socket.off('new-comment');
     
+    // Verify listener was removed
+    console.log('🔍 After removing listener, hasListeners:', socket.hasListeners('new-comment'));
+    
     // In the socket listener setup
     socket.on('new-comment', (data) => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📨 HOST: New comment received');
+      console.log('📨 HOST: New comment received - LISTENER FIRED!');
       console.log('Comment data:', JSON.stringify(data, null, 2));
+      console.log('Comment type:', typeof data);
+      console.log('Comment keys:', data ? Object.keys(data) : 'null');
       console.log('Socket ID:', socket.id);
       console.log('Socket connected:', socket.connected);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       
-      if (!data || !data.text) {
-        console.error('❌ Invalid comment data received:', data);
+      if (!data) {
+        console.error('❌ No data received');
+        return;
+      }
+      
+      if (!data.text && !data.message) {
+        console.error('❌ Invalid comment data - no text or message:', data);
+        return;
+      }
+      
+      const commentText = data.text || data.message || '';
+      if (!commentText.trim()) {
+        console.error('❌ Empty comment text');
         return;
       }
       
       const newComment = {
         _id: data._id || data.id, // ✅ Use _id or fall back to id
         id: data.id || data._id,   // ✅ Include both for compatibility
-        username: data.username || 'Viewer',
-        text: data.text,
+        username: data.username || data.user?.username || 'Viewer',
+        text: commentText,
         timestamp: new Date(data.timestamp || Date.now()),
         replies: [] // ✅ Initialize replies array
       };
@@ -806,6 +823,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       setComments(prev => {
         const updated = [...prev, newComment];
         console.log('📝 Comments updated. Total:', updated.length);
+        console.log('📝 Latest comment:', updated[updated.length - 1]);
         return updated;
       });
 
@@ -967,10 +985,14 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
       newSocket.on('connect', () => {
         console.log('✅ HOST Socket connected, ID:', newSocket.id);
+        console.log('🔍 Socket ready state:', newSocket.readyState);
         
         // Re-setup listeners after connection to ensure they're active
         console.log('🔍 Re-setting up socket listeners after connection...');
         setupSocketListeners(newSocket);
+        
+        // Verify listeners are attached
+        console.log('🔍 Verifying new-comment listener:', newSocket.hasListeners('new-comment'));
         
         newSocket.emit('join-stream', {
           streamId: streamData.streamId,
@@ -981,6 +1003,13 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         });
         
         console.log('✅ HOST: Joined stream and subscribed to earnings');
+        
+        // Test: Listen for any socket events to debug
+        newSocket.onAny((eventName, ...args) => {
+          if (eventName === 'new-comment') {
+            console.log('🔍 HOST: Received new-comment event via onAny:', args);
+          }
+        });
       });
 
       newSocket.on('disconnect', (reason) => {
