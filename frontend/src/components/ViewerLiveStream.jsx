@@ -2260,7 +2260,7 @@ newSocket.on('product-added', (data) => {
         </div>
       )}
 
-      {showCartModal && selectedProduct && !(isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) && (
+      {showCartModal && selectedProduct && !(isFullscreen && (/iPhone|iPod|Android/.test(navigator.userAgent) && !window.MSStream)) && (
         <CheckoutModal
           product={selectedProduct}
           streamId={streamId}
@@ -2621,6 +2621,8 @@ newSocket.on('product-added', (data) => {
                               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                                 {products.map((p, i) => {
                                   const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                                  const isAndroid = /Android/.test(navigator.userAgent);
+                                  const isMobile = isIPhone || isAndroid;
                                   const isExpanded = expandedProductIndex === i;
                                   const coinCost = Math.ceil(p.price * 100);
                                   
@@ -2650,8 +2652,8 @@ newSocket.on('product-added', (data) => {
                                                 return;
                                               }
                                               
-                                              // On iPhone, show inline checkout; otherwise use modal
-                                              if (isIPhone && isFullscreen) {
+                                              // On mobile devices in fullscreen, show inline checkout; otherwise use modal
+                                              if (isMobile && isFullscreen) {
                                                 setExpandedProductIndex(isExpanded ? null : i);
                                                 setCheckoutStep('delivery');
                                                 setDeliveryInfo({
@@ -2688,8 +2690,8 @@ newSocket.on('product-added', (data) => {
                                         )}
                                       </div>
                                       
-                                      {/* Inline Checkout Form for iPhone */}
-                                      {isExpanded && isIPhone && isFullscreen && p.type === 'product' && (
+                                      {/* Inline Checkout Form for Mobile Devices in Fullscreen */}
+                                      {isExpanded && isMobile && isFullscreen && p.type === 'product' && (
                                         <div className="px-4 pb-4 space-y-4 border-t border-white/20 pt-4 mt-2">
                                           {checkoutStep === 'delivery' ? (
                                             <>
