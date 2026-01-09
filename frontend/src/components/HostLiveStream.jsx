@@ -2468,7 +2468,8 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
               ctx.save();
               ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-              if (bgType === 'blur') {
+              // BLUR AND COLOR COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY
+              /* if (bgType === 'blur') {
                 // For blur: Draw video with blur filter
                 // Note: Without segmentation, the entire video (including person) will be blurred
                 ctx.save();
@@ -2482,7 +2483,7 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 // Draw video on top (full video, no segmentation)
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-              } else if (bgType === 'image' && backgroundImageRef.current) {
+              } else */ if (bgType === 'image' && backgroundImageRef.current) {
                 // For image: Draw background image, then video on top
                 // Without segmentation, the entire video will be visible on the background image
                 const bgImg = backgroundImageRef.current;
@@ -2652,11 +2653,22 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
 
   // Background processing with MediaPipe Selfie Segmentation (only for advanced segmentation)
   const processVideoWithBackground = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
-    // Use simple version for all effects to avoid MediaPipe memory issues
-    console.log('🎬 Using simple background processing (no MediaPipe) for type:', bgType);
-    return processVideoWithBackgroundSimple(videoTrack, canvas, bgType, bgColor, bgBlur);
+    // For background images, use MediaPipe segmentation for proper person/background separation
+    if (bgType === 'image') {
+      console.log('🎬 Using MediaPipe segmentation for background image');
+      // Continue with MediaPipe code below
+    } else {
+      // BLUR AND COLOR COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY
+      console.log('🎬 Using simple background processing (no MediaPipe) for type:', bgType);
+      return processVideoWithBackgroundSimple(videoTrack, canvas, bgType, bgColor, bgBlur);
+    }
     
-    /* MediaPipe code below is disabled to avoid memory issues - all code commented out
+    // MediaPipe code for image backgrounds (uncommented for image type only)
+    if (bgType !== 'image') {
+      return null; // Should not reach here for non-image types
+    }
+    
+    // MediaPipe code for image backgrounds - UNCOMMENTED
     if (!canvas || !videoTrack) {
       console.error('Missing canvas or video track');
       return null;
@@ -2821,7 +2833,8 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         
         // 3. Draw background behind (destination-over fills transparent areas)
         ctx.globalCompositeOperation = 'destination-over';
-        if (bgType === 'blur') {
+        // BLUR AND COLOR COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY
+        /* if (bgType === 'blur') {
           // Create temporary canvas for blur effect
           const blurCanvas = document.createElement('canvas');
           blurCanvas.width = canvas.width;
@@ -2836,7 +2849,7 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         } else if (bgType === 'color') {
           ctx.fillStyle = bgColor;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-        } else if (bgType === 'image' && backgroundImageRef.current) {
+        } else */ if (bgType === 'image' && backgroundImageRef.current) {
           const bgImg = backgroundImageRef.current;
           ctx.save();
           // Center and scale background image to cover canvas
@@ -3026,7 +3039,6 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         reject(err);
       }
     });
-    */
   };
 
 
@@ -4893,7 +4905,8 @@ useEffect(() => {
                             <X className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.none')}</span>
                           </button>
-                          <button
+                          {/* BLUR FILTER COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                          {/* <button
                             onClick={() => setSelectedBackground('blur')}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'blur'
                                 ? 'border-pink-500 bg-pink-500/20'
@@ -4902,8 +4915,9 @@ useEffect(() => {
                           >
                             <Sparkles className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.blur')}</span>
-                          </button>
-                          <button
+                          </button> */}
+                          {/* COLOR FILTER COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                          {/* <button
                             onClick={() => setSelectedBackground('color')}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'color'
                                 ? 'border-pink-500 bg-pink-500/20'
@@ -4912,7 +4926,7 @@ useEffect(() => {
                           >
                             <Palette className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">{t('background.color')}</span>
-                          </button>
+                          </button> */}
                           <button
                             onClick={() => setSelectedBackground('image')}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
@@ -5038,8 +5052,8 @@ useEffect(() => {
                         </div>
                       )}
 
-                      {/* Blur Settings */}
-                      {selectedBackground === 'blur' && (
+                      {/* BLUR SETTINGS COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                      {/* {selectedBackground === 'blur' && (
                         <div>
                           <label className="block text-sm font-medium mb-2 text-white/80">
                             {t('background.blurIntensity')}: {backgroundBlur}px
@@ -5053,10 +5067,10 @@ useEffect(() => {
                             className="w-full"
                           />
                         </div>
-                      )}
+                      )} */}
 
-                      {/* Color Settings */}
-                      {selectedBackground === 'color' && (
+                      {/* COLOR SETTINGS COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                      {/* {selectedBackground === 'color' && (
                         <div>
                           <label className="block text-sm font-medium mb-2 text-white/80">Background Color</label>
                           <div className="grid grid-cols-4 gap-2 mb-3">
@@ -5080,7 +5094,7 @@ useEffect(() => {
                             className="w-full h-12 rounded-lg cursor-pointer"
                           />
                         </div>
-                      )}
+                      )} */}
 
                       <div className="pt-4 border-t border-white/20">
                         <p className="text-xs text-white/60 mb-2">
@@ -5986,7 +6000,8 @@ useEffect(() => {
                                 <X className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.none')}</span>
                               </button>
-                              <button
+                              {/* BLUR FILTER COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                              {/* <button
                                 onClick={() => setSelectedBackground('blur')}
                                 className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'blur'
                                     ? 'border-pink-500 bg-pink-500/20'
@@ -5995,8 +6010,9 @@ useEffect(() => {
                               >
                                 <Sparkles className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.blur')}</span>
-                              </button>
-                              <button
+                              </button> */}
+                              {/* COLOR FILTER COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                              {/* <button
                                 onClick={() => setSelectedBackground('color')}
                                 className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'color'
                                     ? 'border-pink-500 bg-pink-500/20'
@@ -6005,12 +6021,22 @@ useEffect(() => {
                               >
                                 <Palette className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">{t('background.color')}</span>
+                              </button> */}
+                              <button
+                                onClick={() => setSelectedBackground('image')}
+                                className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
+                                  ? 'border-pink-500 bg-pink-500/20'
+                                  : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                  }`}
+                              >
+                                <Image className="w-5 h-5 mx-auto mb-1" />
+                                <span className="text-xs">Image</span>
                               </button>
                             </div>
                           </div>
 
-                          {/* Blur Settings */}
-                          {selectedBackground === 'blur' && (
+                          {/* BLUR SETTINGS COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                          {/* {selectedBackground === 'blur' && (
                             <div>
                               <label className="block text-sm font-medium mb-2 text-white/80">
                                 {t('background.blurIntensity')}: {backgroundBlur}px
@@ -6024,10 +6050,10 @@ useEffect(() => {
                                 className="w-full"
                               />
                             </div>
-                          )}
+                          )} */}
 
-                          {/* Color Settings */}
-                          {selectedBackground === 'color' && (
+                          {/* COLOR SETTINGS COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
+                          {/* {selectedBackground === 'color' && (
                             <div>
                               <label className="block text-sm font-medium mb-2 text-white/80">{t('background.backgroundColor')}</label>
                               <div className="grid grid-cols-4 gap-2 mb-3">
@@ -6051,7 +6077,7 @@ useEffect(() => {
                                 className="w-full h-12 rounded-lg cursor-pointer"
                               />
                             </div>
-                          )}
+                          )} */}
 
                           <div className="pt-4 border-t border-white/20">
                             <p className="text-xs text-white/60 mb-2">
