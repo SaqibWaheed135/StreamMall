@@ -1142,25 +1142,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
             console.error('❌ HOST: Join stream error:', response.error);
           } else {
             console.log('✅ HOST: Successfully joined stream');
-            
-            // Send initialization comment to trigger all socket events
-            // Wait a bit to ensure socket listeners are set up
-            setTimeout(() => {
-              if (!initializationCommentSentRef.current && newSocket && newSocket.connected) {
-                console.log('🚀 HOST: Sending initialization comment to trigger socket events');
-                newSocket.emit('send-comment', {
-                  streamId: streamData.streamId,
-                  text: '🎥 Stream started!'
-                }, (commentResponse) => {
-                  if (commentResponse && commentResponse.error) {
-                    console.error('❌ HOST: Initialization comment error:', commentResponse.error);
-                  } else {
-                    console.log('✅ HOST: Initialization comment sent successfully');
-                    initializationCommentSentRef.current = true;
-                  }
-                });
-              }
-            }, 500); // Small delay to ensure listeners are ready
           }
         });
         
@@ -1246,6 +1227,43 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       setProducts(streamData.stream.products?.map((p, i) => ({ ...p, index: i })) || []);
       setCoinBalance(streamData.stream.points || 0);
       setPaidViewersCount(streamData.stream.paidViewers?.length || 0);
+
+      // Send initialization comment after socket listeners are set up
+      // This ensures all socket events are properly initialized
+      const sendInitializationComment = () => {
+        if (!initializationCommentSentRef.current && newSocket && newSocket.connected && streamData?.streamId) {
+          console.log('🚀 HOST: Sending initialization comment to trigger socket events');
+          newSocket.emit('send-comment', {
+            streamId: streamData.streamId,
+            text: '🎥 Stream started!'
+          }, (commentResponse) => {
+            if (commentResponse && commentResponse.error) {
+              console.error('❌ HOST: Initialization comment error:', commentResponse.error);
+              // Retry after a delay if it failed
+              setTimeout(sendInitializationComment, 1000);
+            } else {
+              console.log('✅ HOST: Initialization comment sent successfully');
+              initializationCommentSentRef.current = true;
+            }
+          });
+        } else if (!newSocket.connected) {
+          // Socket not connected yet, wait a bit and retry
+          setTimeout(sendInitializationComment, 500);
+        }
+      };
+
+      // Wait for socket to be connected and listeners to be ready
+      // Use a longer delay to ensure everything is initialized
+      setTimeout(() => {
+        if (newSocket.connected) {
+          sendInitializationComment();
+        } else {
+          // If not connected yet, wait for connect event
+          newSocket.once('connect', () => {
+            setTimeout(sendInitializationComment, 1500);
+          });
+        }
+      }, 1500);
 
       return () => {
         // Clear fullscreen controls timeout on cleanup
