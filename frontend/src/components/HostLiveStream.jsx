@@ -2002,8 +2002,10 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
   };
 
   const restoreOriginalCamera = async () => {
-    if (!liveKitRoom || !localStream) return;
+    if (!liveKitRoom) return;
   
+    console.log('🧹 Cleaning up existing processed stream');
+    
     // Cleanup MediaPipe processing
     if (selfieSegmentationRef.current) {
       try {
@@ -2019,30 +2021,93 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       backgroundAnimationFrameRef.current = null;
     }
 
-    if (backgroundVideoElementRef.current) {
-      backgroundVideoElementRef.current.pause();
-      if (backgroundVideoElementRef.current.srcObject) {
-        backgroundVideoElementRef.current.srcObject.getTracks().forEach(track => track.stop());
-        backgroundVideoElementRef.current.srcObject = null;
+    // Cleanup processed stream
+    if (processedStream) {
+      if (processedStream._cleanup) {
+        processedStream._cleanup();
       }
+      // Stop processed tracks but NOT the original camera track
+      processedStream.getTracks().forEach(track => {
+        // Only stop tracks that are not the original camera track
+        if (originalMediaStreamTrackRef.current && track.id !== originalMediaStreamTrackRef.current.id) {
+          track.stop();
+        }
+      });
+      setProcessedStream(null);
+    }
+
+    if (backgroundVideoElementRef.current) {
+      const videoEl = backgroundVideoElementRef.current;
+      videoEl.pause();
+      if (videoEl.srcObject) {
+        // Only stop tracks that are not the original camera track
+        const tracks = videoEl.srcObject.getTracks();
+        tracks.forEach(track => {
+          // Don't stop the original camera track - it's still in use
+          if (originalMediaStreamTrackRef.current && track.id === originalMediaStreamTrackRef.current.id) {
+            // Keep this track alive
+            return;
+          }
+          // Stop processed/duplicate tracks
+          track.stop();
+        });
+        videoEl.srcObject = null;
+      }
+      // Remove video element from DOM
+      if (videoEl.parentNode) {
+        try {
+          document.body.removeChild(videoEl);
+        } catch (e) {
+          // Element might already be removed
+        }
+      }
+      backgroundVideoElementRef.current = null;
     }
 
     isProcessingBackgroundRef.current = false;
     backgroundProcessingRef.current = false;
   
-    const originalTrack = localStream.getVideoTracks()[0];
+    // Get the original track - prefer stored reference, fallback to LiveKit publication
+    let originalTrack = null;
+    
+    if (originalMediaStreamTrackRef.current && originalMediaStreamTrackRef.current.readyState !== 'ended') {
+      originalTrack = originalMediaStreamTrackRef.current;
+      console.log('✅ Using stored original track for restoration');
+    } else {
+      // Try to get from LiveKit publication
+      const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (publication?.track) {
+        originalTrack = publication.track.mediaStreamTrack;
+        // If it's not ended, store it
+        if (originalTrack.readyState !== 'ended') {
+          originalMediaStreamTrackRef.current = originalTrack;
+        }
+      }
+    }
   
-    const publication =
-      liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+    const publication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
   
-    if (publication?.track && originalTrack) {
-      await publication.track.replaceTrack(originalTrack);
-      console.log('✅ Restored original camera track');
+    if (publication?.track && originalTrack && originalTrack.readyState !== 'ended') {
+      try {
+        await publication.track.replaceTrack(originalTrack);
+        console.log('✅ Restored original camera track');
+        
+        // Wait and refresh video
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const updatedPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (updatedPublication && updatedPublication.track) {
+          attachVideoStream(updatedPublication.track, true);
+        }
+      } catch (replaceErr) {
+        console.warn('Failed to restore track, camera may need re-enabling:', replaceErr);
+      }
+    } else {
+      console.warn('⚠️ Could not restore original track - track may be ended');
     }
   };
 
   const applyBackground = async () => {
-    if (!localStream || !liveKitRoom || !backgroundCanvasRef.current) {
+    if (!liveKitRoom || !backgroundCanvasRef.current) {
       console.error('Missing required components for background processing');
       return;
     }
@@ -2057,11 +2122,45 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     if (isProcessingBackgroundRef.current) {
       await restoreOriginalCamera();
       // Wait a bit before starting new processing
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     try {
-      const videoTrack = localStream.getVideoTracks()[0];
+      // Get the current camera track from LiveKit publication
+      const cameraPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (!cameraPublication || !cameraPublication.track) {
+        console.error('No camera publication available');
+        return;
+      }
+
+      let videoTrack = cameraPublication.track.mediaStreamTrack;
+      
+      // If the track is ended, try to get a fresh one
+      if (videoTrack.readyState === 'ended') {
+        console.warn('⚠️ Current track is ended, attempting to get fresh track...');
+        
+        // Try to use the original track reference if available
+        if (originalMediaStreamTrackRef.current && originalMediaStreamTrackRef.current.readyState !== 'ended') {
+          videoTrack = originalMediaStreamTrackRef.current;
+          console.log('✅ Using stored original track');
+        } else {
+          // Re-enable camera to get a fresh track
+          await liveKitRoom.localParticipant.setCameraEnabled(false);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await liveKitRoom.localParticipant.setCameraEnabled(true);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const freshPublication = liveKitRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+          if (!freshPublication || !freshPublication.track) {
+            console.error('Failed to get fresh camera track');
+            return;
+          }
+          videoTrack = freshPublication.track.mediaStreamTrack;
+          originalMediaStreamTrackRef.current = videoTrack;
+          console.log('✅ Got fresh camera track');
+        }
+      }
+
       if (!videoTrack || videoTrack.readyState === 'ended') {
         console.error('Video track not available or ended');
         return;
@@ -2488,8 +2587,9 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
           videoHeight: video.videoHeight
         });
         
+        // Capture stream with higher frame rate for smoother playback
         stream = canvas.captureStream(30);
-
+        
         if (stream && stream.getVideoTracks().length > 0) {
           console.log('✅ Simple stream created successfully with', stream.getVideoTracks().length, 'track(s)');
           
@@ -2497,8 +2597,13 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
           const videoTrack = stream.getVideoTracks()[0];
           if (videoTrack) {
             videoTrack.enabled = true;
+            // Ensure the track is not muted
+            videoTrack.muted = false;
             console.log('✅ Video track enabled, readyState:', videoTrack.readyState);
           }
+          
+          // Keep the processing loop running to ensure continuous updates
+          // The animation frame loop will continue running as long as isProcessing is true
           
           stream._cleanup = () => {
             console.log('🧹 Cleaning up simple background processing');
@@ -2514,12 +2619,23 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
             }
             video.pause();
             if (video.srcObject) {
-              video.srcObject.getTracks().forEach(track => track.stop());
+              // Only stop tracks that are not the original camera track
+              video.srcObject.getTracks().forEach(track => {
+                if (originalMediaStreamTrackRef.current && track.id === originalMediaStreamTrackRef.current.id) {
+                  // Don't stop the original camera track
+                  return;
+                }
+                track.stop();
+              });
               video.srcObject = null;
             }
             // Remove video from DOM
             if (video.parentNode) {
-              document.body.removeChild(video);
+              try {
+                document.body.removeChild(video);
+              } catch (e) {
+                // Element might already be removed
+              }
             }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
           };
