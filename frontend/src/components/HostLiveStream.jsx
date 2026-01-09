@@ -152,6 +152,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const backgroundAnimationFrameRef = useRef(null);
   const originalMediaStreamTrackRef = useRef(null); // Store original track reference
   const backgroundImageRef = useRef(null); // Ref to store loaded background image
+  const [filterLoading, setFilterLoading] = useState(false);
+
 
   const videoRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -816,6 +818,33 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       container.scrollTop = container.scrollHeight;
     }
   }, [comments, isFullscreen]);
+  useEffect(() => {
+    return () => {
+      // Clean up all MediaPipe resources
+      if (backgroundProcessingRef.current) {
+        backgroundProcessingRef.current = false;
+      }
+      
+      if (backgroundAnimationFrameRef.current) {
+        cancelAnimationFrame(backgroundAnimationFrameRef.current);
+        backgroundAnimationFrameRef.current = null;
+      }
+      
+      if (processedStream) {
+        if (processedStream._cleanup) {
+          processedStream._cleanup();
+        }
+        processedStream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Reset all refs
+      isApplyingFilterRef.current = false;
+      filterActiveRef.current = null;
+      filterStartingRef.current = false;
+      
+      console.log('🧹 Component unmount - cleaned up all filter resources');
+    };
+  }, [processedStream]);
 
   useEffect(() => {
     if (replyingTo && replyInputRef.current) {
@@ -2179,6 +2208,23 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     // Create MediaStream from track
     const sourceStream = new MediaStream([videoTrack]);
     video.srcObject = sourceStream;
+
+    // After stream is created, add stability tracking
+stream._isStable = false;
+stream._stableCheckTimeout = setTimeout(() => {
+  stream._isStable = true;
+  console.log('✅ MediaPipe stream stabilized');
+}, 2000); // Mark as stable after 2 seconds
+
+stream._cleanup = () => {
+  console.log('🧹 Cleaning up MediaPipe background processing');
+  isProcessing = false;
+  backgroundProcessingRef.current = false;
+  
+  if (stream._stableCheckTimeout) {
+    clearTimeout(stream._stableCheckTimeout);
+  }
+}
     
     // Verify track is enabled
     if (videoTrack.enabled === false) {
@@ -2999,6 +3045,8 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
 // }, [liveKitRoom, isLive, selectedBackground, backgroundColor, backgroundBlur, selectedBackgroundImage, processedStream, attachVideoStream]);
 
 const applyBackgroundFilter = React.useCallback(async () => {
+  setFilterLoading(true);
+
   // CRITICAL: Prevent concurrent filter applications with timeout
   if (isApplyingFilterRef.current) {
     console.log('⚠️ Filter application already in progress, skipping...');
@@ -3011,10 +3059,50 @@ const applyBackgroundFilter = React.useCallback(async () => {
     return;
   }
 
+  // if (!liveKitRoom || !isLive) {
+  //   console.log('Background filter: Not live or no room');
+  //   return;
+  // }
+
+ 
+  // Check if we're actually live and have a room
   if (!liveKitRoom || !isLive) {
     console.log('Background filter: Not live or no room');
+    isApplyingFilterRef.current = false;
+    filterActiveRef.current = null;
     return;
   }
+
+  // Get current filter settings for comparison
+  const currentFilter = {
+    background: selectedBackground,
+    color: backgroundColor,
+    blur: backgroundBlur,
+    image: selectedBackgroundImage?.id || null
+  };
+
+  // Check if this is the same as what we're already showing
+  if (filterActiveRef.current === 'active') {
+    const lastApplied = lastAppliedFilterRef.current;
+    const isSameFilter = 
+      currentFilter.background === lastApplied.background &&
+      (currentFilter.background !== 'color' || currentFilter.color === lastApplied.color) &&
+      (currentFilter.background !== 'blur' || currentFilter.blur === lastApplied.blur) &&
+      (currentFilter.background !== 'image' || currentFilter.image === lastApplied.image);
+    
+    if (isSameFilter) {
+      console.log('🎯 Already showing this exact filter, skipping...');
+      isApplyingFilterRef.current = false;
+      return;
+    }
+  }
+
+  // Set flags
+  isApplyingFilterRef.current = true;
+  filterActiveRef.current = selectedBackground === 'none' ? 'cleaning' : 'applying';
+
+  console.log(`🎬 Starting filter application: ${selectedBackground} (${filterActiveRef.current})`);
+
 
   // Set flags
   isApplyingFilterRef.current = true;
@@ -3229,8 +3317,12 @@ const applyBackgroundFilter = React.useCallback(async () => {
         }
         
         console.log('Background filter: Applied successfully');
+        setFilterLoading(false);
+
       } catch (replaceError) {
         console.warn('replaceTrack failed:', replaceError);
+        setFilterLoading(false);
+
         
         // Fallback: publish as new track
         try {
@@ -3324,17 +3416,78 @@ const applyBackgroundFilter = React.useCallback(async () => {
 //   };
 // }, [selectedBackground, backgroundColor, backgroundBlur, selectedBackgroundImage, isLive, liveKitRoom, applyBackgroundFilter, processedStream]);
 
+// Track last applied filter to prevent unnecessary re-applications
+const lastAppliedFilterRef = useRef({
+  background: 'none',
+  color: '#00ff00',
+  blur: 10,
+  image: null
+});
+
+// Update background when selection changes - with proper debouncing
 useEffect(() => {
   if (!isLive || !liveKitRoom) {
+    // Clean up if not live
+    backgroundProcessingRef.current = false;
+    if (backgroundAnimationFrameRef.current) {
+      cancelAnimationFrame(backgroundAnimationFrameRef.current);
+      backgroundAnimationFrameRef.current = null;
+    }
+    if (processedStream) {
+      if (processedStream._cleanup) {
+        processedStream._cleanup();
+      }
+      processedStream.getTracks().forEach(track => track.stop());
+      setProcessedStream(null);
+    }
     return;
   }
 
-  // Debounce to prevent rapid successive calls
-  const timer = setTimeout(() => {
+  // Check if filter settings actually changed
+  const currentFilter = {
+    background: selectedBackground,
+    color: backgroundColor,
+    blur: backgroundBlur,
+    image: selectedBackgroundImage?.id || null
+  };
+
+  const lastFilter = lastAppliedFilterRef.current;
+  
+  const filterChanged = 
+    currentFilter.background !== lastFilter.background ||
+    (currentFilter.background === 'color' && currentFilter.color !== lastFilter.color) ||
+    (currentFilter.background === 'blur' && currentFilter.blur !== lastFilter.blur) ||
+    (currentFilter.background === 'image' && currentFilter.image !== lastFilter.image);
+
+  if (!filterChanged) {
+    console.log('🎯 Filter settings unchanged, skipping application');
+    return;
+  }
+
+  // Update last applied filter
+  lastAppliedFilterRef.current = currentFilter;
+
+  // Clear any pending timeout
+  let timer;
+  
+  // Debounce with increasing delay based on filter type
+  let delay = 1000; // Base delay
+  
+  if (selectedBackground === 'none' && lastFilter.background !== 'none') {
+    // Removing filter - faster
+    delay = 300;
+  } else if (selectedBackground === 'image') {
+    // Image filter takes longer to load
+    delay = 1500;
+  }
+
+  console.log(`⏳ Debouncing filter application for ${delay}ms...`);
+
+  timer = setTimeout(() => {
     console.log('🔄 Triggering background filter application');
     applyBackgroundFilter();
-  }, 800); // Increased from 500ms
-  
+  }, delay);
+
   return () => {
     clearTimeout(timer);
   };
@@ -6427,6 +6580,7 @@ useEffect(() => {
         className="inline-flex items-center gap-2 bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] px-4 py-2 rounded-xl font-semibold transition mb-6 shadow-sm"
       >
 
+
         ← {t('stream.backToStreams')}
       </button>
 
@@ -6600,6 +6754,12 @@ useEffect(() => {
           <span className="text-sm font-medium">{t('stream.openingInFullscreen')}</span>
         </div>
       )}
+      {filterLoading && (
+  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm z-50 flex items-center gap-2">
+    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+    Applying filter...
+  </div>
+)}
     </div>
 
   );
