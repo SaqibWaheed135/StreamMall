@@ -650,6 +650,7 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
   const videoContainerRef = useRef(null);
   const videoRef = useRef(null);
   const fullscreenInputRef = useRef(null);
+  const streamEndedRef = useRef(false); // Track if stream has ended to prevent reconnection
 
   const commentsEndRef = useRef(null);
 
@@ -949,6 +950,9 @@ newSocket.on('product-added', (data) => {
       // Check if this is the current stream
       if (data.stream?._id === streamId || data.stream?._id?.toString() === streamId?.toString()) {
         console.log('✅ Stream ended - showing modal');
+        // Mark stream as ended to prevent any reconnection attempts
+        streamEndedRef.current = true;
+        
         setEndedStreamData({
           duration: data.duration,
           totalViews: data.stream.totalViews,
@@ -958,16 +962,52 @@ newSocket.on('product-added', (data) => {
         });
         setShowStreamEnded(true);
         
+        // Exit fullscreen on iPhone if active
+        const isIPhone = /iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIPhone && isFullscreen && videoContainerRef.current) {
+          console.log('📱 Exiting iPhone fullscreen due to stream end');
+          videoContainerRef.current.classList.remove('ios-fullscreen');
+          document.body.classList.remove('ios-fullscreen-active');
+          document.documentElement.classList.remove('ios-fullscreen-active');
+          
+          // Reset inline styles
+          if (videoContainerRef.current) {
+            videoContainerRef.current.style.cssText = '';
+          }
+          
+          // Restore body scroll
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.left = '';
+          document.body.style.right = '';
+          document.body.style.bottom = '';
+          document.body.style.width = '';
+          document.body.style.height = '';
+          document.body.style.overflow = '';
+          
+          // Restore html styles
+          document.documentElement.style.position = '';
+          document.documentElement.style.width = '';
+          document.documentElement.style.height = '';
+          document.documentElement.style.overflow = '';
+          
+          setIsFullscreen(false);
+        }
+        
         // Disconnect from LiveKit room
         if (liveKitRoom) {
           liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
           setLiveKitRoom(null);
         }
         
-        // Disconnect socket
+        // Disconnect socket and prevent reconnection
         if (newSocket) {
+          newSocket.removeAllListeners('reconnect'); // Prevent reconnection
           newSocket.disconnect();
         }
+        
+        // Clear the stream state to prevent any reconnection attempts
+        setStream(null);
       }
     });
 
@@ -985,6 +1025,13 @@ newSocket.on('product-added', (data) => {
     });
 
     newSocket.on('reconnect', () => {
+      // Don't reconnect if stream has ended
+      if (showStreamEnded || streamEndedRef.current) {
+        console.log('📺 Stream has ended, preventing reconnection');
+        newSocket.disconnect();
+        return;
+      }
+      
       setSocketConnected(true);
       // Rejoin stream on reconnect
       newSocket.emit('join-stream', {
@@ -1174,8 +1221,21 @@ newSocket.on('product-added', (data) => {
       room.on(RoomEvent.ParticipantDisconnected, () => {
         setViewerCount(room.remoteParticipants.size);
       });
+
+      // Handle room disconnection - don't try to reconnect if stream has ended
+      room.on(RoomEvent.Disconnected, (reason) => {
+        console.log('📺 LiveKit room disconnected:', reason);
+        // Don't try to reconnect if stream has ended
+        if (streamEndedRef.current) {
+          console.log('📺 Stream has ended, not attempting LiveKit reconnection');
+          return;
+        }
+      });
     } catch (err) {
-      setError(t('viewerStream.errors.failedToConnect', { message: err.message }));
+      // Don't show error if stream has already ended
+      if (!streamEndedRef.current) {
+        setError(t('viewerStream.errors.failedToConnect', { message: err.message }));
+      }
     }
   };
 
@@ -1529,8 +1589,15 @@ newSocket.on('product-added', (data) => {
     };
   }, [overlayComments.length]);
 
-  // Handle back navigation with auto-refresh
+  // Handle back navigation with auto-refresh (for manual back button clicks)
   const handleBack = () => {
+    // Don't reload if stream has ended - just navigate back normally
+    if (showStreamEnded) {
+      console.log('📺 Stream already ended, navigating back without reload');
+      onBack();
+      return;
+    }
+    
     // Clean up resources
     if (liveKitRoom) {
       liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
@@ -1544,6 +1611,22 @@ newSocket.on('product-added', (data) => {
     setTimeout(() => {
       window.location.reload();
     }, 300);
+  };
+
+  // Handle navigation from stream ended modal (no reload needed)
+  const handleStreamEndedNavigate = () => {
+    console.log('📺 Navigating back from stream ended modal');
+    // Clean up resources
+    if (liveKitRoom) {
+      liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
+      setLiveKitRoom(null);
+    }
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+    // Just navigate back without reload since stream has already ended
+    onBack();
   };
 
   // Auto-fullscreen for iPhone users when stream is ready
@@ -2207,7 +2290,7 @@ newSocket.on('product-added', (data) => {
       )}
 
       {showStreamEnded && endedStreamData && (
-        <StreamEndedModal streamData={endedStreamData} onNavigate={onBack} />
+        <StreamEndedModal streamData={endedStreamData} onNavigate={handleStreamEndedNavigate} />
       )}
 
       {/* iPhone Fullscreen Toast */}
