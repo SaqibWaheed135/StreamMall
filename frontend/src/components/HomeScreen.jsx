@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Heart,
   MessageCircle,
@@ -21,8 +21,9 @@ import HostLiveStream from "./HostLiveStream";
 import PointsTransfer from "./PointsTransfer";
 import Logo from "../assets/logo.jpeg";
 import { useNavigate, useRoutes } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, SOCKET_URL } from "../config/api";
 import LanguageSwitcher from "./LanguageSwitcher";
+import io from 'socket.io-client';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
@@ -42,6 +43,8 @@ export default function StreamMallHome() {
   const [currentUser, setCurrentUser] = useState(null);
   const [pointsLoading, setPointsLoading] = useState(true);
   const navigate = useNavigate();
+  const socketRef = useRef(null);
+  const fetchLiveRoomsRef = useRef(null);
 
 
   useEffect(() => {
@@ -56,6 +59,11 @@ export default function StreamMallHome() {
     fetchLiveRooms();
     fetchUserFriends();
     fetchUserPoints();
+  }, []);
+
+  // Store fetchLiveRooms in ref for use in other effects
+  useEffect(() => {
+    fetchLiveRoomsRef.current = fetchLiveRooms;
   }, []);
 
   const fetchUserPoints = async () => {
@@ -111,6 +119,76 @@ export default function StreamMallHome() {
       console.error("Error fetching live rooms:", error);
     }
   };
+
+  // Set up socket connection to listen for stream-ended events
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return; // Only connect if user is logged in
+
+    const socket = io(SOCKET_URL, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity,
+      transports: ['websocket', 'polling'],
+      auth: { token }
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('✅ HomeScreen: Socket connected');
+    });
+
+    socket.on('stream-ended', (data) => {
+      console.log('📺 HomeScreen: Stream ended event received:', data);
+      // Immediately refresh the stream list when any stream ends
+      if (fetchLiveRoomsRef.current) {
+        console.log('🔄 HomeScreen: Refreshing stream list due to stream end');
+        fetchLiveRoomsRef.current();
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('❌ HomeScreen: Socket connection error:', error);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.warn('⚠️ HomeScreen: Socket disconnected:', reason);
+    });
+
+    return () => {
+      console.log('🧹 HomeScreen: Cleaning up socket connection');
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, []);
+
+  // Refresh when page becomes visible (user returns to tab/window)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && fetchLiveRoomsRef.current) {
+        console.log('👁️ HomeScreen: Page became visible, refreshing streams');
+        fetchLiveRoomsRef.current();
+      }
+    };
+
+    const handleFocus = () => {
+      if (fetchLiveRoomsRef.current) {
+        console.log('🎯 HomeScreen: Window focused, refreshing streams');
+        fetchLiveRoomsRef.current();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const fetchUserFriends = async () => {
     try {
