@@ -2118,11 +2118,18 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       return;
     }
 
+    // For image background, ensure an image is selected
+    if (selectedBackground === 'image' && !selectedBackgroundImage) {
+      console.error('❌ Background image type selected but no image is selected');
+      setError('Please select or upload a background image first');
+      return;
+    }
+
     // Cleanup any existing processing
     if (isProcessingBackgroundRef.current) {
       await restoreOriginalCamera();
       // Wait longer for MediaPipe to fully clean up before re-initializing
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     try {
@@ -2916,66 +2923,39 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         ctx.save();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Correct MediaPipe compositing approach:
-        // 1. Draw the person image first
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-        
-        // 2. Apply segmentation mask to keep only the person (white = person, black = transparent)
-        // destination-in keeps only where both exist (person + mask)
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
-        
-        // 3. Draw background behind (destination-over fills transparent areas)
-        ctx.globalCompositeOperation = 'destination-over';
-        // BLUR AND COLOR COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY
-        /* if (bgType === 'blur') {
-          // Create temporary canvas for blur effect
-          const blurCanvas = document.createElement('canvas');
-          blurCanvas.width = canvas.width;
-          blurCanvas.height = canvas.height;
-          const blurCtx = blurCanvas.getContext('2d');
-          blurCtx.drawImage(video, 0, 0, blurCanvas.width, blurCanvas.height);
-          
+        // Correct MediaPipe compositing approach for background replacement:
+        // 1. Draw background image first (if available)
+        if (bgType === 'image' && backgroundImageRef.current) {
+          const bgImg = backgroundImageRef.current;
           ctx.save();
-          ctx.filter = `blur(${bgBlur}px)`;
-          ctx.drawImage(blurCanvas, 0, 0);
-          ctx.restore();
-        } else if (bgType === 'color') {
-          ctx.fillStyle = bgColor;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        } else */ if (bgType === 'image') {
-          if (backgroundImageRef.current) {
-            const bgImg = backgroundImageRef.current;
-            ctx.save();
-            // Center and scale background image to cover canvas
-            const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-            const x = (canvas.width - bgImg.width * scale) / 2;
-            const y = (canvas.height - bgImg.height * scale) / 2;
-            
-            // Apply rotation if needed
-            if (selectedBackgroundImage?.rotation) {
-              ctx.translate(canvas.width / 2, canvas.height / 2);
-              ctx.rotate((selectedBackgroundImage.rotation * Math.PI) / 180);
-              ctx.translate(-canvas.width / 2, -canvas.height / 2);
-            }
-            
-            ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
-            ctx.restore();
-          } else {
-            // Background image not loaded yet, use black as fallback
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // Log occasionally if image is missing
-            if (frameCount % 100 === 0) {
-              console.warn('⚠️ Background image not loaded, using black background');
-            }
+          // Center and scale background image to cover canvas
+          const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+          const x = (canvas.width - bgImg.width * scale) / 2;
+          const y = (canvas.height - bgImg.height * scale) / 2;
+          
+          // Apply rotation if needed
+          if (selectedBackgroundImage?.rotation) {
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((selectedBackgroundImage.rotation * Math.PI) / 180);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
           }
+          
+          ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+          ctx.restore();
         } else {
-          // Default: black background
+          // No background image, use black
           ctx.fillStyle = '#000000';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
+
+        // 2. Draw the person image on top
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        
+        // 3. Apply segmentation mask to keep only the person (white = person, black = transparent)
+        // destination-in keeps only where both exist (person + mask)
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
 
         ctx.restore();
         framesProcessed++;
@@ -5108,11 +5088,19 @@ useEffect(() => {
                             <span className="text-xs">{t('background.color')}</span>
                           </button> */}
                           <button
-                            onClick={() => setSelectedBackground('image')}
+                            onClick={() => {
+                              if (backgroundImages.length === 0 && !selectedBackgroundImage) {
+                                setError('Please upload a background image first');
+                                return;
+                              }
+                              setSelectedBackground('image');
+                            }}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
                               ? 'border-pink-500 bg-pink-500/20'
                               : 'border-white/20 bg-white/5 hover:bg-white/10'
                               }`}
+                            disabled={backgroundImages.length === 0 && !selectedBackgroundImage}
+                            title={backgroundImages.length === 0 && !selectedBackgroundImage ? 'Upload an image first' : 'Background Image'}
                           >
                             <Image className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">Image</span>
@@ -5173,6 +5161,7 @@ useEffect(() => {
                                       onClick={() => {
                                         setSelectedBackgroundImage(img);
                                         setSelectedBackground('image');
+                                        setError(''); // Clear any previous errors
                                       }}
                                     />
                                     {selectedBackgroundImage?.id === img.id && (
@@ -6203,11 +6192,19 @@ useEffect(() => {
                                 <span className="text-xs">{t('background.color')}</span>
                               </button> */}
                               <button
-                                onClick={() => setSelectedBackground('image')}
+                                onClick={() => {
+                                  if (backgroundImages.length === 0 && !selectedBackgroundImage) {
+                                    setError('Please upload a background image first');
+                                    return;
+                                  }
+                                  setSelectedBackground('image');
+                                }}
                                 className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
                                   ? 'border-pink-500 bg-pink-500/20'
                                   : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                  }`}
+                                  } ${(backgroundImages.length === 0 && !selectedBackgroundImage) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={backgroundImages.length === 0 && !selectedBackgroundImage}
+                                title={backgroundImages.length === 0 && !selectedBackgroundImage ? 'Upload an image first' : 'Background Image'}
                               >
                                 <Image className="w-5 h-5 mx-auto mb-1" />
                                 <span className="text-xs">Image</span>
