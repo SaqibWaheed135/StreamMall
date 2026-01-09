@@ -2734,26 +2734,33 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       try {
         selfieSegmentationRef.current.close();
         selfieSegmentationRef.current = null;
-        // Wait for MediaPipe to fully clean up
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait longer for MediaPipe to fully clean up before re-initializing
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (cleanupErr) {
         console.warn('Error cleaning up previous MediaPipe instance:', cleanupErr);
         selfieSegmentationRef.current = null;
-        // Still wait a bit
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Still wait a bit longer
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
     
     let selfieSegmentation;
     try {
-      // Check if SelfieSegmentation is available
+      // Check if SelfieSegmentation is available - wait a bit if it's not ready
+      let checkAttempts = 0;
+      while ((!SelfieSegmentation || typeof SelfieSegmentation !== 'function') && checkAttempts < 10) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        checkAttempts++;
+      }
+      
       if (!SelfieSegmentation || typeof SelfieSegmentation !== 'function') {
         console.error('SelfieSegmentation check:', {
           exists: !!SelfieSegmentation,
           type: typeof SelfieSegmentation,
-          isFunction: typeof SelfieSegmentation === 'function'
+          isFunction: typeof SelfieSegmentation === 'function',
+          checkAttempts
         });
-        throw new Error('SelfieSegmentation is not available or not a constructor');
+        throw new Error('SelfieSegmentation is not available or not a constructor after waiting');
       }
       
       console.log('📹 Creating new SelfieSegmentation instance...');
@@ -2910,23 +2917,33 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         } else if (bgType === 'color') {
           ctx.fillStyle = bgColor;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-        } else */ if (bgType === 'image' && backgroundImageRef.current) {
-          const bgImg = backgroundImageRef.current;
-          ctx.save();
-          // Center and scale background image to cover canvas
-          const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-          const x = (canvas.width - bgImg.width * scale) / 2;
-          const y = (canvas.height - bgImg.height * scale) / 2;
-          
-          // Apply rotation if needed
-          if (selectedBackgroundImage?.rotation) {
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate((selectedBackgroundImage.rotation * Math.PI) / 180);
-            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        } else */ if (bgType === 'image') {
+          if (backgroundImageRef.current) {
+            const bgImg = backgroundImageRef.current;
+            ctx.save();
+            // Center and scale background image to cover canvas
+            const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+            const x = (canvas.width - bgImg.width * scale) / 2;
+            const y = (canvas.height - bgImg.height * scale) / 2;
+            
+            // Apply rotation if needed
+            if (selectedBackgroundImage?.rotation) {
+              ctx.translate(canvas.width / 2, canvas.height / 2);
+              ctx.rotate((selectedBackgroundImage.rotation * Math.PI) / 180);
+              ctx.translate(-canvas.width / 2, -canvas.height / 2);
+            }
+            
+            ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+            ctx.restore();
+          } else {
+            // Background image not loaded yet, use black as fallback
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Log occasionally if image is missing
+            if (frameCount % 100 === 0) {
+              console.warn('⚠️ Background image not loaded, using black background');
+            }
           }
-          
-          ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
-          ctx.restore();
         } else {
           // Default: black background
           ctx.fillStyle = '#000000';
@@ -2986,23 +3003,29 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         canvas.height = video.videoHeight;
         console.log('✅ Canvas dimensions set:', canvas.width, 'x', canvas.height);
 
-        // Load background image if needed
-        if (bgType === 'image' && selectedBackgroundImage && !backgroundImageRef.current) {
-          console.log('📹 Loading background image...');
-          await new Promise((imgResolve, imgReject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-              backgroundImageRef.current = img;
-              console.log('✅ Background image loaded');
-              imgResolve();
-            };
-            img.onerror = () => {
-              console.error('Failed to load background image');
-              imgReject(new Error('Failed to load background image'));
-            };
-            img.src = selectedBackgroundImage.imageUrl;
-          });
+        // Load background image if needed - MUST be loaded before starting frame processing
+        if (bgType === 'image' && selectedBackgroundImage) {
+          if (!backgroundImageRef.current) {
+            console.log('📹 Loading background image...');
+            await new Promise((imgResolve, imgReject) => {
+              const img = new Image();
+              img.crossOrigin = 'anonymous';
+              img.onload = () => {
+                backgroundImageRef.current = img;
+                console.log('✅ Background image loaded:', img.width, 'x', img.height);
+                imgResolve();
+              };
+              img.onerror = () => {
+                console.error('Failed to load background image from:', selectedBackgroundImage.imageUrl);
+                imgReject(new Error('Failed to load background image'));
+              };
+              img.src = selectedBackgroundImage.imageUrl;
+            });
+          } else {
+            console.log('✅ Background image already loaded');
+          }
+        } else if (bgType === 'image' && !selectedBackgroundImage) {
+          console.warn('⚠️ Background image type selected but no image is selected');
         }
 
         // Start MediaPipe processing
@@ -3054,47 +3077,39 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
         // Start processing frames
         processFrames();
 
-        // Wait for MediaPipe to process initial frames and canvas to have content
-        console.log('⏳ Waiting for MediaPipe to process frames...');
-        let frameCheckAttempts = 0;
-        let hasValidFrames = false;
-        const maxFrameCheckAttempts = 50; // Increased from 30 to give more time
+        // Wait for MediaPipe to process initial frames
+        // Since MediaPipe is processing frames (we can see frameCount increasing), 
+        // we'll wait a bit and then proceed - the canvas should have content
+        console.log('⏳ Waiting for MediaPipe to process initial frames...');
+        await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds for initial frames
         
-        while (frameCheckAttempts < maxFrameCheckAttempts && !hasValidFrames) {
-          await new Promise(r => setTimeout(r, 100));
-          
-          // Check if canvas has content
-          try {
-            if (canvas.width > 0 && canvas.height > 0) {
-              const testImageData = ctx.getImageData(0, 0, Math.min(20, canvas.width), Math.min(20, canvas.height));
-              let nonBlackPixels = 0;
-              for (let i = 0; i < testImageData.data.length; i += 4) {
-                const r = testImageData.data[i];
-                const g = testImageData.data[i + 1];
-                const b = testImageData.data[i + 2];
-                if (r > 10 || g > 10 || b > 10) {
-                  nonBlackPixels++;
-                }
-              }
-              if (nonBlackPixels > 10) {
-                hasValidFrames = true;
-                console.log(`✅ Canvas has valid frames from MediaPipe (after ${frameCheckAttempts} attempts, ${frameCount} frames processed)`);
-                break;
+        // Check canvas content once
+        let hasContent = false;
+        try {
+          if (canvas.width > 0 && canvas.height > 0) {
+            const testImageData = ctx.getImageData(0, 0, Math.min(50, canvas.width), Math.min(50, canvas.height));
+            let nonBlackPixels = 0;
+            for (let i = 0; i < testImageData.data.length; i += 4) {
+              const r = testImageData.data[i];
+              const g = testImageData.data[i + 1];
+              const b = testImageData.data[i + 2];
+              if (r > 5 || g > 5 || b > 5) {
+                nonBlackPixels++;
               }
             }
-          } catch (e) {
-            // Continue checking
+            if (nonBlackPixels > 20) {
+              hasContent = true;
+              console.log(`✅ Canvas has valid frames from MediaPipe (${frameCount} frames processed, ${nonBlackPixels} non-black pixels)`);
+            } else {
+              console.warn(`⚠️ Canvas appears mostly black (${nonBlackPixels} non-black pixels), but proceeding anyway`);
+            }
           }
-          frameCheckAttempts++;
-          
-          // Log progress every 10 attempts
-          if (frameCheckAttempts % 10 === 0) {
-            console.log(`⏳ Still waiting for frames... (attempt ${frameCheckAttempts}/${maxFrameCheckAttempts}, frames processed: ${frameCount})`);
-          }
+        } catch (e) {
+          console.warn('Could not check canvas content:', e);
         }
         
-        if (!hasValidFrames) {
-          console.warn(`⚠️ Canvas frames check timeout after ${maxFrameCheckAttempts} attempts (${frameCount} frames processed), proceeding anyway`);
+        if (!hasContent && frameCount > 0) {
+          console.warn(`⚠️ Canvas check inconclusive but ${frameCount} frames were processed, proceeding anyway`);
         }
         
         // Create canvas stream
