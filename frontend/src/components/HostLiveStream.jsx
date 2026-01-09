@@ -2040,201 +2040,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
   };
 
-  // Simple background processing WITHOUT MediaPipe (for blur and basic effects)
-  const processVideoWithBackgroundSimple = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
-    if (!canvas || !videoTrack) {
-      console.error('Missing canvas or video track');
-      return null;
-    }
-
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) {
-      console.error('Failed to get canvas context');
-      return null;
-    }
-
-    console.log('🎬 Starting simple background processing (no MediaPipe) with type:', bgType);
-
-    // Create video element
-    const video = document.createElement('video');
-    video.playsInline = true;
-    video.muted = true;
-    video.autoplay = true;
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('webkit-playsinline', 'true');
-    
-    backgroundVideoElementRef.current = video;
-    
-    if (videoTrack.readyState === 'ended') {
-      console.error('❌ Cannot use ended track');
-      throw new Error('Video track has ended');
-    }
-    
-    const sourceStream = new MediaStream([videoTrack]);
-    video.srcObject = sourceStream;
-    
-    if (videoTrack.enabled === false) {
-      videoTrack.enabled = true;
-    }
-    
-    let animationFrameId = null;
-    let isProcessing = false;
-    let stream = null;
-
-    return new Promise(async (resolve, reject) => {
-      try {
-        await video.play();
-        
-        // Wait for video dimensions
-        let attempts = 0;
-        while (attempts < 100) {
-          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-            break;
-          }
-          await new Promise(r => setTimeout(r, 50));
-          attempts++;
-        }
-        
-        if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
-          throw new Error('Video not ready');
-        }
-        
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        console.log('✅ Canvas dimensions:', canvas.width, 'x', canvas.height);
-
-        // Load background image if needed
-        if (bgType === 'image' && selectedBackgroundImage && !backgroundImageRef.current) {
-          await new Promise((imgResolve, imgReject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-              backgroundImageRef.current = img;
-              imgResolve();
-            };
-            img.onerror = () => imgReject(new Error('Failed to load image'));
-            img.src = selectedBackgroundImage.imageUrl;
-          });
-        }
-
-        isProcessing = true;
-        backgroundProcessingRef.current = true;
-
-        // Simple frame processing without MediaPipe
-        const processFrames = () => {
-          if (!isProcessing || !backgroundProcessingRef.current) {
-            return;
-          }
-
-          if (video.paused && video.readyState >= video.HAVE_METADATA) {
-            video.play().catch(() => {});
-          }
-
-          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-            try {
-              ctx.save();
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-              if (bgType === 'blur') {
-                // Draw video with blur filter applied to entire video
-                ctx.save();
-                ctx.filter = `blur(${bgBlur}px)`;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                ctx.restore();
-              } else if (bgType === 'color') {
-                // Draw solid color background first
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                // Draw video on top (semi-transparent overlay for better effect)
-                ctx.globalAlpha = 0.95; // Slight transparency to show background
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                ctx.globalAlpha = 1.0;
-              } else if (bgType === 'image' && backgroundImageRef.current) {
-                // Draw background image first (scaled to cover)
-                const bgImg = backgroundImageRef.current;
-                const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-                const x = (canvas.width - bgImg.width * scale) / 2;
-                const y = (canvas.height - bgImg.height * scale) / 2;
-                
-                // Apply rotation if needed
-                if (selectedBackgroundImage?.rotation) {
-                  ctx.save();
-                  ctx.translate(canvas.width / 2, canvas.height / 2);
-                  ctx.rotate((selectedBackgroundImage.rotation * Math.PI) / 180);
-                  ctx.translate(-canvas.width / 2, -canvas.height / 2);
-                  ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
-                  ctx.restore();
-                } else {
-                  ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
-                }
-                
-                // Draw video on top (no segmentation - full video overlay)
-                // Note: Without MediaPipe segmentation, the entire video will be visible
-                ctx.globalAlpha = 0.9; // Slight transparency to blend with background
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                ctx.globalAlpha = 1.0;
-              } else {
-                // Default: just draw video
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-              }
-
-              ctx.restore();
-            } catch (err) {
-              console.error('Error drawing frame:', err);
-            }
-          }
-
-          animationFrameId = requestAnimationFrame(processFrames);
-          backgroundAnimationFrameRef.current = animationFrameId;
-        };
-
-        processFrames();
-
-        // Wait a bit then create stream
-        await new Promise(r => setTimeout(r, 500));
-        stream = canvas.captureStream(30);
-
-        if (stream && stream.getVideoTracks().length > 0) {
-          stream._cleanup = () => {
-            isProcessing = false;
-            backgroundProcessingRef.current = false;
-            if (animationFrameId) {
-              cancelAnimationFrame(animationFrameId);
-            }
-            if (backgroundAnimationFrameRef.current) {
-              cancelAnimationFrame(backgroundAnimationFrameRef.current);
-            }
-            video.pause();
-            if (video.srcObject) {
-              video.srcObject.getTracks().forEach(track => track.stop());
-              video.srcObject = null;
-            }
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          };
-          resolve(stream);
-        } else {
-          reject(new Error('Failed to create stream'));
-        }
-      } catch (err) {
-        isProcessing = false;
-        backgroundProcessingRef.current = false;
-        reject(err);
-      }
-    });
-  };
-
-  // Background processing with MediaPipe Selfie Segmentation (only for advanced segmentation)
+  // Background processing with MediaPipe Selfie Segmentation
   const processVideoWithBackground = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
-    // For blur, color, and image - use simple version without MediaPipe to avoid memory issues
-    // MediaPipe causes WebAssembly memory errors, so we'll use simple canvas effects instead
-    if (bgType === 'blur' || bgType === 'color' || bgType === 'image') {
-      console.log('🎬 Using simple background effect (no MediaPipe to avoid memory issues)');
-      return processVideoWithBackgroundSimple(videoTrack, canvas, bgType, bgColor, bgBlur);
-    }
-    
-    // Only use MediaPipe for advanced segmentation (if needed in future)
-    // For now, all effects use the simple version
-
     if (!canvas || !videoTrack) {
       console.error('Missing canvas or video track');
       return null;
@@ -2362,25 +2169,23 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
 
     // MediaPipe processing function - Proper compositing
     const processFrameWithMediaPipe = (results) => {
-      // Always check if processing should continue
-      if (!backgroundProcessingRef.current || !isProcessing) {
+      if (!results || !isProcessing) {
         return;
       }
 
-      // Ensure canvas has dimensions
+      if (!results.segmentationMask || !results.image) {
+        return;
+      }
+
+      // Set canvas dimensions from video if not set
       if (canvas.width === 0 || canvas.height === 0) {
         if (video.videoWidth > 0 && video.videoHeight > 0) {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
-        } else if (results && results.image && results.image.width && results.image.height) {
+        } else if (results.image && results.image.width && results.image.height) {
           canvas.width = results.image.width;
           canvas.height = results.image.height;
         } else {
-          // Fallback: draw video directly if MediaPipe results are invalid
-          if (video.videoWidth > 0 && video.videoHeight > 0) {
-            ctx.clearRect(0, 0, canvas.width || video.videoWidth, canvas.height || video.videoHeight);
-            ctx.drawImage(video, 0, 0);
-          }
           return;
         }
       }
@@ -2389,28 +2194,18 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         ctx.save();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // If MediaPipe results are valid, use them
-        if (results && results.segmentationMask && results.image) {
-          // Correct MediaPipe compositing approach:
-          // 1. Draw the person image first
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-          
-          // 2. Apply segmentation mask to keep only the person (white = person, black = transparent)
-          // destination-in keeps only where both exist (person + mask)
-          ctx.globalCompositeOperation = 'destination-in';
-          ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
-          
-          // 3. Draw background behind (destination-over fills transparent areas)
-          ctx.globalCompositeOperation = 'destination-over';
-        } else {
-          // Fallback: if MediaPipe results are invalid, draw video directly
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          ctx.globalCompositeOperation = 'destination-over';
-        }
-
-        // Draw background (always, even if MediaPipe failed)
+        // Correct MediaPipe compositing approach:
+        // 1. Draw the person image first
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        
+        // 2. Apply segmentation mask to keep only the person (white = person, black = transparent)
+        // destination-in keeps only where both exist (person + mask)
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+        
+        // 3. Draw background behind (destination-over fills transparent areas)
+        ctx.globalCompositeOperation = 'destination-over';
         if (bgType === 'blur') {
           // Create temporary canvas for blur effect
           const blurCanvas = document.createElement('canvas');
@@ -2453,20 +2248,11 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         framesProcessed++;
       } catch (err) {
         console.error('❌ Error drawing MediaPipe frame:', err);
-        // Fallback: draw video directly on error
-        try {
-          if (video.videoWidth > 0 && video.videoHeight > 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          }
-        } catch (fallbackErr) {
-          console.error('❌ Fallback drawing also failed:', fallbackErr);
-        }
       }
     };
 
-    // Set up MediaPipe results handler (will be wrapped in the promise below)
-    // Note: The handler is set up in the promise to track MediaPipe response times
+    // Set up MediaPipe results handler
+    selfieSegmentation.onResults(processFrameWithMediaPipe);
 
     // Initialize and start processing
     return new Promise(async (resolve, reject) => {
@@ -2535,105 +2321,36 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         isProcessing = true;
         backgroundProcessingRef.current = true;
 
-        // Keep track of last successful MediaPipe result (shared between handler and loop)
-        const lastMediaPipeTimeRef = { value: Date.now() };
-        const MEDIAPIPE_TIMEOUT = 1000; // If no MediaPipe result for 1 second, use fallback
-
-        // Wrap the MediaPipe handler to track when we get results
-        const originalProcessFrameHandler = processFrameWithMediaPipe;
-        const wrappedProcessFrameHandler = (results) => {
-          lastMediaPipeTimeRef.value = Date.now();
-          originalProcessFrameHandler(results);
-        };
-        
-        // Update the handler
-        selfieSegmentation.onResults(wrappedProcessFrameHandler);
-
-        // Throttle MediaPipe calls to avoid memory issues (only send every 3rd frame)
-        let frameSkipCounter = 0;
-        const FRAME_SKIP = 3; // Process every 3rd frame with MediaPipe
-
-        // Process frames continuously with throttling
+        // Process frames continuously
         const processFrames = async () => {
-          // Always check both flags
           if (!isProcessing || !backgroundProcessingRef.current) {
             return;
           }
 
-          // Ensure video is still playing
-          if (video.paused && video.readyState >= video.HAVE_METADATA) {
-            try {
-              await video.play();
-            } catch (playErr) {
-              // Continue even if play fails
-            }
-          }
-
           if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-            frameSkipCounter++;
-            
-            // Only send to MediaPipe every Nth frame to reduce memory pressure
-            const shouldProcessWithMediaPipe = frameSkipCounter % FRAME_SKIP === 0;
-            const timeSinceLastResult = Date.now() - lastMediaPipeTimeRef.value;
-            const useFallback = timeSinceLastResult > MEDIAPIPE_TIMEOUT;
-
-            if (shouldProcessWithMediaPipe && !useFallback) {
-              try {
-                // Send frame to MediaPipe (non-blocking, throttled)
-                selfieSegmentation.send({ image: video }).catch(err => {
-                  // Only log occasionally to avoid spam
-                  if (framesProcessed % 120 === 0) {
-                    console.warn('MediaPipe send error (throttled):', err.message);
-                  }
-                });
-              } catch (err) {
-                // Continue processing even on error
-              }
-            } else {
-              // Use fallback: draw video directly with background (no segmentation)
-              try {
-                ctx.save();
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw video
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                // Draw background (simple fallback - no segmentation)
-                ctx.globalCompositeOperation = 'destination-over';
-                if (bgType === 'color') {
-                  ctx.fillStyle = bgColor;
-                  ctx.fillRect(0, 0, canvas.width, canvas.height);
-                } else if (bgType === 'image' && backgroundImageRef.current) {
-                  const bgImg = backgroundImageRef.current;
-                  const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-                  const x = (canvas.width - bgImg.width * scale) / 2;
-                  const y = (canvas.height - bgImg.height * scale) / 2;
-                  ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+            try {
+              // Send frame to MediaPipe
+              await selfieSegmentation.send({ image: video });
+              
+              // Continue processing
+              animationFrameId = requestAnimationFrame(processFrames);
+              backgroundAnimationFrameRef.current = animationFrameId;
+            } catch (err) {
+              console.error('MediaPipe send error:', err);
+              // Retry after a short delay
+              setTimeout(() => {
+                if (isProcessing) {
+                  requestAnimationFrame(processFrames);
                 }
-                ctx.restore();
-              } catch (fallbackErr) {
-                // Even fallback failed, just draw video
-                try {
-                  ctx.clearRect(0, 0, canvas.width, canvas.height);
-                  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                } catch (e) {
-                  // Ignore
-                }
-              }
+              }, 100);
             }
-            
-            // Continue processing immediately
-            animationFrameId = requestAnimationFrame(processFrames);
-            backgroundAnimationFrameRef.current = animationFrameId;
           } else {
             // Video not ready, retry
-            animationFrameId = requestAnimationFrame(processFrames);
-            backgroundAnimationFrameRef.current = animationFrameId;
+            requestAnimationFrame(processFrames);
           }
         };
 
-        // Start processing frames immediately
+        // Start processing frames
         processFrames();
 
         // Wait a bit for MediaPipe to process initial frames
