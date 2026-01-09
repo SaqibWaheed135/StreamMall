@@ -168,6 +168,12 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const isApplyingFilterRef = useRef(false); // Prevent multiple simultaneous filter applications
   const filterActiveRef = useRef(false);
   const filterStartingRef = useRef(false);
+  const lastAppliedFilterRef = useRef({
+    background: 'none',
+    color: '#00ff00',
+    blur: 10,
+    image: null
+  });
   
   const startBackgroundProcessing = async (inputTrack) => {
     if (backgroundProcessingRef.current) return;
@@ -2395,7 +2401,7 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     console.log('🎬 Using simple background processing (no MediaPipe) for type:', bgType);
     return processVideoWithBackgroundSimple(videoTrack, canvas, bgType, bgColor, bgBlur);
     
-    /* MediaPipe code below is disabled to avoid memory issues
+    /* MediaPipe code below is disabled to avoid memory issues - all code commented out
     if (!canvas || !videoTrack) {
       console.error('Missing canvas or video track');
       return null;
@@ -2429,23 +2435,6 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     // Create MediaStream from track
     const sourceStream = new MediaStream([videoTrack]);
     video.srcObject = sourceStream;
-
-    // After stream is created, add stability tracking
-stream._isStable = false;
-stream._stableCheckTimeout = setTimeout(() => {
-  stream._isStable = true;
-  console.log('✅ MediaPipe stream stabilized');
-}, 2000); // Mark as stable after 2 seconds
-
-stream._cleanup = () => {
-  console.log('🧹 Cleaning up MediaPipe background processing');
-  isProcessing = false;
-  backgroundProcessingRef.current = false;
-  
-  if (stream._stableCheckTimeout) {
-    clearTimeout(stream._stableCheckTimeout);
-  }
-}
     
     // Verify track is enabled
     if (videoTrack.enabled === false) {
@@ -2782,6 +2771,7 @@ stream._cleanup = () => {
         reject(err);
       }
     });
+    */
   };
 
 
@@ -3636,14 +3626,6 @@ const applyBackgroundFilter = React.useCallback(async () => {
 //     clearTimeout(timer);
 //   };
 // }, [selectedBackground, backgroundColor, backgroundBlur, selectedBackgroundImage, isLive, liveKitRoom, applyBackgroundFilter, processedStream]);
-
-// Track last applied filter to prevent unnecessary re-applications
-const lastAppliedFilterRef = useRef({
-  background: 'none',
-  color: '#00ff00',
-  blur: 10,
-  image: null
-});
 
 // Update background when selection changes - with proper debouncing
 useEffect(() => {
