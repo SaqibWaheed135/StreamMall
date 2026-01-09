@@ -918,21 +918,61 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
       }
     });
 
+    socket.on('product-added', (data) => {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🎁 HOST: Product added event received');
+      console.log('Stream ID match:', data.streamId === streamData?.streamId);
+      console.log('Product data:', data.product);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      if (data.streamId === streamData?.streamId) {
+        setProducts(prev => {
+          // Check if product already exists to avoid duplicates
+          const exists = prev.some(p => p.index === data.productIndex || p._id === data.product._id);
+          if (exists) {
+            console.log('⚠️ Product already exists, updating instead');
+            return prev.map(p => 
+              (p.index === data.productIndex || p._id === data.product._id) 
+                ? { ...data.product, index: data.productIndex }
+                : p
+            );
+          }
+          console.log('✅ Adding new product to host products list');
+          return [...prev, { ...data.product, index: data.productIndex }];
+        });
+      }
+    });
+
     socket.on('error', (error) => {
       console.error('Socket error:', error);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('❌ HOST: Socket connection error:', error);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.warn('⚠️ HOST: Socket disconnected:', reason);
     });
   };
 
   useEffect(() => {
     if (isLive && streamData?.streamId) {
+      const token = localStorage.getItem('token');
       const newSocket = io(SOCKET_URL, {
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: Infinity,
+        transports: ['websocket', 'polling'],
         auth: {
-          token: localStorage.getItem('token')
-        }
+          token: token
+        },
+        forceNew: false
       });
 
       newSocket.on('connect', () => {
-        console.log('Socket connected');
+        console.log('✅ HOST: Socket connected, ID:', newSocket.id);
         newSocket.emit('join-stream', {
           streamId: streamData.streamId,
           isStreamer: true
@@ -940,6 +980,42 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         newSocket.emit('subscribe-to-stream-earnings', {
           streamId: streamData.streamId
         });
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.error('❌ HOST: Socket connection error:', error);
+      });
+
+      newSocket.on('disconnect', (reason) => {
+        console.warn('⚠️ HOST: Socket disconnected:', reason);
+        if (reason === 'io server disconnect') {
+          // Server disconnected the socket, reconnect manually
+          newSocket.connect();
+        }
+      });
+
+      newSocket.on('reconnect', (attemptNumber) => {
+        console.log('🔄 HOST: Socket reconnected after', attemptNumber, 'attempts');
+        // Rejoin stream on reconnect
+        newSocket.emit('join-stream', {
+          streamId: streamData.streamId,
+          isStreamer: true
+        });
+        newSocket.emit('subscribe-to-stream-earnings', {
+          streamId: streamData.streamId
+        });
+      });
+
+      newSocket.on('reconnect_attempt', (attemptNumber) => {
+        console.log('🔄 HOST: Reconnection attempt', attemptNumber);
+      });
+
+      newSocket.on('reconnect_error', (error) => {
+        console.error('❌ HOST: Reconnection error:', error);
+      });
+
+      newSocket.on('reconnect_failed', () => {
+        console.error('❌ HOST: Reconnection failed');
       });
 
       setupSocketListeners(newSocket);
@@ -955,6 +1031,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           clearTimeout(fullscreenControlsTimeoutRef.current);
           fullscreenControlsTimeoutRef.current = null;
         }
+        console.log('🧹 HOST: Cleaning up socket connection');
         newSocket.disconnect();
       };
     }
@@ -5426,7 +5503,7 @@ useEffect(() => {
                                     });
                                     const data = await response.json();
                                     if (response.ok) {
-                                      setProducts([...products, data.product]);
+                                      setProducts(prev => [...prev, { ...data.product, index: prev.length }]);
                                       setNewProduct({
                                         type: "product",
                                         name: "",
@@ -5777,7 +5854,7 @@ useEffect(() => {
                       const data = await response.json();
 
                       if (response.ok) {
-                        setProducts([...products, data.product]);
+                        setProducts(prev => [...prev, { ...data.product, index: prev.length }]);
                         setNewProduct({
                           type: "product",
                           name: "",
