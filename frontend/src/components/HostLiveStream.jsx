@@ -2173,8 +2173,229 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     }
   };
 
-  // Background processing with MediaPipe Selfie Segmentation
+  // Simple background processing WITHOUT MediaPipe (avoids memory issues)
+  const processVideoWithBackgroundSimple = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
+    if (!canvas || !videoTrack) {
+      console.error('Missing canvas or video track');
+      return null;
+    }
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) {
+      console.error('Failed to get canvas context');
+      return null;
+    }
+
+    console.log('🎬 Starting simple background processing (no MediaPipe) with type:', bgType);
+
+    // Create video element
+    const video = document.createElement('video');
+    video.playsInline = true;
+    video.muted = true;
+    video.autoplay = true;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    
+    backgroundVideoElementRef.current = video;
+    
+    if (videoTrack.readyState === 'ended') {
+      console.error('❌ Cannot use ended track');
+      throw new Error('Video track has ended');
+    }
+    
+    const sourceStream = new MediaStream([videoTrack]);
+    video.srcObject = sourceStream;
+    
+    if (videoTrack.enabled === false) {
+      videoTrack.enabled = true;
+    }
+    
+    let animationFrameId = null;
+    let isProcessing = false;
+    let stream = null;
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        await video.play();
+        
+        // Wait for video dimensions
+        let attempts = 0;
+        while (attempts < 100) {
+          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+            break;
+          }
+          await new Promise(r => setTimeout(r, 50));
+          attempts++;
+        }
+        
+        if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
+          throw new Error('Video not ready');
+        }
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        console.log('✅ Canvas dimensions:', canvas.width, 'x', canvas.height);
+
+        // Load background image if needed
+        if (bgType === 'image' && selectedBackgroundImage && !backgroundImageRef.current) {
+          await new Promise((imgResolve, imgReject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              backgroundImageRef.current = img;
+              console.log('✅ Background image loaded');
+              imgResolve();
+            };
+            img.onerror = () => {
+              console.error('Failed to load background image');
+              imgReject(new Error('Failed to load image'));
+            };
+            img.src = selectedBackgroundImage.imageUrl;
+          });
+        }
+
+        isProcessing = true;
+        backgroundProcessingRef.current = true;
+
+        // Simple frame processing without MediaPipe
+        const processFrames = () => {
+          if (!isProcessing || !backgroundProcessingRef.current) {
+            return;
+          }
+
+          if (video.paused && video.readyState >= video.HAVE_METADATA) {
+            video.play().catch(() => {});
+          }
+
+          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+            try {
+              ctx.save();
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+              if (bgType === 'blur') {
+                // Draw video with blur filter applied to entire video
+                ctx.save();
+                ctx.filter = `blur(${bgBlur}px)`;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+              } else if (bgType === 'color') {
+                // Draw solid color background first
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Draw video on top
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              } else if (bgType === 'image' && backgroundImageRef.current) {
+                // Draw background image first (scaled to cover)
+                const bgImg = backgroundImageRef.current;
+                const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+                const x = (canvas.width - bgImg.width * scale) / 2;
+                const y = (canvas.height - bgImg.height * scale) / 2;
+                
+                // Apply rotation if needed
+                if (selectedBackgroundImage?.rotation) {
+                  ctx.save();
+                  ctx.translate(canvas.width / 2, canvas.height / 2);
+                  ctx.rotate((selectedBackgroundImage.rotation * Math.PI) / 180);
+                  ctx.translate(-canvas.width / 2, -canvas.height / 2);
+                  ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+                  ctx.restore();
+                } else {
+                  ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+                }
+                
+                // Draw video on top (no segmentation - full video overlay)
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              } else {
+                // Default: just draw video
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              }
+
+              ctx.restore();
+            } catch (err) {
+              console.error('Error drawing frame:', err);
+            }
+          }
+
+          animationFrameId = requestAnimationFrame(processFrames);
+          backgroundAnimationFrameRef.current = animationFrameId;
+        };
+
+        // Ensure video is playing before starting frame processing
+        if (video.paused) {
+          await video.play();
+        }
+        
+        // Wait a moment for video to start
+        await new Promise(r => setTimeout(r, 200));
+        
+        // Start processing frames
+        processFrames();
+
+        // Wait for frames to be drawn before capturing stream
+        // Give the frame processing loop time to draw at least a few frames
+        await new Promise(r => setTimeout(r, 800));
+        
+        console.log('📹 Creating canvas stream...');
+        console.log('📹 Canvas dimensions:', canvas.width, 'x', canvas.height);
+        console.log('📹 Video state:', {
+          paused: video.paused,
+          readyState: video.readyState,
+          videoWidth: video.videoWidth,
+          videoHeight: video.videoHeight
+        });
+        
+        stream = canvas.captureStream(30);
+
+        if (stream && stream.getVideoTracks().length > 0) {
+          console.log('✅ Simple stream created successfully with', stream.getVideoTracks().length, 'track(s)');
+          
+          // Verify the track is enabled
+          const videoTrack = stream.getVideoTracks()[0];
+          if (videoTrack) {
+            videoTrack.enabled = true;
+            console.log('✅ Video track enabled, readyState:', videoTrack.readyState);
+          }
+          
+          stream._cleanup = () => {
+            console.log('🧹 Cleaning up simple background processing');
+            isProcessing = false;
+            backgroundProcessingRef.current = false;
+            if (animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+              animationFrameId = null;
+            }
+            if (backgroundAnimationFrameRef.current) {
+              cancelAnimationFrame(backgroundAnimationFrameRef.current);
+              backgroundAnimationFrameRef.current = null;
+            }
+            video.pause();
+            if (video.srcObject) {
+              video.srcObject.getTracks().forEach(track => track.stop());
+              video.srcObject = null;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          };
+          resolve(stream);
+        } else {
+          console.error('❌ Failed to create stream - no video tracks');
+          reject(new Error('Failed to create stream with video tracks'));
+        }
+      } catch (err) {
+        console.error('❌ Simple background processing error:', err);
+        isProcessing = false;
+        backgroundProcessingRef.current = false;
+        reject(err);
+      }
+    });
+  };
+
+  // Background processing with MediaPipe Selfie Segmentation (only for advanced segmentation)
   const processVideoWithBackground = async (videoTrack, canvas, bgType, bgColor, bgBlur) => {
+    // Use simple version for all effects to avoid MediaPipe memory issues
+    console.log('🎬 Using simple background processing (no MediaPipe) for type:', bgType);
+    return processVideoWithBackgroundSimple(videoTrack, canvas, bgType, bgColor, bgBlur);
+    
+    /* MediaPipe code below is disabled to avoid memory issues
     if (!canvas || !videoTrack) {
       console.error('Missing canvas or video track');
       return null;
