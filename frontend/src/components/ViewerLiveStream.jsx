@@ -1529,6 +1529,23 @@ newSocket.on('product-added', (data) => {
     };
   }, [overlayComments.length]);
 
+  // Handle back navigation with auto-refresh
+  const handleBack = () => {
+    // Clean up resources
+    if (liveKitRoom) {
+      liveKitRoom.disconnect().catch(err => console.error('Error disconnecting from LiveKit:', err));
+    }
+    if (socket) {
+      socket.disconnect();
+    }
+    
+    // Auto-refresh the page to ensure all state is completely reset
+    // This resolves the issue where the page gets stuck after leaving viewer stream
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
+  };
+
   // Auto-fullscreen for iPhone users when stream is ready
   useEffect(() => {
     // Only detect iPhone specifically (not iPad or other iOS devices)
@@ -1819,7 +1836,7 @@ newSocket.on('product-added', (data) => {
           <h2 className="text-2xl font-bold text-pink-700 mb-3">{t('viewerStream.streamNotAvailable')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 px-6 py-3 rounded-xl text-white font-semibold transition-all"
           >
             {t('viewerStream.goBack')}
@@ -1861,7 +1878,7 @@ newSocket.on('product-added', (data) => {
                 {paymentProcessing ? t('viewerStream.processing') : t('viewerStream.payEnterStream')}
               </button>
               <button
-                onClick={onBack}
+                onClick={handleBack}
                 disabled={paymentProcessing}
                 className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
@@ -1880,7 +1897,7 @@ newSocket.on('product-added', (data) => {
                 {t('viewerStream.purchaseCoins')}
               </button>
               <button
-                onClick={onBack}
+                onClick={handleBack}
                 className="w-full bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] py-3 sm:py-3.5 rounded-xl font-semibold transition-all text-sm sm:text-base min-h-[44px]"
               >
                 {t('viewerStream.goBack')}
@@ -2218,7 +2235,7 @@ newSocket.on('product-added', (data) => {
               </div>
             </div>
             <button
-              onClick={onBack}
+              onClick={handleBack}
               className="bg-white text-pink-600 border border-[#ff99b3] hover:bg-[#ffe0ea] px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
             >
               {t('viewerStream.exit')}
@@ -2381,7 +2398,7 @@ newSocket.on('product-added', (data) => {
 
                   {/* Exit Button - Top Left */}
                   <button
-                    onClick={onBack}
+                    onClick={handleBack}
                     className="absolute top-4 left-4 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg border-2 border-white/30 flex items-center gap-2 font-semibold"
                     style={{ 
                       zIndex: 2147483647,
