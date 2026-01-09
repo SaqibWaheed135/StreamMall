@@ -163,6 +163,7 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const isFullscreenRef = useRef(isFullscreen); // Ref to track current fullscreen state
   const isNavigatingAwayRef = useRef(false); // Track if we're navigating away to prevent unnecessary operations
   const iPhoneChatPanelRef = useRef(null); // Ref for iPhone chat panel auto-scroll
+  const isApplyingFilterRef = useRef(false); // Prevent multiple simultaneous filter applications
 
   // Handle iOS viewport height changes
   useEffect(() => {
