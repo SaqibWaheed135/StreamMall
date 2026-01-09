@@ -1365,10 +1365,18 @@ newSocket.on('product-added', (data) => {
     // Emit comment to server with error handling
     try {
       console.log('📤 Emitting send-comment event...');
+      console.log('📤 Socket state:', {
+        connected: socket.connected,
+        id: socket.id,
+        readyState: socket.readyState
+      });
+      console.log('📤 Payload:', { streamId, text: commentText });
+      
       socket.emit('send-comment', {
         streamId,
         text: commentText
       });
+      
       console.log('✅ send-comment event emitted successfully');
       
       // Add listener to check if server acknowledges
