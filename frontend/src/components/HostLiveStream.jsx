@@ -772,11 +772,26 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🎯 HOST: Setting up socket listeners');
     console.log('Socket ID:', socket.id);
+    console.log('Socket connected:', socket.connected);
+    console.log('Stream ID:', streamData?.streamId);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    // Remove any existing listeners to prevent duplicates
+    socket.removeAllListeners('new-comment');
+    socket.removeAllListeners('new-reply');
+    socket.removeAllListeners('heart-sent');
+    socket.removeAllListeners('new-order');
+    socket.removeAllListeners('entry-fee-received');
+    socket.removeAllListeners('tip-received');
+    socket.removeAllListeners('coins-updated');
+    socket.removeAllListeners('product-added');
+    
     // In the socket listener setup
     socket.on('new-comment', (data) => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('📨 HOST: New comment received');
+      console.log('Socket ID:', socket.id);
+      console.log('Socket connected:', socket.connected);
       console.log('Comment data:', JSON.stringify(data, null, 2));
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       const newComment = {
@@ -892,17 +907,24 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     });
 
     socket.on('tip-received', (data) => {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🎁 HOST: Tip/gift received');
+      console.log('Socket ID:', socket.id);
+      console.log('Socket connected:', socket.connected);
+      console.log('Tip data:', JSON.stringify(data, null, 2));
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
       setTips(prev => [...prev, {
         id: Date.now() + Math.random(),
-        username: data.tipper.username,
+        username: data.tipper?.username || data.tipperUsername || 'Viewer',
         amount: data.amount,
         giftType: data.giftType,
-        timestamp: data.timestamp
+        timestamp: data.timestamp || new Date()
       }]);
       setCoinBalance(prev => prev + data.amount);
 
       setShowTipNotification({
-        username: data.tipper.username,
+        username: data.tipper?.username || data.tipperUsername || 'Viewer',
         amount: data.amount,
         giftType: data.giftType
       });
@@ -976,9 +998,22 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         newSocket.emit('join-stream', {
           streamId: streamData.streamId,
           isStreamer: true
+        }, (response) => {
+          if (response && response.error) {
+            console.error('❌ HOST: Join stream error:', response.error);
+          } else {
+            console.log('✅ HOST: Successfully joined stream');
+          }
         });
+        
         newSocket.emit('subscribe-to-stream-earnings', {
           streamId: streamData.streamId
+        }, (response) => {
+          if (response && response.error) {
+            console.error('❌ HOST: Subscribe to earnings error:', response.error);
+          } else {
+            console.log('✅ HOST: Successfully subscribed to stream earnings');
+          }
         });
       });
 
@@ -1000,9 +1035,21 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         newSocket.emit('join-stream', {
           streamId: streamData.streamId,
           isStreamer: true
+        }, (response) => {
+          if (response && response.error) {
+            console.error('❌ HOST: Rejoin stream error:', response.error);
+          } else {
+            console.log('✅ HOST: Successfully rejoined stream after reconnect');
+          }
         });
         newSocket.emit('subscribe-to-stream-earnings', {
           streamId: streamData.streamId
+        }, (response) => {
+          if (response && response.error) {
+            console.error('❌ HOST: Resubscribe to earnings error:', response.error);
+          } else {
+            console.log('✅ HOST: Successfully resubscribed to stream earnings');
+          }
         });
       });
 

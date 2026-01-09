@@ -735,12 +735,23 @@ const ViewerLiveStream = ({ streamId, onBack }) => {
     });
 
     newSocket.on('connect', () => {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ VIEWER: Socket connected');
+      console.log('Socket ID:', newSocket.id);
+      console.log('Stream ID:', streamId);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       setSocketConnected(true);
 
       // Always try to join the stream - backend will handle access checks
       newSocket.emit('join-stream', {
         streamId,
         isStreamer: false
+      }, (response) => {
+        if (response && response.error) {
+          console.error('❌ Join stream error:', response.error);
+        } else {
+          console.log('✅ Successfully joined stream');
+        }
       });
     });
 
@@ -988,26 +999,48 @@ newSocket.on('product-added', (data) => {
       }
     });
 
-    newSocket.on('connect_error', () => {
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ VIEWER: Socket connection error:', error);
       setSocketConnected(false);
       setError('Chat connection failed. Retrying...');
     });
 
     newSocket.on('error', (socketError) => {
+      console.error('❌ VIEWER: Socket error:', socketError);
       setError(t('viewerStream.errors.connectionError', { message: socketError.message || 'Unknown error' }));
     });
 
-    newSocket.on('disconnect', () => {
+    newSocket.on('disconnect', (reason) => {
+      console.warn('⚠️ VIEWER: Socket disconnected:', reason);
       setSocketConnected(false);
     });
 
-    newSocket.on('reconnect', () => {
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log('🔄 VIEWER: Socket reconnected after', attemptNumber, 'attempts');
       setSocketConnected(true);
       // Rejoin stream on reconnect
       newSocket.emit('join-stream', {
         streamId,
         isStreamer: false
+      }, (response) => {
+        if (response && response.error) {
+          console.error('❌ Rejoin stream error:', response.error);
+        } else {
+          console.log('✅ Successfully rejoined stream after reconnect');
+        }
       });
+    });
+
+    newSocket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('🔄 VIEWER: Reconnection attempt', attemptNumber);
+    });
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error('❌ VIEWER: Reconnection error:', error);
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('❌ VIEWER: Reconnection failed');
     });
 
     setSocket(newSocket);
@@ -1399,9 +1432,29 @@ newSocket.on('product-added', (data) => {
     e.preventDefault();
     if (!comment.trim()) return;
 
-    if (!socket || !socketConnected) {
+    // Enhanced socket connection check
+    if (!socket) {
+      console.error('❌ Socket not initialized');
       setError(t('viewerStream.errors.chatNotConnected'));
       setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    // Check if socket is actually connected (not just socketConnected state)
+    if (!socket.connected) {
+      console.error('❌ Socket not connected. State:', {
+        socketConnected,
+        socketId: socket.id,
+        connected: socket.connected
+      });
+      setError(t('viewerStream.errors.chatNotConnected'));
+      setTimeout(() => setError(''), 3000);
+      
+      // Try to reconnect
+      if (socket.disconnected) {
+        console.log('🔄 Attempting to reconnect socket...');
+        socket.connect();
+      }
       return;
     }
 
@@ -1411,13 +1464,20 @@ newSocket.on('product-added', (data) => {
       return;
     }
 
-    console.log('📤 Sending comment from viewer:', comment.trim());
+    const commentText = comment.trim();
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📤 VIEWER: Sending comment');
+    console.log('Socket ID:', socket.id);
+    console.log('Socket connected:', socket.connected);
+    console.log('Stream ID:', streamId);
+    console.log('Comment text:', commentText);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // Optimistically add comment to UI
     const newComment = {
       id: Date.now(),
       username: 'You',
-      text: comment,
+      text: commentText,
       timestamp: new Date()
     };
 
@@ -1431,10 +1491,18 @@ newSocket.on('product-added', (data) => {
     
     setComment('');
 
-    // Emit comment to server
+    // Emit comment to server with acknowledgment
     socket.emit('send-comment', {
       streamId,
-      text: comment.trim()
+      text: commentText
+    }, (response) => {
+      if (response && response.error) {
+        console.error('❌ Comment send error:', response.error);
+        setError(response.error);
+        setTimeout(() => setError(''), 3000);
+      } else {
+        console.log('✅ Comment sent successfully');
+      }
     });
   };
 
