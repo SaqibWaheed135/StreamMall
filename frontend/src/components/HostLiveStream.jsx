@@ -1362,6 +1362,23 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         const data = await response.json();
         setBackgroundImages(prev => [data.backgroundImage, ...prev]);
         setSelectedBackgroundImage(data.backgroundImage);
+        
+        // Load the background image immediately after upload
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = () => {
+            backgroundImageRef.current = img;
+            console.log('✅ Background image loaded after upload:', img.width, 'x', img.height);
+            resolve();
+          };
+          img.onerror = () => {
+            console.error('Failed to load uploaded background image');
+            reject(new Error('Failed to load background image'));
+          };
+          img.src = data.backgroundImage.imageUrl;
+        });
+        
         setSelectedBackground('image');
         setError('');
       } else {
@@ -2923,11 +2940,22 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       }
       
       console.log('✅ SelfieSegmentation is available, creating new instance...');
-      selfieSegmentation = new SelfieSegmentation({
-        locateFile: (file) => {
-          return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-        }
-      });
+      
+      // Ensure SelfieSegmentation is actually a constructor
+      if (typeof SelfieSegmentation !== 'function') {
+        throw new Error('SelfieSegmentation is not a constructor function');
+      }
+      
+      try {
+        selfieSegmentation = new SelfieSegmentation({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+          }
+        });
+      } catch (constructorError) {
+        console.error('❌ Error creating SelfieSegmentation instance:', constructorError);
+        throw new Error(`Failed to create SelfieSegmentation instance: ${constructorError.message}`);
+      }
       
       selfieSegmentation.setOptions({
         modelSelection: 1, // 0: General, 1: Landscape (better for video)
@@ -3158,6 +3186,29 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
           }
         } else if (bgType === 'image' && !selectedBackgroundImage) {
           console.warn('⚠️ Background image type selected but no image is selected');
+          throw new Error('Background image type selected but no image is selected');
+        } else if (bgType === 'image' && selectedBackgroundImage && !backgroundImageRef.current) {
+          console.warn('⚠️ Background image selected but not loaded yet, loading now...');
+          // Load the background image if it's not loaded
+          await new Promise((imgResolve, imgReject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              backgroundImageRef.current = img;
+              console.log('✅ Background image loaded:', img.width, 'x', img.height);
+              imgResolve();
+            };
+            img.onerror = () => {
+              console.error('Failed to load background image from:', selectedBackgroundImage.imageUrl);
+              imgReject(new Error('Failed to load background image'));
+            };
+            img.src = selectedBackgroundImage.imageUrl;
+          });
+        }
+
+        // Verify background image is loaded before starting MediaPipe
+        if (bgType === 'image' && (!backgroundImageRef.current || !backgroundImageRef.current.complete)) {
+          throw new Error('Background image is not fully loaded');
         }
 
         // Start MediaPipe processing
@@ -5286,10 +5337,28 @@ useEffect(() => {
                                       src={img.imageUrl}
                                       alt="Background"
                                       className="w-full h-20 object-cover"
-                                      onClick={() => {
+                                      onClick={async () => {
                                         setSelectedBackgroundImage(img);
-                                        setSelectedBackground('image');
                                         setError(''); // Clear any previous errors
+                                        
+                                        // Load the background image before setting it as selected
+                                        const imageToLoad = new Image();
+                                        imageToLoad.crossOrigin = 'anonymous';
+                                        await new Promise((resolve, reject) => {
+                                          imageToLoad.onload = () => {
+                                            backgroundImageRef.current = imageToLoad;
+                                            console.log('✅ Background image loaded:', imageToLoad.width, 'x', imageToLoad.height);
+                                            resolve();
+                                          };
+                                          imageToLoad.onerror = () => {
+                                            console.error('Failed to load background image');
+                                            setError('Failed to load background image');
+                                            reject(new Error('Failed to load background image'));
+                                          };
+                                          imageToLoad.src = img.imageUrl;
+                                        });
+                                        
+                                        setSelectedBackground('image');
                                       }}
                                     />
                                     {selectedBackgroundImage?.id === img.id && (
