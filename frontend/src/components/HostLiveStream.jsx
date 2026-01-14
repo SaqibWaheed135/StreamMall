@@ -5410,7 +5410,7 @@ useEffect(() => {
                 {/* Persistent Chat Panel - Instagram style - Always visible in iPhone mode */}
                 {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <div
-                    className="fixed left-0 bottom-0 z-50 flex flex-col bg-black/20 backdrop-blur-sm"
+                    className="fixed left-0 bottom-0 z-50 flex flex-col bg-transparent backdrop-blur-sm"
                     style={{
                       width: '30vw',
                       maxWidth: '30vw',
@@ -5423,7 +5423,8 @@ useEffect(() => {
                       pointerEvents: 'auto',
                       transform: 'translate3d(0,0,0)',
                       WebkitTransform: 'translate3d(0,0,0)',
-                      padding: '0.5rem 0'
+                      padding: '0.5rem 0',
+                      border: 'none'
                     }}
                   >
                     {/* Chat Messages Container - Scrollable */}
@@ -5431,7 +5432,7 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: '240px', // Show approximately 3 comments at a time
+                        maxHeight: '300px', // Show approximately 3 comments at a time
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(255,255,255,0.3) transparent',
@@ -5447,10 +5448,10 @@ useEffect(() => {
                         comments.map((comment) => (
                           <div
                             key={comment.id || comment._id}
-                            className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border ${
+                            className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg ${
                               comment.isJoinNotification 
-                                ? 'bg-transparent border-blue-400/30' 
-                                : 'bg-transparent border-white/10'
+                                ? 'bg-transparent' 
+                                : 'bg-transparent'
                             }`}
                             style={{
                               fontSize: '0.85rem',
@@ -5536,7 +5537,7 @@ useEffect(() => {
                 {/* Persistent Chat Panel - Android/Desktop - Always visible in fullscreen mode */}
                 {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <div
-                    className="fixed left-0 bottom-0 z-50 flex flex-col bg-black/20 backdrop-blur-sm"
+                    className="fixed left-0 bottom-0 z-50 flex flex-col bg-transparent backdrop-blur-sm"
                     style={{
                       width: '30vw',
                       maxWidth: '30vw',
@@ -5549,7 +5550,8 @@ useEffect(() => {
                       pointerEvents: 'auto',
                       transform: 'translate3d(0,0,0)',
                       WebkitTransform: 'translate3d(0,0,0)',
-                      padding: '0.5rem 0'
+                      padding: '0.5rem 0',
+                      border: 'none'
                     }}
                   >
                     {/* Chat Messages Container - Scrollable */}
@@ -5557,7 +5559,7 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: '240px', // Show approximately 3 comments at a time
+                        maxHeight: '300px', // Show approximately 3 comments at a time
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(255,255,255,0.3) transparent',
@@ -5573,10 +5575,10 @@ useEffect(() => {
                         comments.map((comment) => (
                           <div
                             key={comment.id || comment._id}
-                            className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border ${
+                            className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg ${
                               comment.isJoinNotification 
-                                ? 'bg-transparent border-blue-400/30' 
-                                : 'bg-transparent border-white/10'
+                                ? 'bg-transparent' 
+                                : 'bg-transparent'
                             }`}
                             style={{
                               fontSize: '0.85rem',
