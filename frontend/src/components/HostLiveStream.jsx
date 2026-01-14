@@ -5431,7 +5431,7 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: 'calc(100vh - 120px)',
+                        maxHeight: '240px', // Show approximately 3 comments at a time
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(255,255,255,0.3) transparent',
@@ -5449,8 +5449,8 @@ useEffect(() => {
                             key={comment.id || comment._id}
                             className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border ${
                               comment.isJoinNotification 
-                                ? 'bg-blue-500/40 border-blue-400/30' 
-                                : 'bg-black/30 border-white/10'
+                                ? 'bg-transparent border-blue-400/30' 
+                                : 'bg-transparent border-white/10'
                             }`}
                             style={{
                               fontSize: '0.85rem',
@@ -5557,7 +5557,7 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: 'calc(100vh - 120px)',
+                        maxHeight: '240px', // Show approximately 3 comments at a time
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(255,255,255,0.3) transparent',
@@ -5575,8 +5575,8 @@ useEffect(() => {
                             key={comment.id || comment._id}
                             className={`backdrop-blur-sm text-white px-3 py-2 rounded-2xl shadow-lg border ${
                               comment.isJoinNotification 
-                                ? 'bg-blue-500/40 border-blue-400/30' 
-                                : 'bg-black/30 border-white/10'
+                                ? 'bg-transparent border-blue-400/30' 
+                                : 'bg-transparent border-white/10'
                             }`}
                             style={{
                               fontSize: '0.85rem',
