@@ -5432,7 +5432,7 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: '300px', // Show approximately 3 comments at a time
+                        maxHeight: '100px', // Show approximately 1 comment at a time
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(255,255,255,0.3) transparent',
@@ -5559,7 +5559,7 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: '300px', // Show approximately 3 comments at a time
+                        maxHeight: '100px', // Show approximately 1 comment at a time
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(255,255,255,0.3) transparent',
