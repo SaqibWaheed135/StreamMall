@@ -1362,23 +1362,6 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         const data = await response.json();
         setBackgroundImages(prev => [data.backgroundImage, ...prev]);
         setSelectedBackgroundImage(data.backgroundImage);
-        
-        // Load the background image immediately after upload
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            backgroundImageRef.current = img;
-            console.log('✅ Background image loaded after upload:', img.width, 'x', img.height);
-            resolve();
-          };
-          img.onerror = () => {
-            console.error('Failed to load uploaded background image');
-            reject(new Error('Failed to load background image'));
-          };
-          img.src = data.backgroundImage.imageUrl;
-        });
-        
         setSelectedBackground('image');
         setError('');
       } else {
@@ -2940,22 +2923,11 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       }
       
       console.log('✅ SelfieSegmentation is available, creating new instance...');
-      
-      // Ensure SelfieSegmentation is actually a constructor
-      if (typeof SelfieSegmentation !== 'function') {
-        throw new Error('SelfieSegmentation is not a constructor function');
-      }
-      
-      try {
-        selfieSegmentation = new SelfieSegmentation({
-          locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-          }
-        });
-      } catch (constructorError) {
-        console.error('❌ Error creating SelfieSegmentation instance:', constructorError);
-        throw new Error(`Failed to create SelfieSegmentation instance: ${constructorError.message}`);
-      }
+      selfieSegmentation = new SelfieSegmentation({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+        }
+      });
       
       selfieSegmentation.setOptions({
         modelSelection: 1, // 0: General, 1: Landscape (better for video)
@@ -3186,29 +3158,6 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
           }
         } else if (bgType === 'image' && !selectedBackgroundImage) {
           console.warn('⚠️ Background image type selected but no image is selected');
-          throw new Error('Background image type selected but no image is selected');
-        } else if (bgType === 'image' && selectedBackgroundImage && !backgroundImageRef.current) {
-          console.warn('⚠️ Background image selected but not loaded yet, loading now...');
-          // Load the background image if it's not loaded
-          await new Promise((imgResolve, imgReject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-              backgroundImageRef.current = img;
-              console.log('✅ Background image loaded:', img.width, 'x', img.height);
-              imgResolve();
-            };
-            img.onerror = () => {
-              console.error('Failed to load background image from:', selectedBackgroundImage.imageUrl);
-              imgReject(new Error('Failed to load background image'));
-            };
-            img.src = selectedBackgroundImage.imageUrl;
-          });
-        }
-
-        // Verify background image is loaded before starting MediaPipe
-        if (bgType === 'image' && (!backgroundImageRef.current || !backgroundImageRef.current.complete)) {
-          throw new Error('Background image is not fully loaded');
         }
 
         // Start MediaPipe processing
@@ -5265,14 +5214,18 @@ useEffect(() => {
                           </button> */}
                           <button
                             onClick={() => {
+                              if (backgroundImages.length === 0 && !selectedBackgroundImage) {
+                                setError('Please upload a background image first');
+                                return;
+                              }
                               setSelectedBackground('image');
-                              setError(''); // Clear any previous errors
                             }}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
                               ? 'border-pink-500 bg-pink-500/20'
                               : 'border-white/20 bg-white/5 hover:bg-white/10'
                               }`}
-                            title="Background Image"
+                            disabled={backgroundImages.length === 0 && !selectedBackgroundImage}
+                            title={backgroundImages.length === 0 && !selectedBackgroundImage ? 'Upload an image first' : 'Background Image'}
                           >
                             <Image className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">Image</span>
@@ -5295,24 +5248,17 @@ useEffect(() => {
                                 if (file) {
                                   handleUploadBackgroundImage(file);
                                 }
-                                // Reset input value to allow selecting the same file again
-                                e.target.value = '';
                               }}
                               className="hidden"
                               id="background-image-upload"
                               disabled={uploadingImage}
-                              style={{ pointerEvents: 'auto' }}
                             />
                             <label
                               htmlFor="background-image-upload"
                               className={`block w-full p-3 rounded-lg border-2 border-dashed border-white/30 text-center cursor-pointer transition-all ${uploadingImage
-                                  ? 'opacity-50 cursor-not-allowed pointer-events-none'
-                                  : 'hover:border-white/50 hover:bg-white/5 pointer-events-auto'
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : 'hover:border-white/50 hover:bg-white/5'
                                 }`}
-                              style={{ 
-                                pointerEvents: uploadingImage ? 'none' : 'auto',
-                                zIndex: 10
-                              }}
                             >
                               {uploadingImage ? 'Uploading...' : '+ Upload Image'}
                             </label>
@@ -5337,28 +5283,10 @@ useEffect(() => {
                                       src={img.imageUrl}
                                       alt="Background"
                                       className="w-full h-20 object-cover"
-                                      onClick={async () => {
+                                      onClick={() => {
                                         setSelectedBackgroundImage(img);
-                                        setError(''); // Clear any previous errors
-                                        
-                                        // Load the background image before setting it as selected
-                                        const imageToLoad = new Image();
-                                        imageToLoad.crossOrigin = 'anonymous';
-                                        await new Promise((resolve, reject) => {
-                                          imageToLoad.onload = () => {
-                                            backgroundImageRef.current = imageToLoad;
-                                            console.log('✅ Background image loaded:', imageToLoad.width, 'x', imageToLoad.height);
-                                            resolve();
-                                          };
-                                          imageToLoad.onerror = () => {
-                                            console.error('Failed to load background image');
-                                            setError('Failed to load background image');
-                                            reject(new Error('Failed to load background image'));
-                                          };
-                                          imageToLoad.src = img.imageUrl;
-                                        });
-                                        
                                         setSelectedBackground('image');
+                                        setError(''); // Clear any previous errors
                                       }}
                                     />
                                     {selectedBackgroundImage?.id === img.id && (
@@ -5874,14 +5802,18 @@ useEffect(() => {
                           </button>
                           <button
                             onClick={() => {
+                              if (backgroundImages.length === 0 && !selectedBackgroundImage) {
+                                setError('Please upload a background image first');
+                                return;
+                              }
                               setSelectedBackground('image');
-                              setError(''); // Clear any previous errors
                             }}
                             className={`p-3 rounded-lg border-2 transition-all ${selectedBackground === 'image'
                               ? 'border-pink-500 bg-pink-500/20'
                               : 'border-white/20 bg-white/5 hover:bg-white/10'
-                            }`}
-                            title="Background Image"
+                            } ${(backgroundImages.length === 0 && !selectedBackgroundImage) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={backgroundImages.length === 0 && !selectedBackgroundImage}
+                            title={backgroundImages.length === 0 && !selectedBackgroundImage ? 'Upload an image first' : 'Background Image'}
                           >
                             <Image className="w-5 h-5 mx-auto mb-1" />
                             <span className="text-xs">Image</span>
@@ -6710,122 +6642,6 @@ useEffect(() => {
                               </button>
                             </div>
                           </div>
-
-                          {/* Image Background Settings */}
-                          {selectedBackground === 'image' && (
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-white/80">
-                                  Upload Background Image
-                                </label>
-                                <input
-                                  type="file"
-                                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      handleUploadBackgroundImage(file);
-                                    }
-                                    // Reset input value to allow selecting the same file again
-                                    e.target.value = '';
-                                  }}
-                                  className="hidden"
-                                  id="background-image-upload-fullscreen"
-                                  disabled={uploadingImage}
-                                  style={{ pointerEvents: 'auto' }}
-                                />
-                                <label
-                                  htmlFor="background-image-upload-fullscreen"
-                                  className={`block w-full p-3 rounded-lg border-2 border-dashed border-white/30 text-center cursor-pointer transition-all ${uploadingImage
-                                      ? 'opacity-50 cursor-not-allowed pointer-events-none'
-                                      : 'hover:border-white/50 hover:bg-white/5 pointer-events-auto'
-                                    }`}
-                                  style={{ 
-                                    pointerEvents: uploadingImage ? 'none' : 'auto',
-                                    zIndex: 10
-                                  }}
-                                >
-                                  {uploadingImage ? 'Uploading...' : '+ Upload Image'}
-                                </label>
-                              </div>
-
-                              {/* Available Background Images */}
-                              {backgroundImages.length > 0 && (
-                                <div>
-                                  <label className="block text-sm font-medium mb-2 text-white/80">
-                                    Select Background Image
-                                  </label>
-                                  <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                                    {backgroundImages.map((img) => (
-                                      <div
-                                        key={img.id}
-                                        className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedBackgroundImage?.id === img.id
-                                            ? 'border-pink-500 ring-2 ring-pink-500'
-                                            : 'border-white/20 hover:border-white/40'
-                                          }`}
-                                      >
-                                        <img
-                                          src={img.imageUrl}
-                                          alt="Background"
-                                          className="w-full h-20 object-cover"
-                                          onClick={() => {
-                                            setSelectedBackgroundImage(img);
-                                            setSelectedBackground('image');
-                                            setError(''); // Clear any previous errors
-                                          }}
-                                        />
-                                        {selectedBackgroundImage?.id === img.id && (
-                                          <div className="absolute top-1 right-1 bg-pink-500 rounded-full p-1">
-                                            <X className="w-3 h-3 text-white" />
-                                          </div>
-                                        )}
-                                        {/* Rotation and Delete buttons */}
-                                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleRotateBackgroundImage(img.id);
-                                            }}
-                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 rounded"
-                                            title="Rotate"
-                                          >
-                                            ↻
-                                          </button>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleDeleteBackgroundImage(img.id);
-                                            }}
-                                            className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs py-1 rounded"
-                                            title="Delete"
-                                          >
-                                            🗑️
-                                          </button>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {selectedBackgroundImage && (
-                                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm text-white/80">Current Image</span>
-                                    <button
-                                      onClick={() => handleRotateBackgroundImage(selectedBackgroundImage.id)}
-                                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
-                                    >
-                                      Rotate
-                                    </button>
-                                  </div>
-                                  <p className="text-xs text-white/60 mt-1">
-                                    Rotation: {selectedBackgroundImage.rotation}°
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
 
                           {/* BLUR SETTINGS COMMENTED OUT - FOCUS ON BACKGROUND IMAGE ONLY */}
                           {/* {selectedBackground === 'blur' && (
