@@ -5410,17 +5410,20 @@ useEffect(() => {
                 {/* Persistent Chat Panel - Instagram style - Always visible in iPhone mode */}
                 {isFullscreen && (/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <div
-                    className="fixed left-0 bottom-0 z-50 flex flex-col"
+                    className="fixed left-0 bottom-0 z-50 flex flex-col bg-black/20 backdrop-blur-sm"
                     style={{
-                      width: '280px',
-                      maxWidth: '75%',
-                      maxHeight: '60%',
+                      width: '30vw',
+                      maxWidth: '30vw',
+                      minWidth: '200px',
+                      maxHeight: '100vh',
                       height: 'auto',
                       bottom: '80px', // Above the input bar
+                      left: '0',
                       zIndex: 2147483646,
                       pointerEvents: 'auto',
                       transform: 'translate3d(0,0,0)',
-                      WebkitTransform: 'translate3d(0,0,0)'
+                      WebkitTransform: 'translate3d(0,0,0)',
+                      padding: '0.5rem 0'
                     }}
                   >
                     {/* Chat Messages Container - Scrollable */}
@@ -5428,10 +5431,12 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: 'calc(60vh - 60px)',
+                        maxHeight: 'calc(100vh - 120px)',
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
-                        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent',
+                        overflowY: 'auto',
+                        overscrollBehavior: 'contain'
                       }}
                     >
                       {comments.length === 0 ? (
@@ -5531,17 +5536,20 @@ useEffect(() => {
                 {/* Persistent Chat Panel - Android/Desktop - Always visible in fullscreen mode */}
                 {isFullscreen && !(/iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) && (
                   <div
-                    className="fixed left-0 bottom-0 z-50 flex flex-col"
+                    className="fixed left-0 bottom-0 z-50 flex flex-col bg-black/20 backdrop-blur-sm"
                     style={{
-                      width: '280px',
-                      maxWidth: '75%',
-                      maxHeight: '60%',
+                      width: '30vw',
+                      maxWidth: '30vw',
+                      minWidth: '200px',
+                      maxHeight: '100vh',
                       height: 'auto',
                       bottom: '80px', // Above the input bar
+                      left: '0',
                       zIndex: 2147483646,
                       pointerEvents: 'auto',
                       transform: 'translate3d(0,0,0)',
-                      WebkitTransform: 'translate3d(0,0,0)'
+                      WebkitTransform: 'translate3d(0,0,0)',
+                      padding: '0.5rem 0'
                     }}
                   >
                     {/* Chat Messages Container - Scrollable */}
@@ -5549,10 +5557,12 @@ useEffect(() => {
                       ref={iPhoneChatPanelRef}
                       className="flex-1 overflow-y-auto px-2 pb-2 space-y-2"
                       style={{
-                        maxHeight: 'calc(60vh - 60px)',
+                        maxHeight: 'calc(100vh - 120px)',
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
-                        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent',
+                        overflowY: 'auto',
+                        overscrollBehavior: 'contain'
                       }}
                     >
                       {comments.length === 0 ? (
