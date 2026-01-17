@@ -860,29 +860,49 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   }, [replyingTo]);
 
   const startCameraPreview = async () => {
-    try {
-      const constraints = getCameraConstraints();
-      console.log('📱 Using constraints:', constraints);
+    const constraints = getCameraConstraints();
+    console.log('📱 Using constraints:', constraints);
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      setLocalStream(stream);
-
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-        localVideoRef.current.muted = true;
-        localVideoRef.current.style.objectFit = 'cover';
-        localVideoRef.current.style.objectPosition = 'center';
-        await localVideoRef.current.play();
-
-        if (isMobile()) {
-          localVideoRef.current.style.width = '100%';
-          localVideoRef.current.style.height = '100%';
-        }
-      }
-    } catch (err) {
-      console.error('Camera preview error:', err);
-      setError('Could not access camera/microphone. Please grant permissions.');
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    
+    // Verify that the stream has at least video or audio tracks
+    const videoTracks = stream.getVideoTracks();
+    const audioTracks = stream.getAudioTracks();
+    
+    if (videoTracks.length === 0 && audioTracks.length === 0) {
+      stream.getTracks().forEach(track => track.stop());
+      throw new Error('No video or audio tracks available. Please grant camera and/or microphone permissions.');
     }
+    
+    // Check if video track exists and is active
+    if (videoTracks.length > 0 && videoTracks[0].readyState !== 'live') {
+      stream.getTracks().forEach(track => track.stop());
+      throw new Error('Camera permission denied or camera is not available. Please grant camera permissions.');
+    }
+    
+    // Check if audio track exists and is active (if audio was requested)
+    if (audioTracks.length > 0 && audioTracks[0].readyState !== 'live') {
+      stream.getTracks().forEach(track => track.stop());
+      throw new Error('Microphone permission denied or microphone is not available. Please grant microphone permissions.');
+    }
+    
+    setLocalStream(stream);
+
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = stream;
+      localVideoRef.current.muted = true;
+      localVideoRef.current.style.objectFit = 'cover';
+      localVideoRef.current.style.objectPosition = 'center';
+      await localVideoRef.current.play();
+
+      if (isMobile()) {
+        localVideoRef.current.style.width = '100%';
+        localVideoRef.current.style.height = '100%';
+      }
+    }
+    
+    // Return the stream so it can be used immediately (state update is async)
+    return stream;
   };
 
   const setupSocketListeners = (socket) => {
@@ -1492,11 +1512,38 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     setLoading(true);
     setError('');
 
+    // Track created streamId for cleanup if process fails
+    let createdStreamId = null;
+
     try {
-      if (!localStream) {
-        await startCameraPreview();
+      // First, ensure we have camera/mic access BEFORE creating backend stream
+      let currentStream = localStream;
+      if (!currentStream) {
+        currentStream = await startCameraPreview();
+      }
+      
+      // Double-check that we have a valid stream
+      if (!currentStream) {
+        throw new Error('Camera/microphone access is required to start a live stream. Please grant permissions and try again.');
+      }
+      
+      const videoTracks = currentStream.getVideoTracks();
+      const audioTracks = currentStream.getAudioTracks();
+      
+      // Verify stream has at least one active track
+      const hasActiveVideo = videoTracks.length > 0 && videoTracks[0].readyState === 'live';
+      const hasActiveAudio = audioTracks.length > 0 && audioTracks[0].readyState === 'live';
+      
+      if (!hasActiveVideo && !hasActiveAudio) {
+        throw new Error('Camera and microphone permissions are required. Please grant permissions and try again.');
+      }
+      
+      // If video was requested but not available, throw error
+      if (videoTracks.length === 0 || !hasActiveVideo) {
+        throw new Error('Camera permission is required to start a live stream. Please grant camera permission and try again.');
       }
 
+      // Only create backend stream if we have valid media access
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/live/create`, {
         method: 'POST',
@@ -1517,6 +1564,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
         throw new Error(data.msg || 'Failed to create stream');
       }
 
+      // Store streamId for potential cleanup if process fails
+      createdStreamId = data.streamId || data._id;
       setStreamData(data);
 
       const room = new Room({
@@ -1653,9 +1702,44 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
     } catch (err) {
       console.error('Error starting stream:', err);
       setError(err.message);
+      
+      // Clean up local stream if it exists
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
         setLocalStream(null);
+      }
+      
+      // If backend stream was created but process failed, clean it up
+      if (createdStreamId) {
+        console.log('⚠️ Backend stream was created but process failed. Cleaning up stream:', createdStreamId);
+        
+        try {
+          const token = localStorage.getItem('token');
+          await fetch(`${API_BASE_URL}/live/${createdStreamId}/end`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` })
+            }
+          });
+          console.log('✅ Cleaned up backend stream');
+        } catch (cleanupErr) {
+          console.error('❌ Failed to clean up backend stream:', cleanupErr);
+          // Don't show this error to user as the main error is more important
+        }
+        
+        // Reset streamData
+        setStreamData(null);
+      }
+      
+      // Clean up LiveKit room if it was created
+      if (liveKitRoom) {
+        try {
+          await liveKitRoom.disconnect();
+          setLiveKitRoom(null);
+        } catch (roomErr) {
+          console.error('Error disconnecting LiveKit room:', roomErr);
+        }
       }
     } finally {
       setLoading(false);
