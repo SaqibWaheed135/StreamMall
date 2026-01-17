@@ -102,6 +102,7 @@ const HostLiveStream = ({ onBack }) => {
   const [products, setProducts] = useState([]);
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const [fullscreenComment, setFullscreenComment] = useState('');
+  const [snackbarError, setSnackbarError] = useState('');
 const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
   const fullscreenInputContainerRef = useRef(null); // For iPhone fullscreen input container
 
@@ -1493,14 +1494,23 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
     }
   };
 
+  // Helper function to show snackbar error
+  const showSnackbarError = (message) => {
+    setError(''); // Clear regular error to avoid showing both
+    setSnackbarError(message);
+    setTimeout(() => {
+      setSnackbarError('');
+    }, 2000);
+  };
+
   const startStream = async () => {
     if (!title.trim()) {
-      setError('Please enter a title');
+      showSnackbarError('Please enter a title');
       return;
     }
 
     if (entryFee < 0) {
-      setError('Entry fee cannot be negative');
+      showSnackbarError('Entry fee cannot be negative');
       return;
     }
 
@@ -1701,7 +1711,13 @@ await liveKitRoom.localParticipant.publishTrack(processedTrack);
       });
     } catch (err) {
       console.error('Error starting stream:', err);
-      setError(err.message);
+      // Show permission-related errors in snackbar, others as regular error
+      const errorMessage = err.message || 'An error occurred';
+      if (errorMessage.includes('permission') || errorMessage.includes('Camera') || errorMessage.includes('Microphone') || errorMessage.includes('access')) {
+        showSnackbarError(errorMessage);
+      } else {
+        setError(errorMessage);
+      }
       
       // Clean up local stream if it exists
       if (localStream) {
@@ -7942,6 +7958,27 @@ useEffect(() => {
           <span className="text-sm font-medium">{t('stream.openingInFullscreen')}</span>
         </div>
       )}
+      
+      {/* Error Snackbar - appears from right corner */}
+      {snackbarError && (
+        <div
+          className="fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-2xl z-[9999] flex items-center gap-3 max-w-md"
+          style={{
+            animation: 'slideIn 0.3s ease-out'
+          }}
+        >
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+          <span className="text-sm font-medium flex-1">{snackbarError}</span>
+          <button
+            onClick={() => setSnackbarError('')}
+            className="flex-shrink-0 hover:bg-white/20 rounded-full p-1 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      
       {filterLoading && (
   <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm z-50 flex items-center gap-2">
     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
