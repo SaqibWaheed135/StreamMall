@@ -100,6 +100,7 @@ const HostLiveStream = ({ onBack }) => {
   const [comments, setComments] = useState([]);
   const [hearts, setHearts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [addingProduct, setAddingProduct] = useState(false);
   const [showFullscreenToast, setShowFullscreenToast] = useState(false);
   const [fullscreenComment, setFullscreenComment] = useState('');
   const [snackbarError, setSnackbarError] = useState('');
@@ -1122,6 +1123,8 @@ const fullscreenInputRef = useRef(null); // For iPhone fullscreen input
           console.log('✅ Adding new product to host products list');
           return [...prev, { ...data.product, index: data.productIndex }];
         });
+        // Stop showing "Adding..." when product is successfully added
+        setAddingProduct(false);
       }
     });
 
@@ -6214,6 +6217,7 @@ useEffect(() => {
                                   setError("Name, price and image are required");
                                   return;
                                 }
+                                setAddingProduct(true);
                                 const formData = new FormData();
                                 formData.append("type", newProduct.type);
                                 formData.append("name", newProduct.name);
@@ -6230,6 +6234,8 @@ useEffect(() => {
                                   });
                                   const data = await response.json();
                                   if (response.ok) {
+                                    // Product will be added via socket event 'product-added'
+                                    // But we'll also add it directly if socket hasn't fired yet
                                     setProducts(prev => [...prev, { ...data.product, index: prev.length }]);
                                     setNewProduct({
                                       type: "product",
@@ -6241,16 +6247,28 @@ useEffect(() => {
                                       link: "",
                                     });
                                     setError("");
+                                    // Socket event will set addingProduct to false, but set it here too in case socket is slow
+                                    setTimeout(() => setAddingProduct(false), 500);
                                   } else {
                                     setError(data.msg || "Failed to add product");
+                                    setAddingProduct(false);
                                   }
                                 } catch {
                                   setError("Failed to add product");
+                                  setAddingProduct(false);
                                 }
                               }}
-                              className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+                              disabled={addingProduct}
+                              className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
                             >
-                              {t('products.addProductBtn')}
+                              {addingProduct ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  Adding...
+                                </>
+                              ) : (
+                                t('products.addProductBtn')
+                              )}
                             </button>
 
                             <div className="mt-4">
@@ -7114,6 +7132,7 @@ useEffect(() => {
                                     setError("Name, price and image are required");
                                     return;
                                   }
+                                  setAddingProduct(true);
                                   const formData = new FormData();
                                   formData.append("type", newProduct.type);
                                   formData.append("name", newProduct.name);
@@ -7130,6 +7149,8 @@ useEffect(() => {
                                     });
                                     const data = await response.json();
                                     if (response.ok) {
+                                      // Product will be added via socket event 'product-added'
+                                      // But we'll also add it directly if socket hasn't fired yet
                                       setProducts(prev => [...prev, { ...data.product, index: prev.length }]);
                                       setNewProduct({
                                         type: "product",
@@ -7141,16 +7162,28 @@ useEffect(() => {
                                         link: "",
                                       });
                                       setError("");
+                                      // Socket event will set addingProduct to false, but set it here too in case socket is slow
+                                      setTimeout(() => setAddingProduct(false), 500);
                                     } else {
                                       setError(data.msg || "Failed to add product");
+                                      setAddingProduct(false);
                                     }
                                   } catch {
                                     setError("Failed to add product");
+                                    setAddingProduct(false);
                                   }
                                 }}
-                                className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+                                disabled={addingProduct}
+                                className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
                               >
-                                  {t('products.addProductBtn')}
+                                {addingProduct ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Adding...
+                                  </>
+                                ) : (
+                                  t('products.addProductBtn')
+                                )}
                               </button>
 
                               <div className="mt-4">
@@ -7461,6 +7494,7 @@ useEffect(() => {
                       return;
                     }
 
+                    setAddingProduct(true);
                     const formData = new FormData();
                     formData.append("type", newProduct.type);
                     formData.append("name", newProduct.name);
@@ -7481,6 +7515,8 @@ useEffect(() => {
                       const data = await response.json();
 
                       if (response.ok) {
+                        // Product will be added via socket event 'product-added'
+                        // But we'll also add it directly if socket hasn't fired yet
                         setProducts(prev => [...prev, { ...data.product, index: prev.length }]);
                         setNewProduct({
                           type: "product",
@@ -7492,16 +7528,28 @@ useEffect(() => {
                           link: "",
                         });
                         setError("");
+                        // Socket event will set addingProduct to false, but set it here too in case socket is slow
+                        setTimeout(() => setAddingProduct(false), 500);
                       } else {
                         setError(data.msg || "Failed to add product");
+                        setAddingProduct(false);
                       }
                     } catch {
                       setError("Failed to add product");
+                      setAddingProduct(false);
                     }
                   }}
-                  className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 text-white py-3 rounded-xl font-semibold transition mt-5"
+                  disabled={addingProduct}
+                  className="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:shadow-lg hover:shadow-pink-200 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition mt-5 flex items-center justify-center gap-2"
                 >
-                  Add Item
+                  {addingProduct ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Adding...
+                    </>
+                  ) : (
+                    'Add Item'
+                  )}
                 </button>
 
                 <div className="mt-4">
